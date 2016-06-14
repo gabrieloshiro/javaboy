@@ -85,7 +85,7 @@ public class DefineControls extends Frame implements KeyListener, WindowListener
         setSize(230, 300);
         setResizable(false);
         addWindowListener(this);
-        show();
+        setVisible(true);
     }
 
     public String getKeyDesc(int code, char c) {
@@ -126,7 +126,7 @@ public class DefineControls extends Frame implements KeyListener, WindowListener
     }
 
     public void windowClosing(WindowEvent e) {
-        hide();
+        setVisible(false);
     }
 
     public void windowOpened(WindowEvent e) {
@@ -145,7 +145,7 @@ public class DefineControls extends Frame implements KeyListener, WindowListener
     }
 
     public void actionPerformed(ActionEvent e) {
-        hide();
+        setVisible(false);
     }
 
 }

@@ -22,24 +22,7 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
 import java.awt.*;
-import java.awt.image.*;
-import java.lang.*;
-import java.io.*;
-import java.applet.*;
-import java.net.*;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowListener;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentListener;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ItemEvent;
-import java.util.StringTokenizer;
-import java.util.Hashtable;
-import javax.sound.sampled.*;
+import java.awt.event.*;
 
 /**
  * This class is used when JavaBoy is run as an application
@@ -329,7 +312,7 @@ class GameBoyScreen extends Frame implements ActionListener,
 
         connectDialog.setSize(350, 125);
         connectDialog.setResizable(false);
-        connectDialog.show();
+        connectDialog.setVisible(true);
     }
 
 
@@ -431,7 +414,7 @@ class GameBoyScreen extends Frame implements ActionListener,
             }
 
             FileDialog fd = new FileDialog(this, "Open ROM");
-            fd.show();
+            fd.setVisible(true);
 
             if (fd.getFile() != null) {
                 applet.cartridge = new Cartridge(fd.getDirectory() + fd.getFile(), this);
@@ -465,7 +448,7 @@ class GameBoyScreen extends Frame implements ActionListener,
         } else if (command.equals("Execute script")) {
             if (applet.dmgcpu != null) {
                 FileDialog fd = new FileDialog(this, "Execute debugger script");
-                fd.show();
+                fd.setVisible(true);
                 applet.queueDebuggerCommand("c " + fd.getDirectory() + fd.getFile());
                 applet.dmgcpu.terminate = true;
             } else {
@@ -497,10 +480,10 @@ class GameBoyScreen extends Frame implements ActionListener,
         } else if (command.equals("Connect to client")) {
             makeConnectDialog();
         } else if (command.equals("Connect cancel")) {
-            connectDialog.hide();
+            connectDialog.setVisible(false);
             connectDialog = null;
         } else if (command.equals("Connect ok")) {
-            connectDialog.hide();
+            connectDialog.setVisible(false);
             connectDialog = null;
         } else if (command.equals("Exit")) {
             applet.dispose();

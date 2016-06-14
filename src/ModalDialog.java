@@ -61,7 +61,7 @@ class ModalDialog implements ActionListener {
         b.addActionListener(this);
         dialog.add(b, "South");
         dialog.setSize(350, 110);
-        dialog.show();
+        dialog.setVisible(true);
 
         finished = false;
 
@@ -90,7 +90,7 @@ class ModalDialog implements ActionListener {
         dialog.add(b);
 
         dialog.setSize(350, 110);
-        dialog.show();
+        dialog.setVisible(true);
 
         finished = false;
 
@@ -114,7 +114,7 @@ class ModalDialog implements ActionListener {
             }
         }
 
-        dialog.hide();
+        dialog.setVisible(false);
         dialog = null;
         finished = true;
     }

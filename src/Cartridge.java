@@ -933,13 +933,13 @@ class WebSaveRAM implements Runnable, DialogListener {
             if (save) {
                 f.add(new Label("Please wait, saving"), "North");
                 f.add(new Label("game data to web server..."), "Center");
-                f.show();
+                f.setVisible(true);
                 saveRam();
                 new ModalDialog(null, "Sucess!", "Game data", "Saved ok.");
             } else {
                 f.add(new Label("Please wait, loading"), "North");
                 f.add(new Label("game data from web server..."), "Center");
-                f.show();
+                f.setVisible(true);
                 loadRam();
                 new ModalDialog(null, "Success!", "Game data", "loaded ok.");
             }
@@ -950,7 +950,7 @@ class WebSaveRAM implements Runnable, DialogListener {
             System.out.println("Error! " + e);
             new ModalDialog(null, "Error!", "Load/Save error!  Report to site administrator.", e.toString());
         }
-        f.hide();
+        f.setVisible(false);
     }
 
     public void saveRam() throws Exception {

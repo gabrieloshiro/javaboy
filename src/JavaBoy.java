@@ -414,7 +414,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
 
             }
 
-            //   f.hide();
+            //   f.setVisible(false);
 
 
         } else if (e.getActionCommand().equals("Load")) {
@@ -960,26 +960,20 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     public void windowDeactivated(WindowEvent e) {
     }
 
-    public JavaBoy() {
-    }
-
     /**
      * Initialize JavaBoy when run as an application
      */
-    public JavaBoy(String cartName) {
+    public JavaBoy() {
         mainWindow = new GameBoyScreen("JavaBoy " + versionString, this);
         mainWindow.setVisible(true);
         this.requestFocus();
-        //  mainWindow.addKeyListener(this);
         mainWindow.addWindowListener(this);
-        //  cartridge = new Cartridge(cartName, mainWindow);
-        //  dmgcpu = new Dmgcpu(cartridge, mainWindow);
     }
 
     public static void main(String[] args) {
         System.out.println("JavaBoy (tm) Version " + versionString + " (c) 2005 Neil Millstone (application)");
         runningAsApplet = false;
-        JavaBoy javaBoy = new JavaBoy("");
+        JavaBoy javaBoy = new JavaBoy();
 
         Thread p = new Thread(javaBoy);
         p.start();
