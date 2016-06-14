@@ -214,7 +214,6 @@ class IoHandler {
      * Write data to IO Ram
      */
     public void ioWrite(int num, short data) {
-        boolean soundOn = (dmgcpu.soundChip != null);
 
         if (num <= 0x4B) {
             //  System.out.println("Write of register " + JavaBoy.hexByte(num) + " to " + JavaBoy.hexWord(data) + " at " + JavaBoy.hexWord(dmgcpu.pc));
@@ -260,10 +259,7 @@ class IoHandler {
 
                 registers[0x02] = (byte) data;
 
-                if (dmgcpu.gameLink != null) {                    // Game Link is connected to serial port
-                    if (((JavaBoy.unsign(data) & 0x81) == 0x81)) {
-                        dmgcpu.gameLink.send(registers[0x01]);
-                    }
+                if (false) {                    // Game Link is connected to serial port
                 } else {
                     if ((registers[0x02] & 0x01) == 1) {
                         registers[0x01] = (byte) 0xFF; // when no LAN connection, always receive 0xFF from port.  Simulates empty socket.
@@ -316,212 +312,81 @@ class IoHandler {
                 break;
 
             case 0x10:           // Sound channel 1, sweep
-                if (soundOn)
-                    dmgcpu.soundChip.channel1.setSweep(
-                            (JavaBoy.unsign(data) & 0x70) >> 4,
-                            (JavaBoy.unsign(data) & 0x07),
-                            (JavaBoy.unsign(data) & 0x08) == 1);
                 registers[0x10] = (byte) data;
                 break;
 
             case 0x11:           // Sound channel 1, length and wave duty
-                if (soundOn) {
-                    dmgcpu.soundChip.channel1.setDutyCycle((JavaBoy.unsign(data) & 0xC0) >> 6);
-                    dmgcpu.soundChip.channel1.setLength(JavaBoy.unsign(data) & 0x3F);
-                }
                 registers[0x11] = (byte) data;
                 break;
 
             case 0x12:           // Sound channel 1, volume envelope
-                if (soundOn) {
-                    dmgcpu.soundChip.channel1.setEnvelope(
-                            (JavaBoy.unsign(data) & 0xF0) >> 4,
-                            (JavaBoy.unsign(data) & 0x07),
-                            (JavaBoy.unsign(data) & 0x08) == 8);
-                }
                 registers[0x12] = (byte) data;
                 break;
 
             case 0x13:           // Sound channel 1, frequency low
                 registers[0x13] = (byte) data;
-                if (soundOn) {
-                    dmgcpu.soundChip.channel1.setFrequency(
-                            ((int) (JavaBoy.unsign(registers[0x14]) & 0x07) << 8) + JavaBoy.unsign(registers[0x13]));
-                }
                 break;
 
             case 0x14:           // Sound channel 1, frequency high
                 registers[0x14] = (byte) data;
 
-                if (soundOn) {
-                    if ((registers[0x14] & 0x80) != 0) {
-                        dmgcpu.soundChip.channel1.setLength(JavaBoy.unsign(registers[0x11]) & 0x3F);
-                        dmgcpu.soundChip.channel1.setEnvelope(
-                                (JavaBoy.unsign(registers[0x12]) & 0xF0) >> 4,
-                                (JavaBoy.unsign(registers[0x12]) & 0x07),
-                                (JavaBoy.unsign(registers[0x12]) & 0x08) == 8);
-                    }
-                    if ((registers[0x14] & 0x40) == 0) {
-                        dmgcpu.soundChip.channel1.setLength(-1);
-                    }
-
-                    dmgcpu.soundChip.channel1.setFrequency(
-                            ((int) (JavaBoy.unsign(registers[0x14]) & 0x07) << 8) + JavaBoy.unsign(registers[0x13]));
-                }
                 break;
 
             case 0x17:           // Sound channel 2, volume envelope
-                if (soundOn) {
-                    dmgcpu.soundChip.channel2.setEnvelope(
-                            (JavaBoy.unsign(data) & 0xF0) >> 4,
-                            (JavaBoy.unsign(data) & 0x07),
-                            (JavaBoy.unsign(data) & 0x08) == 8);
-                }
                 registers[0x17] = (byte) data;
                 break;
 
             case 0x18:           // Sound channel 2, frequency low
                 registers[0x18] = (byte) data;
-                if (soundOn) {
-                    dmgcpu.soundChip.channel2.setFrequency(
-                            ((int) (JavaBoy.unsign(registers[0x19]) & 0x07) << 8) + JavaBoy.unsign(registers[0x18]));
-                }
                 break;
 
             case 0x19:           // Sound channel 2, frequency high
                 registers[0x19] = (byte) data;
-
-                if (soundOn) {
-                    if ((registers[0x19] & 0x80) != 0) {
-                        dmgcpu.soundChip.channel2.setLength(JavaBoy.unsign(registers[0x21]) & 0x3F);
-                        dmgcpu.soundChip.channel2.setEnvelope(
-                                (JavaBoy.unsign(registers[0x17]) & 0xF0) >> 4,
-                                (JavaBoy.unsign(registers[0x17]) & 0x07),
-                                (JavaBoy.unsign(registers[0x17]) & 0x08) == 8);
-                    }
-                    if ((registers[0x19] & 0x40) == 0) {
-                        dmgcpu.soundChip.channel2.setLength(-1);
-                    }
-                    dmgcpu.soundChip.channel2.setFrequency(
-                            ((int) (JavaBoy.unsign(registers[0x19]) & 0x07) << 8) + JavaBoy.unsign(registers[0x18]));
-                }
                 break;
 
             case 0x16:           // Sound channel 2, length and wave duty
-                if (soundOn) {
-                    dmgcpu.soundChip.channel2.setDutyCycle((JavaBoy.unsign(data) & 0xC0) >> 6);
-                    dmgcpu.soundChip.channel2.setLength(JavaBoy.unsign(data) & 0x3F);
-                }
                 registers[0x16] = (byte) data;
                 break;
 
             case 0x1A:           // Sound channel 3, on/off
-                if (soundOn) {
-                    if ((JavaBoy.unsign(data) & 0x80) != 0) {
-                        dmgcpu.soundChip.channel3.setVolume((JavaBoy.unsign(registers[0x1C]) & 0x60) >> 5);
-                    } else {
-                        dmgcpu.soundChip.channel3.setVolume(0);
-                    }
-                }
-                //    System.out.println("Channel 3 enable: " + data);
                 registers[0x1A] = (byte) data;
                 break;
 
             case 0x1B:           // Sound channel 3, length
-                //    System.out.println("D:" + data);
                 registers[0x1B] = (byte) data;
-                if (soundOn) dmgcpu.soundChip.channel3.setLength(JavaBoy.unsign(data));
                 break;
 
             case 0x1C:           // Sound channel 3, volume
                 registers[0x1C] = (byte) data;
-                if (soundOn) dmgcpu.soundChip.channel3.setVolume((JavaBoy.unsign(registers[0x1C]) & 0x60) >> 5);
                 break;
 
             case 0x1D:           // Sound channel 3, frequency lower 8-bit
                 registers[0x1D] = (byte) data;
-                if (soundOn) dmgcpu.soundChip.channel3.setFrequency(
-                        ((int) (JavaBoy.unsign(registers[0x1E]) & 0x07) << 8) + JavaBoy.unsign(registers[0x1D]));
                 break;
 
             case 0x1E:           // Sound channel 3, frequency higher 3-bit
                 registers[0x1E] = (byte) data;
-                if (soundOn) {
-                    if ((registers[0x19] & 0x80) != 0) {
-                        dmgcpu.soundChip.channel3.setLength(JavaBoy.unsign(registers[0x1B]));
-                    }
-                    dmgcpu.soundChip.channel3.setFrequency(
-                            ((int) (JavaBoy.unsign(registers[0x1E]) & 0x07) << 8) + JavaBoy.unsign(registers[0x1D]));
-                }
                 break;
 
             case 0x20:           // Sound channel 4, length
-                if (soundOn) dmgcpu.soundChip.channel4.setLength(JavaBoy.unsign(data) & 0x3F);
                 registers[0x20] = (byte) data;
                 break;
-
-
             case 0x21:           // Sound channel 4, volume envelope
-                if (soundOn) dmgcpu.soundChip.channel4.setEnvelope(
-                        (JavaBoy.unsign(data) & 0xF0) >> 4,
-                        (JavaBoy.unsign(data) & 0x07),
-                        (JavaBoy.unsign(data) & 0x08) == 8);
                 registers[0x21] = (byte) data;
                 break;
 
             case 0x22:           // Sound channel 4, polynomial parameters
-                if (soundOn) dmgcpu.soundChip.channel4.setParameters(
-                        (JavaBoy.unsign(data) & 0x07),
-                        (JavaBoy.unsign(data) & 0x08) == 8,
-                        (JavaBoy.unsign(data) & 0xF0) >> 4);
                 registers[0x22] = (byte) data;
                 break;
 
             case 0x23:          // Sound channel 4, initial/consecutive
                 registers[0x23] = (byte) data;
-                if (soundOn) {
-                    if ((registers[0x23] & 0x80) != 0) {
-                        dmgcpu.soundChip.channel4.setLength(JavaBoy.unsign(registers[0x20]) & 0x3F);
-                    }
-                    if ((registers[0x23] & 0x40) == 0) {
-                        dmgcpu.soundChip.channel4.setLength(-1);
-                    }
-                }
                 break;
 
             case 0x25:           // Stereo select
                 int chanData;
 
                 registers[0x25] = (byte) data;
-
-                if (soundOn) {
-                    chanData = 0;
-                    if ((JavaBoy.unsign(data) & 0x01) != 0) {
-                        chanData |= SquareWaveGenerator.CHAN_LEFT;
-                    }
-                    if ((JavaBoy.unsign(data) & 0x10) != 0) {
-                        chanData |= SquareWaveGenerator.CHAN_RIGHT;
-                    }
-                    dmgcpu.soundChip.channel1.setChannel(chanData);
-
-                    chanData = 0;
-                    if ((JavaBoy.unsign(data) & 0x02) != 0) {
-                        chanData |= SquareWaveGenerator.CHAN_LEFT;
-                    }
-                    if ((JavaBoy.unsign(data) & 0x20) != 0) {
-                        chanData |= SquareWaveGenerator.CHAN_RIGHT;
-                    }
-                    dmgcpu.soundChip.channel2.setChannel(chanData);
-
-                    chanData = 0;
-                    if ((JavaBoy.unsign(data) & 0x04) != 0) {
-                        chanData |= SquareWaveGenerator.CHAN_LEFT;
-                    }
-                    if ((JavaBoy.unsign(data) & 0x40) != 0) {
-                        chanData |= SquareWaveGenerator.CHAN_RIGHT;
-                    }
-                    dmgcpu.soundChip.channel3.setChannel(chanData);
-                }
 
                 break;
 
@@ -541,7 +406,6 @@ class IoHandler {
             case 0x3D:
             case 0x3E:
             case 0x3F:
-                if (soundOn) dmgcpu.soundChip.channel3.setSamplePair(num - 0x30, JavaBoy.unsign(data));
                 registers[num] = (byte) data;
                 break;
 

@@ -163,11 +163,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     GraphicsChip graphicsChip;
 
     /**
-     * When connected to another computer or to a Game Boy printer, references the current Game link object
-     */
-    GameLink gameLink;
-
-    /**
      * Stores the byte which was overwritten at the breakpoint address by the breakpoint instruction
      */
     short breakpointInstr;
@@ -447,18 +442,9 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     }
 
     public void itemStateChanged(ItemEvent e) {
-        setSoundEnable(soundCheck.getState());
+
     }
 
-    public void setSoundEnable(boolean on) {
-        soundCheck.setState(on);
-        if (dmgcpu.soundChip != null) {
-            dmgcpu.soundChip.channel1Enable = on;
-            dmgcpu.soundChip.channel2Enable = on;
-            dmgcpu.soundChip.channel3Enable = on;
-            dmgcpu.soundChip.channel4Enable = on;
-        }
-    }
 
     /**
      * Activate the console debugger interface
@@ -995,17 +981,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
         runningAsApplet = false;
         JavaBoy javaBoy = new JavaBoy("");
 
-        //  javaBoy.mainWindow.addKeyListener(javaBoy);
-        //  javaBoy.mainWindow.addWindowListener(javaBoy);
-        if (args.length > 0) {
-            if (args[0].equals("server")) {
-                javaBoy.gameLink = new TCPGameLink(null);
-            } else if (args[0].equals("client")) {
-                javaBoy.gameLink = new TCPGameLink(null, args[1]);
-            }
-        }
-        //  javaBoy.mainWindow.setGraphicsChip(javaBoy.dmgcpu.graphicsChip);
-
         Thread p = new Thread(javaBoy);
         p.start();
     }
@@ -1019,7 +994,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
 
 
         cartridge = new Cartridge(getParameter("ROMIMAGE"), this);
-        dmgcpu = new Dmgcpu(cartridge, null, this);
+        dmgcpu = new Dmgcpu(cartridge, this);
         dmgcpu.graphicsChip.setMagnify(getSize().width / 160);
         this.requestFocus();
         p.start();
@@ -1054,7 +1029,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
         popupMenu.addActionListener(this);
 
         soundCheck.addItemListener(this);
-        setSoundEnable((getParameter("SOUND") == null) || (getParameter("SOUND").equals("ON")));
+
 
 
         addMouseListener(this);

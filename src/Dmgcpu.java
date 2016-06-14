@@ -24,23 +24,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
 import java.awt.*;
-import java.awt.image.*;
-import java.lang.*;
-import java.io.*;
-import java.applet.*;
-import java.net.*;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowListener;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentListener;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ItemEvent;
-import java.util.StringTokenizer;
-import javax.sound.sampled.*;
 
 /**
  * This is the main controlling class for the emulation
@@ -164,8 +147,6 @@ class Dmgcpu {
 
     Cartridge cartridge;
     GraphicsChip graphicsChip;
-    SoundChip soundChip;
-    GameLink gameLink;
     IoHandler ioHandler;
     Component applet;
     boolean terminate;
@@ -179,10 +160,8 @@ class Dmgcpu {
      * Create a CPU emulator with the supplied cartridge and game link objects.  Both can be set up
      * or changed later if needed
      */
-    public Dmgcpu(Cartridge c, GameLink l, Component a) {
+    public Dmgcpu(Cartridge c, Component a) {
         cartridge = c;
-        gameLink = l;
-        if (gameLink != null) gameLink.setDmgcpu(this);
         graphicsChip = new TileBasedGraphicsChip(a, this);
         checkEnableGbc();
         boolean java1point3 = true;
@@ -193,7 +172,6 @@ class Dmgcpu {
         java1point3 = !((version.startsWith("1.0") || version.startsWith("1.1")));
 
         if (java1point3) {
-            soundChip = new SoundChip();
         }
         ioHandler = new IoHandler(this);
         applet = a;
@@ -707,7 +685,6 @@ class Dmgcpu {
                 //     System.out.println("VBlank");
 
                 ioHandler.registers[0x44] = 0;
-                if (soundChip != null) soundChip.outputSound();
                 graphicsChip.frameDone = false;
                 if (JavaBoy.runningAsApplet) {
                     ((JavaBoy) (applet)).drawNextFrame();
