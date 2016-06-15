@@ -413,11 +413,11 @@ class GameBoyScreen extends Frame implements ActionListener,
                 clearWindow();
             }
 
-            FileDialog fd = new FileDialog(this, "Open ROM");
-            fd.setVisible(true);
+//            FileDialog fd = new FileDialog(this, "Open ROM");
+//            fd.setVisible(true);
 
-            if (fd.getFile() != null) {
-                applet.cartridge = new Cartridge(fd.getDirectory() + fd.getFile(), this);
+            if (true) {
+                applet.cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb", this);
                 applet.dmgcpu = new Dmgcpu(applet.cartridge, this);
                 setGraphicsChip(applet.dmgcpu.graphicsChip);
                 setMagnify();
