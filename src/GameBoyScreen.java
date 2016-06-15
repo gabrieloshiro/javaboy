@@ -87,234 +87,19 @@ class GameBoyScreen extends Frame implements ActionListener,
         MenuItem fileOpen = new MenuItem("Open ROM");
         fileOpen.setActionCommand("Open ROM");
         fileOpen.addActionListener(this);
-
-        MenuItem fileEmulate = new MenuItem("Emulate");
-        fileEmulate.setActionCommand("Emulate");
-        fileEmulate.addActionListener(this);
-
-        MenuItem fileReset = new MenuItem("Reset");
-        fileReset.setActionCommand("Reset");
-        fileReset.addActionListener(this);
-
-        MenuItem filePause = new MenuItem("Pause");
-        filePause.setActionCommand("Pause");
-        filePause.addActionListener(this);
-
-        MenuItem fileControls = new MenuItem("Define controls...");
-        fileControls.setActionCommand("Controls");
-        fileControls.addActionListener(this);
-
-        fileGameboyColor = new CheckboxMenuItem("Use Gameboy Color features");
-        fileGameboyColor.addItemListener(this);
-        fileGameboyColor.setState(true);
-
-        MenuItem fileQuit = new MenuItem("Exit");
-        fileQuit.setActionCommand("Exit");
-        fileQuit.addActionListener(this);
-
-        viewSingle = new CheckboxMenuItem("Size: actual");
-        viewSingle.addItemListener(this);
-
-        viewDouble = new CheckboxMenuItem("Size: 2x");
-        viewDouble.addItemListener(this);
-
-        viewTriple = new CheckboxMenuItem("Size: 3x");
-        viewTriple.addItemListener(this);
-
-        viewQuadrouple = new CheckboxMenuItem("Size: 4x");
-        viewQuadrouple.addItemListener(this);
-
-        viewFrameSkip0 = new CheckboxMenuItem("Frame skip: 0");
-        viewFrameSkip0.addItemListener(this);
-
-        viewFrameSkip1 = new CheckboxMenuItem("Frame skip: 1");
-        viewFrameSkip1.addItemListener(this);
-
-        viewFrameSkip2 = new CheckboxMenuItem("Frame skip: 2");
-        viewFrameSkip2.addItemListener(this);
-
-        viewFrameSkip3 = new CheckboxMenuItem("Frame skip: 3");
-        viewFrameSkip3.addItemListener(this);
-
-        viewFrameSkip4 = new CheckboxMenuItem("Frame skip: 4");
-        viewFrameSkip4.addItemListener(this);
-
-        viewFrameCounter = new CheckboxMenuItem("Frame counter");
-        viewFrameCounter.setActionCommand("Frame counter");
-        viewFrameCounter.addActionListener(this);
-
-        viewSpeedThrottle = new CheckboxMenuItem("Speed throttle");
-        viewSpeedThrottle.setActionCommand("Speed throttle");
-        viewSpeedThrottle.addActionListener(this);
-        viewSpeedThrottle.setState(true);
-
-        CheckboxMenuItem viewStandardCols = new CheckboxMenuItem("Standard colours");
-        viewStandardCols.addItemListener(this);
-        viewStandardCols.setState(true);
-
-        CheckboxMenuItem viewLcdCols = new CheckboxMenuItem("LCD shades");
-        viewLcdCols.addItemListener(this);
-
-        CheckboxMenuItem viewGreenyCols = new CheckboxMenuItem("Greeny shades");
-        viewGreenyCols.addItemListener(this);
-
-        MenuItem debugEnter = new MenuItem("Enter debugger");
-        debugEnter.setActionCommand("Enter debugger");
-        debugEnter.addActionListener(this);
-
-        MenuItem debugExecuteScript = new MenuItem("Execute script");
-        debugExecuteScript.setActionCommand("Execute script");
-        debugExecuteScript.addActionListener(this);
-
-        soundChannel1Enable = new CheckboxMenuItem("Channel 1 (Square wave)");
-        soundChannel1Enable.addItemListener(this);
-        soundChannel1Enable.setState(true);
-
-        soundChannel2Enable = new CheckboxMenuItem("Channel 2 (Square wave)");
-        soundChannel2Enable.addItemListener(this);
-        soundChannel2Enable.setState(true);
-
-        soundChannel3Enable = new CheckboxMenuItem("Channel 3 (Voluntary wave)");
-        soundChannel3Enable.addItemListener(this);
-        soundChannel3Enable.setState(true);
-
-        soundChannel4Enable = new CheckboxMenuItem("Channel 4 (Noise)");
-        soundChannel4Enable.addItemListener(this);
-        soundChannel4Enable.setState(true);
-
-        soundFreq11 = new CheckboxMenuItem("Sample rate: 11khz");
-        soundFreq11.addItemListener(this);
-
-        soundFreq22 = new CheckboxMenuItem("Sample rate: 22khz");
-        soundFreq22.addItemListener(this);
-
-        soundFreq44 = new CheckboxMenuItem("Sample rate: 44khz");
-        soundFreq44.addItemListener(this);
-        soundFreq44.setState(true);
-
-        soundBuffer200 = new CheckboxMenuItem("Buffer length: 200ms");
-        soundBuffer200.addItemListener(this);
-        soundBuffer200.setState(true);
-
-        soundBuffer300 = new CheckboxMenuItem("Buffer length: 300ms");
-        soundBuffer300.addItemListener(this);
-
-        soundBuffer400 = new CheckboxMenuItem("Buffer length: 400ms");
-        soundBuffer400.addItemListener(this);
-
-        MenuItem networkConnect = new MenuItem("Connect to client");
-        networkConnect.setActionCommand("Connect to client");
-        networkConnect.addActionListener(this);
-
-        networkServer = new CheckboxMenuItem("Allow connections");
-        networkServer.addItemListener(this);
-
-        networkPrinter = new CheckboxMenuItem("Emulate printer");
-        networkPrinter.addItemListener(this);
-
-
         Menu fileMenu = new Menu("File");
-        Menu viewMenu = new Menu("View");
-        Menu soundMenu = new Menu("Sound");
-        Menu networkMenu = new Menu("Serial Port");
-        Menu debugMenu = new Menu("Debug");
 
         fileMenu.add(fileOpen);
-        fileMenu.add(fileReset);
-        fileMenu.add(filePause);
-        fileMenu.add(fileEmulate);
-        fileMenu.add(fileGameboyColor);
-        fileMenu.add(fileControls);
-        fileMenu.add(new MenuItem("-"));
-        fileMenu.add(fileQuit);
-
-        viewMenu.add(viewSingle);
-        viewMenu.add(viewDouble);
-        viewMenu.add(viewTriple);
-        viewMenu.add(viewQuadrouple);
-        viewMenu.add(new MenuItem("-"));
-        viewMenu.add(viewFrameSkip0);
-        viewMenu.add(viewFrameSkip1);
-        viewMenu.add(viewFrameSkip2);
-        viewMenu.add(viewFrameSkip3);
-        viewMenu.add(viewFrameSkip4);
-        viewMenu.add(new MenuItem("-"));
-        viewMenu.add(viewFrameCounter);
-        viewMenu.add(viewSpeedThrottle);
-        viewMenu.add(new MenuItem("-"));
-
         for (int r = 0; r < JavaBoy.schemeNames.length; r++) {
             schemes[r] = new CheckboxMenuItem(JavaBoy.schemeNames[r]);
             schemes[r].addItemListener(this);
-            viewMenu.add(schemes[r]);
             if (r == 0) schemes[r].setState(true);
         }
 
-        soundMenu.add(soundChannel1Enable);
-        soundMenu.add(soundChannel2Enable);
-        soundMenu.add(soundChannel3Enable);
-        soundMenu.add(soundChannel4Enable);
-        soundMenu.add(new MenuItem("-"));
-        soundMenu.add(soundFreq11);
-        soundMenu.add(soundFreq22);
-        soundMenu.add(soundFreq44);
-        soundMenu.add(new MenuItem("-"));
-        soundMenu.add(soundBuffer200);
-        soundMenu.add(soundBuffer300);
-        soundMenu.add(soundBuffer400);
-
-        networkMenu.add(networkConnect);
-        networkMenu.add(networkServer);
-        networkMenu.add(networkPrinter);
-
-        debugMenu.add(debugEnter);
-        debugMenu.add(debugExecuteScript);
-
         menuBar.add(fileMenu);
-        menuBar.add(viewMenu);
-        menuBar.add(soundMenu);
-        menuBar.add(networkMenu);
-        menuBar.add(debugMenu);
-
         setMenuBar(menuBar);
 
     }
-
-
-    /**
-     * Creates a connection dialog for Game Link connections
-     */
-    public void makeConnectDialog() {
-        connectDialog = new Dialog(this, "Game Link connect", true);
-        Panel p1 = new Panel();
-        Panel p2 = new Panel();
-        Panel p3 = new Panel();
-
-        p1.add(new Label("Host address:"), "Center");
-
-        hostAddress = new TextField(35);
-        p2.add(hostAddress, "Center");
-
-        Button connectButton = new Button("Connect");
-        connectButton.setActionCommand("Connect ok");
-        connectButton.addActionListener(this);
-
-        Button cancelButton = new Button("Cancel");
-        cancelButton.setActionCommand("Connect cancel");
-        cancelButton.addActionListener(this);
-
-        p3.add(cancelButton, "West");
-        p3.add(connectButton, "East");
-
-        connectDialog.add(p1, "North");
-        connectDialog.add(p2, "Center");
-        connectDialog.add(p3, "South");
-
-        connectDialog.setSize(350, 125);
-        connectDialog.setResizable(false);
-        connectDialog.setVisible(true);
-    }
-
 
     /**
      * Sets the current GraphicsChip object which is responsible for drawing the screen
@@ -357,24 +142,7 @@ class GameBoyScreen extends Frame implements ActionListener,
      * Resize the Frame to a suitable size for a Gameboy with a magnification given
      */
     public void setWindowSize(int mag) {
-        setSize(175 * mag + 20, 174 * mag + 20);
-    }
-
-    public void setMagnify() {
-        if (applet.dmgcpu != null) {
-            if (viewSingle.getState()) {
-                applet.dmgcpu.graphicsChip.setMagnify(1);
-            }
-            if (viewDouble.getState()) {
-                applet.dmgcpu.graphicsChip.setMagnify(2);
-            }
-            if (viewTriple.getState()) {
-                applet.dmgcpu.graphicsChip.setMagnify(3);
-            }
-            if (viewQuadrouple.getState()) {
-                applet.dmgcpu.graphicsChip.setMagnify(4);
-            }
-        }
+        setSize(175 + 20, 174 + 20);
     }
 
     public void setFrameSkip() {
@@ -412,42 +180,10 @@ class GameBoyScreen extends Frame implements ActionListener,
             applet.cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb", this);
             applet.dmgcpu = new Dmgcpu(applet.cartridge, this);
             setGraphicsChip(applet.dmgcpu.graphicsChip);
-            setMagnify();
-            setFrameSkip();
-            applet.dmgcpu.allowGbcFeatures = fileGameboyColor.getState();
+//            applet.dmgcpu.allowGbcFeatures = fileGameboyColor.getState();
             applet.dmgcpu.reset();
             applet.queueDebuggerCommand("s;g");
             applet.dmgcpu.terminate = true;
-        }
-    }
-
-    public void setColourScheme(String command) {
-        if (applet.dmgcpu == null) {
-            new ModalDialog(this, "Error", "Load a ROM before selecting", "a colour scheme.");
-            for (int r = 0; r < JavaBoy.schemeNames.length; r++) {
-                if (JavaBoy.schemeNames[r] == command) {
-                    schemes[r].setState(false);
-                }
-            }
-        } else {
-            for (int r = 0; r < JavaBoy.schemeNames.length; r++) {
-                if (JavaBoy.schemeNames[r] == command) {
-                    applet.dmgcpu.graphicsChip.backgroundPalette.setColours(
-                            JavaBoy.schemeColours[r][0], JavaBoy.schemeColours[r][1],
-                            JavaBoy.schemeColours[r][2], JavaBoy.schemeColours[r][3]);
-
-                    applet.dmgcpu.graphicsChip.obj1Palette.setColours(
-                            JavaBoy.schemeColours[r][4], JavaBoy.schemeColours[r][5],
-                            JavaBoy.schemeColours[r][6], JavaBoy.schemeColours[r][7]);
-
-                    applet.dmgcpu.graphicsChip.obj2Palette.setColours(
-                            JavaBoy.schemeColours[r][8], JavaBoy.schemeColours[r][9],
-                            JavaBoy.schemeColours[r][10], JavaBoy.schemeColours[r][11]);
-                    applet.dmgcpu.graphicsChip.invalidateAll();
-                } else {
-                    schemes[r].setState(false);
-                }
-            }
         }
     }
 
@@ -461,12 +197,12 @@ class GameBoyScreen extends Frame implements ActionListener,
             int x = (d.width / 2) - (graphicsChip.width / 2);
             int y = (d.height / 2) - (graphicsChip.height / 2);
             boolean b = graphicsChip.draw(g, x, y + 20, this);
-            if (viewFrameCounter.getState()) {
+//            if (viewFrameCounter.getState()) {
                 g.setColor(new Color(255, 255, 255));
                 g.fillRect(0, d.height - 20, d.width, 20);
                 g.setColor(new Color(0, 0, 0));
                 g.drawString(graphicsChip.getFPS() + " frames per second", 10, d.height - 7);
-            }
+  //          }
         }
     }
 }

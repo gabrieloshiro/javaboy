@@ -662,7 +662,7 @@ class Dmgcpu {
                 boolean speedThrottle = true;
                 if (!JavaBoy.runningAsApplet) {
                     GameBoyScreen g = (GameBoyScreen) applet;
-                    speedThrottle = g.viewSpeedThrottle.getState();
+                    //speedThrottle = g.viewSpeedThrottle.getState();
                 }
                 if ((speedThrottle) && (graphicsChip.frameWaitTime >= 0)) {
                     //      System.out.println("Waiting for " + graphicsChip.frameWaitTime + "ms.");
