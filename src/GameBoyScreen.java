@@ -398,98 +398,26 @@ class GameBoyScreen extends Frame implements ActionListener,
     }
 
     public void actionPerformed(ActionEvent e) {
-        String command = e.getActionCommand();
-        //  System.out.println("Command: " + command);
-
-        if (command.equals("Open ROM")) {
-
+        if (applet.dmgcpu != null) {
+            applet.dmgcpu.terminate = true;
+            if (applet.cartridge != null) applet.cartridge.dispose();
             if (applet.dmgcpu != null) {
-                applet.dmgcpu.terminate = true;
-                if (applet.cartridge != null) applet.cartridge.dispose();
-                if (applet.dmgcpu != null) {
-                    applet.dmgcpu.dispose();
-                    applet.dmgcpu = null;
-                }
-                clearWindow();
+                applet.dmgcpu.dispose();
+                applet.dmgcpu = null;
             }
+            clearWindow();
+        }
 
-//            FileDialog fd = new FileDialog(this, "Open ROM");
-//            fd.setVisible(true);
-
-            if (true) {
-                applet.cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb", this);
-                applet.dmgcpu = new Dmgcpu(applet.cartridge, this);
-                setGraphicsChip(applet.dmgcpu.graphicsChip);
-                setMagnify();
-                setFrameSkip();
-                applet.dmgcpu.allowGbcFeatures = fileGameboyColor.getState();
-                applet.dmgcpu.reset();
-                applet.queueDebuggerCommand("s;g");
-                applet.dmgcpu.terminate = true;
-            }
-
-        } else if (command.equals("Frame counter")) {
-            viewFrameCounter.setState(!viewFrameCounter.getState());
-        } else if (command.equals("Speed throttle")) {
-            viewSpeedThrottle.setState(!viewSpeedThrottle.getState());
-        } else if (command.equals("Emulate")) {
-            if ((applet.cartridge != null) && (applet.cartridge.cartridgeReady)) {
-                applet.queueDebuggerCommand("g");
-                applet.dmgcpu.terminate = true;
-            } else {
-                new ModalDialog(this, "Error", "You need to load a ROM before", "you select 'Emulate'.");
-            }
-        } else if (command.equals("Reset")) {
+        if (true) {
+            applet.cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb", this);
+            applet.dmgcpu = new Dmgcpu(applet.cartridge, this);
+            setGraphicsChip(applet.dmgcpu.graphicsChip);
+            setMagnify();
+            setFrameSkip();
+            applet.dmgcpu.allowGbcFeatures = fileGameboyColor.getState();
+            applet.dmgcpu.reset();
             applet.queueDebuggerCommand("s;g");
             applet.dmgcpu.terminate = true;
-        } else if (command.equals("Pause")) {
-            applet.dmgcpu.terminate = true;
-        } else if (command.equals("Controls")) {
-            //   makeControlsDialog();
-            new DefineControls();
-        } else if (command.equals("Execute script")) {
-            if (applet.dmgcpu != null) {
-                FileDialog fd = new FileDialog(this, "Execute debugger script");
-                fd.setVisible(true);
-                applet.queueDebuggerCommand("c " + fd.getDirectory() + fd.getFile());
-                applet.dmgcpu.terminate = true;
-            } else {
-                new ModalDialog(this, "Error", "Load a ROM before executing a debugger script", "");
-            }
-        } else if (command.equals("Enter debugger")) {
-            if (applet.dmgcpu != null) {
-                applet.debuggerActive = true;
-                applet.dmgcpu.terminate = true;
-            } else {
-                new ModalDialog(this, "Error", "Load a ROM before entering the debugger", "");
-            }
-        } else if (command.equals("1x")) {
-            applet.dmgcpu.graphicsChip.setMagnify(1);
-            setWindowSize(1);
-            clearWindow();
-        } else if (command.equals("2x")) {
-            applet.dmgcpu.graphicsChip.setMagnify(2);
-            setWindowSize(2);
-            clearWindow();
-        } else if (command.equals("3x")) {
-            applet.dmgcpu.graphicsChip.setMagnify(3);
-            setWindowSize(3);
-            clearWindow();
-        } else if (command.equals("4x")) {
-            applet.dmgcpu.graphicsChip.setMagnify(4);
-            setWindowSize(4);
-            clearWindow();
-        } else if (command.equals("Connect to client")) {
-            makeConnectDialog();
-        } else if (command.equals("Connect cancel")) {
-            connectDialog.setVisible(false);
-            connectDialog = null;
-        } else if (command.equals("Connect ok")) {
-            connectDialog.setVisible(false);
-            connectDialog = null;
-        } else if (command.equals("Exit")) {
-            applet.dispose();
-            System.exit(0);
         }
     }
 
