@@ -25,9 +25,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
 import java.applet.Applet;
 import java.awt.*;
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Calendar;
 
 /**
@@ -210,7 +207,7 @@ class Cartridge {
             JavaBoy.debugLog("Type: " + cartTypeTable[cartType] + " (" + JavaBoy.hexByte(cartType) + ")");
 
             if (!verifyChecksum() && (a instanceof Frame)) {
-                new ModalDialog((Frame) a, "Warning", "This cartridge has an invalid checksum.", "It may not execute correctly.");
+                //new ModalDialog((Frame) a, "Warning", "This cartridge has an invalid checksum.", "It may not execute correctly.");
             }
 
             if (!JavaBoy.runningAsApplet) {
@@ -240,26 +237,11 @@ class Cartridge {
         } catch (IOException e) {
             System.out.println("Error opening ROM image '" + romFileName + "'!");
         } catch (IndexOutOfBoundsException e) {
-            new ModalDialog((Frame) a, "Error",
-                    "Loading the ROM image failed.",
-                    "The file is not a valid Gameboy ROM.");
+            //            new ModalDialog((Frame) a, "Error",
+            //                    "Loading the ROM image failed.",
+            //                    "The file is not a valid Gameboy ROM.");
         }
 
-    }
-
-    public boolean needsResetEnable() {
-        //  System.out.println("Reset !");
-        if (needsReset) {
-            needsReset = false;
-            System.out.println("Reset requested");
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public void resetSystem() {
-        needsReset = true;
     }
 
     public void update() {
@@ -361,7 +343,7 @@ class Cartridge {
                 // Show an error if no ROM file was found in the ZIP
                 if (!bFoundGBROM) {
                     if (JavaBoy.runningAsApplet) {
-                        new ModalDialog((Frame) a, "Error", "No GBx ROM found!", "");
+                        //new ModalDialog((Frame) a, "Error", "No GBx ROM found!", "");
                     }
                     System.err.println("No GBx ROM found!");
                     throw new java.io.IOException("ERROR");
@@ -785,25 +767,17 @@ class Cartridge {
         }
     }
 
-    public void saveBatteryRAMToWeb(URL url, String username, Dmgcpu cpu) {
-        new WebSaveRAM(url, true, this, cpu, username);
-    }
-
-    public void loadBatteryRAMFromWeb(URL url, String username, Dmgcpu cpu) {
-        new WebSaveRAM(url, false, this, cpu, username);
-    }
-
     /**
      * Peforms saving of the battery RAM before the object is discarded
      */
-    public void dispose() {
+    void dispose() {
         if (!JavaBoy.runningAsApplet) {
             saveBatteryRam();
         }
         disposed = true;
     }
 
-    public boolean verifyChecksum() {
+    private boolean verifyChecksum() {
         int checkSum = (JavaBoy.unsign(rom[0x14E]) << 8) + JavaBoy.unsign(rom[0x14F]);
 
         int total = 0;                   // Calculate ROM checksum
@@ -823,14 +797,10 @@ class Cartridge {
         return cartName;
     }
 
-    String getRomFilename() {
-        return romIntFileName;
-    }
-
     /**
      * Outputs information about the loaded cartridge to stdout.
      */
-    public void outputCartInfo() {
+    void outputCartInfo() {
         boolean checksumOk;
 
         cartName = new String(rom, 0x0134, 16);
@@ -867,7 +837,7 @@ class Cartridge {
     /**
      * Returns the number of 16Kb banks in a cartridge from the header size byte.
      */
-    public int lookUpCartSize(int sizeByte) {
+    private int lookUpCartSize(int sizeByte) {
         int i = 0;
         while ((i < romSizeTable.length) && (romSizeTable[i][0] != sizeByte)) {
             i++;
@@ -882,191 +852,3 @@ class Cartridge {
 
 }
 
-class NoSaveDataException extends java.lang.Exception {
-    public NoSaveDataException(String s) {
-        super(s);
-    }
-}
-
-class WebSaveRAM implements Runnable, DialogListener {
-    Cartridge cart;
-    boolean save;
-    URL url;
-    Dmgcpu cpu;
-    String username;
-
-    public WebSaveRAM(URL url, boolean save, Cartridge cart, Dmgcpu cpu, String username) {
-        this.url = url;
-        this.save = save;
-        this.cart = cart;
-        this.cpu = cpu;
-        this.username = username;
-
-        if (!cart.canSave()) {
-
-            ModalDialog d = new ModalDialog(null, "Sorry", "This game does not", "have a save facility.");
-
-        } else {
-
-            if (save) {
-                ModalDialog d = new ModalDialog(null, "Confirm", "Are you sure you want to save?", this);
-            } else {
-                ModalDialog d = new ModalDialog(null, "Confirm", "Are you sure you want to load?", this);
-            }
-        }
-    }
-
-    public void yesPressed() {
-        Thread t = new Thread(this);
-        t.start();
-    }
-
-    public void noPressed() {
-        // Object deleted now
-    }
-
-    public void run() {
-        Frame f = new Frame("Please Wait...");
-        f.setSize(200, 120);
-
-        try {
-            if (save) {
-                f.add(new Label("Please wait, saving"), "North");
-                f.add(new Label("game data to web server..."), "Center");
-                f.setVisible(true);
-                saveRam();
-                new ModalDialog(null, "Sucess!", "Game data", "Saved ok.");
-            } else {
-                f.add(new Label("Please wait, loading"), "North");
-                f.add(new Label("game data from web server..."), "Center");
-                f.setVisible(true);
-                loadRam();
-                new ModalDialog(null, "Success!", "Game data", "loaded ok.");
-            }
-        } catch (NoSaveDataException e) {
-            System.out.println("Error! " + e);
-            new ModalDialog(null, "Error!", "No save data can be found on the server!", e.toString());
-        } catch (Exception e) {
-            System.out.println("Error! " + e);
-            new ModalDialog(null, "Error!", "Load/Save error!  Report to site administrator.", e.toString());
-        }
-        f.setVisible(false);
-    }
-
-    public void saveRam() throws Exception {
-        //   if (username == null) throw new Exception("No username provided");
-
-        String params = "";
-        String strUrl = url.toString();
-        int questionPos = strUrl.indexOf("?");
-        if (questionPos != -1) {
-            params = "&" + strUrl.substring(questionPos + 1, strUrl.length());
-        }
-
-        System.out.println("Params: (" + url + ") " + params);
-
-        url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "?user=" + URLEncoder.encode(username));
-
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-
-        conn.setRequestMethod("POST");
-        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-        conn.setDoOutput(true);
-        conn.setDoInput(true);
-
-        conn.connect();
-
-        DataOutputStream printout = new DataOutputStream(conn.getOutputStream());
-
-        StringBuffer saveData = new StringBuffer("");
-        byte[] ram = cart.getBatteryRam();
-
-        for (int r = 0; r < cart.getBatteryRamSize(); r++) {
-            saveData.append(JavaBoy.hexByte(JavaBoy.unsign(ram[r])));
-        }
-        //   saveData = URLEncoder.encode("Hel\0lo");
-
-        String content = "romname=" + URLEncoder.encode(cart.getRomFilename()) + "&gamename=" + URLEncoder.encode(cart.getCartName()) + "&user=" + URLEncoder.encode(username) + "&datalength=" + (cart.getBatteryRamSize() * 2) + "&data0=" + saveData + params;
-
-        System.out.println(content);
-
-        printout.writeBytes(content);
-        printout.flush();
-        printout.close();
-
-        conn.disconnect();
-
-        DataInputStream input = new DataInputStream(conn.getInputStream());
-        String str;
-        while (null != ((str = input.readLine()))) {
-            System.out.println(str);
-        }
-
-        System.out.println("OK!");
-    }
-
-    public void loadRam() throws Exception {
-        //   if (username == null) throw new Exception("No username provided");
-
-        String params = "";
-        String strUrl = url.toString();
-        int questionPos = strUrl.indexOf("?");
-        if (questionPos != -1) {
-            params = "&" + strUrl.substring(questionPos + 1, strUrl.length());
-        }
-
-        System.out.println("Params: (" + url + ") " + params);
-
-        url = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "?user=" + URLEncoder.encode(username) + params);
-
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-        conn.setRequestMethod("POST");
-        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-        conn.setDoOutput(true);
-        conn.setDoInput(true);
-
-        conn.connect();
-
-        DataOutputStream printout = new DataOutputStream(conn.getOutputStream());
-
-
-        String content = "gamename=" + URLEncoder.encode(cart.getCartName()) + "&romname=" + URLEncoder.encode(cart.getRomFilename());
-
-        //   System.out.println(content);
-
-        printout.writeBytes(content);
-        printout.flush();
-        printout.close();
-
-        conn.disconnect();
-
-        DataInputStream input = new DataInputStream(conn.getInputStream());
-        String str;
-        str = input.readLine();
-
-        // No save
-        if (str.equals("NOSAVERAM")) {
-            throw new NoSaveDataException("");
-        }
-
-        // General error
-        if (str.startsWith("ERROR")) {
-            throw new Exception(str);
-        }
-
-
-        int pos = 0;
-        try {
-            for (int r = 0; r < cart.getBatteryRamSize(); r++) {
-                String sub = str.substring(r * 2, r * 2 + 2);
-                int val = Integer.valueOf(sub, 16).intValue();
-                cart.ram[r] = (byte) val;
-            }
-        } catch (Exception e) {
-            throw e;
-        }
-        cpu.reset();
-    }
-}

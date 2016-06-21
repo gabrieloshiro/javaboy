@@ -407,30 +407,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
             dmgcpu.reset();
         } else if (e.getActionCommand().equals("Save")) {
 
-
-            try {
-                dmgcpu.cartridge.saveBatteryRAMToWeb(new URL(getParameter("SAVERAMURL")), getParameter("USERNAME"), dmgcpu);
-            } catch (MalformedURLException ex) {
-
-            }
-
-            //   f.setVisible(false);
-
-
         } else if (e.getActionCommand().equals("Load")) {
-            try {
-                //    dmgcpu.terminateProcess();
-                dmgcpu.cartridge.loadBatteryRAMFromWeb(new URL(getParameter("LOADRAMURL")), getParameter("USERNAME"), dmgcpu);
-                //	do {
-                //   java.lang.Thread.sleep(1);
-                //} while (!dmgcpu.cartridge.needsResetEnable());
-                System.out.println("Resetting...");
-                //	dmgcpu.terminate = false;
-                //	dmgcpu.execute(-1);
-            } catch (Exception ex) {
-
-            }
-
 
         } else if (e.getActionCommand().equals("JavaBoy Website")) {
             try {
