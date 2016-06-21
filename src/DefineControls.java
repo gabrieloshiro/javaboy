@@ -1,63 +1,40 @@
-/*
-
-JavaBoy
-                                  
-COPYRIGHT (C) 2001 Neil Millstone and The Victoria University of Manchester
-                                                                         ;;;
-This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2 of the License, or (at your option)
-any later version.        
-
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-more details.
-
-
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA.
-
-*/
-
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Hashtable;
 
 
-public class DefineControls extends Frame implements KeyListener, WindowListener, ActionListener {
+class DefineControls extends Frame implements KeyListener, WindowListener, ActionListener {
 
-    TextField[] controlsField = new TextField[8];
+    private TextField[] controlsField = new TextField[8];
 
-    Hashtable keyNames;
+    private Hashtable<Integer, String> keyNames;
 
-    public DefineControls() {
+    DefineControls() {
         super("Define Controls");
 
-        keyNames = new Hashtable();
-        keyNames.put(new Integer(38), "Up arrow");
-        keyNames.put(new Integer(40), "Down arrow");
-        keyNames.put(new Integer(37), "Left arrow");
-        keyNames.put(new Integer(39), "Right arrow");
-        keyNames.put(new Integer(36), "Pad 7");
-        keyNames.put(new Integer(33), "Pad 9");
-        keyNames.put(new Integer(35), "Pad 1");
-        keyNames.put(new Integer(64), "Pad 3");
-        keyNames.put(new Integer(12), "Pad 5");
-        keyNames.put(new Integer(155), "Insert");
-        keyNames.put(new Integer(36), "Home");
-        keyNames.put(new Integer(33), "Page up");
-        keyNames.put(new Integer(127), "Delete");
-        keyNames.put(new Integer(35), "End");
-        keyNames.put(new Integer(34), "Page down");
-        keyNames.put(new Integer(10), "Return");
-        keyNames.put(new Integer(16), "Shift");
-        keyNames.put(new Integer(17), "Control");
-        keyNames.put(new Integer(18), "Alt");
-        keyNames.put(new Integer(32), "Space");
-        keyNames.put(new Integer(20), "Caps lock");
-        keyNames.put(new Integer(8), "Backspace");
+        keyNames = new Hashtable<Integer, String>();
+        keyNames.put(38, "Up arrow");
+        keyNames.put(40, "Down arrow");
+        keyNames.put(37, "Left arrow");
+        keyNames.put(39, "Right arrow");
+        keyNames.put(36, "Pad 7");
+        keyNames.put(33, "Pad 9");
+        keyNames.put(35, "Pad 1");
+        keyNames.put(64, "Pad 3");
+        keyNames.put(12, "Pad 5");
+        keyNames.put(155, "Insert");
+        keyNames.put(36, "Home");
+        keyNames.put(33, "Page up");
+        keyNames.put(127, "Delete");
+        keyNames.put(35, "End");
+        keyNames.put(34, "Page down");
+        keyNames.put(10, "Return");
+        keyNames.put(16, "Shift");
+        keyNames.put(17, "Control");
+        keyNames.put(18, "Alt");
+        keyNames.put(32, "Space");
+        keyNames.put(20, "Caps lock");
+        keyNames.put(8, "Backspace");
 
         GridLayout g = new GridLayout(9, 2, 12, 12);
 
@@ -88,15 +65,15 @@ public class DefineControls extends Frame implements KeyListener, WindowListener
         setVisible(true);
     }
 
-    public String getKeyDesc(int code, char c) {
-        if (keyNames.containsKey(new Integer(code))) {
-            return (String) keyNames.get(new Integer(code));
+    private String getKeyDesc(int code, char c) {
+        if (keyNames.containsKey(code)) {
+            return keyNames.get(code);
         } else {
             return c + "";
         }
     }
 
-    public TextField addControlsLine(String name) {
+    private TextField addControlsLine(String name) {
         add(new Label(name));
         TextField t = new TextField(4);
         t.addKeyListener(this);

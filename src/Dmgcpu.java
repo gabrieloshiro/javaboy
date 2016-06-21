@@ -1,28 +1,3 @@
-// Mahjong Quest - Value set at 045E
-
-/*
-
-JavaBoy
-                                  
-COPYRIGHT (C) 2001 Neil Millstone and The Victoria University of Manchester
-                                                                         ;;;
-This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2 of the License, or (at your option)
-any later version.        
-
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-more details.
-
-
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA.
-
-*/
-
 import java.awt.*;
 
 /**
@@ -40,7 +15,7 @@ class Dmgcpu {
     /**
      * Registers: 16-bit
      */
-    public int sp, pc, hl;
+    int sp, pc, hl;
 
     /**
      * The number of instructions that have been executed since the
@@ -53,39 +28,32 @@ class Dmgcpu {
     /**
      * Used to implement the IE delay slot
      */
-    int ieDelay = -1;
+    private int ieDelay = -1;
 
     boolean timaEnabled = false;
     int instrsPerTima = 6000;
 
     /**
-     * TRUE when the CPU is currently processing an interrupt
-     */
-    boolean inInterrupt = false;
-
-    /**
      * Enable the breakpoint flag.  As breakpoint instruction is used in some games, this is used to skip over it unless the breakpoint is actually in use
      */
-    boolean breakpointEnable = false;
-
-    // Constants for flags register
+    private boolean breakpointEnable = false;
 
     /**
      * Zero flag
      */
-    final short F_ZERO = 0x80;
+    private final short  F_ZERO = 0x80;
     /**
      * Subtract/negative flag
      */
-    final short F_SUBTRACT = 0x40;
+    private final short F_SUBTRACT = 0x40;
     /**
      * Half carry flag
      */
-    final short F_HALFCARRY = 0x20;
+    private final short F_HALFCARRY = 0x20;
     /**
      * Carry flag
      */
-    final short F_CARRY = 0x10;
+    private final short F_CARRY = 0x10;
 
     final short INSTRS_PER_VBLANK = 9000; /* 10000  */
 
@@ -95,41 +63,41 @@ class Dmgcpu {
      * on the screen.  Multiply by 154 to find out how many instructions
      * per frame.
      */
-    final short BASE_INSTRS_PER_HBLANK = 60;    /* 60    */
+    private final short BASE_INSTRS_PER_HBLANK = 60;    /* 60    */
     short INSTRS_PER_HBLANK = BASE_INSTRS_PER_HBLANK;
 
     /**
      * Used to set the speed of DIV increments
      */
-    final short BASE_INSTRS_PER_DIV = 33;    /* 33    */
-    short INSTRS_PER_DIV = BASE_INSTRS_PER_DIV;
+    private final short BASE_INSTRS_PER_DIV = 33;    /* 33    */
+    private short INSTRS_PER_DIV = BASE_INSTRS_PER_DIV;
 
     // Constants for interrupts
 
     /**
      * Vertical blank interrupt
      */
-    public final short INT_VBLANK = 0x01;
+    private final short INT_VBLANK = 0x01;
 
     /**
      * LCD Coincidence interrupt
      */
-    public final short INT_LCDC = 0x02;
+    private final short INT_LCDC = 0x02;
 
     /**
      * TIMA (programmable timer) interrupt
      */
-    public final short INT_TIMA = 0x04;
+    private final short INT_TIMA = 0x04;
 
     /**
      * Serial interrupt
      */
-    public final short INT_SER = 0x08;
+    final short INT_SER = 0x08;
 
     /**
      * P10 - P13 (Joypad) interrupt
      */
-    public final short INT_P10 = 0x10;
+    final short INT_P10 = 0x10;
 
     String[] registerNames =
             {"B", "C", "D", "E", "H", "L", "(HL)", "A"};
@@ -148,7 +116,7 @@ class Dmgcpu {
     Cartridge cartridge;
     GraphicsChip graphicsChip;
     IoHandler ioHandler;
-    Component applet;
+    private Component applet;
     boolean terminate;
     boolean running = false;
 
@@ -190,14 +158,6 @@ class Dmgcpu {
      */
     public void terminateProcess() {
         terminate = true;
-/*  do {
-   try {
-    java.lang.Thread.sleep(100);
-    System.out.println("Wating for CPU...");
-   } catch (InterruptedException e) {
-    // Nothing
-   }
-  } while (running);*/
     }
 
     /**
@@ -205,15 +165,6 @@ class Dmgcpu {
      * the memory
      */
     public final short addressRead(int addr) {
-
-/*  if ((addr >= 0xDFD8) && (addr <= 0xDFF0) && (running)) {
-   System.out.println(JavaBoy.hexWord(addr) + " read at " + JavaBoy.hexWord(pc) + " bank " + cartridge.currentBank);
-  }*/
-
-/*  if ((addr < 0) || (addr > 65535)) {
-    System.out.println("Tried to read address " + addr + ".  pc = " + JavaBoy.hexWord(pc));
-    return 0xFF;
-  }*/
 
         addr = addr & 0xFFFF;
 
@@ -244,7 +195,6 @@ class Dmgcpu {
 
             case 0xE000:
                 return mainRam[addr - 0xE000];
-     /* (short) (mainRam[addr - 0xE000] & 0x00FF); */
 
             case 0xF000:
                 if (addr < 0xFE00) {
@@ -267,17 +217,6 @@ class Dmgcpu {
      * memory.
      */
     public final void addressWrite(int addr, int data) {
-
-/*  if ((addr >= 0xCFF8) && (addr <= 0xCFF8) && (running)) {
-   System.out.println(JavaBoy.hexWord(data) + " written to " + JavaBoy.hexWord(addr) + " at " + JavaBoy.hexWord(pc) + " bank " + cartridge.currentBank);
-  }
-  if ((addr >= 0xEFF8) && (addr <= 0xEFF8) && (running)) {
-   System.out.println(JavaBoy.hexWord(data) + " written to " + JavaBoy.hexWord(addr) + " at " + JavaBoy.hexWord(pc) + " bank " + cartridge.currentBank);
-  }*/
-
-/*  if ((addr < 0) || (addr > 65535)) {
-   System.out.println(JavaBoy.hexWord(data) + " written to " + JavaBoy.hexWord(addr) + " at " + JavaBoy.hexWord(pc) + " bank " + cartridge.currentBank);
-  }*/
 
         switch (addr & 0xF000) {
             case 0x0000:
@@ -334,49 +273,6 @@ class Dmgcpu {
         }
 
 
-    }
-
-
-    public final void addressWriteOld(int addr, int data) {
-
-/*  if ((addr >= 0xFFA4) && (addr <= 0xFFA5) && (running)) {
-   System.out.println(JavaBoy.hexWord(addr) + " written at " + JavaBoy.hexWord(pc) + " bank " + cartridge.currentBank);
-  }*/
-
-
-        //  System.out.print(JavaBoy.hexByte(JavaBoy.unsign((short) data)) + " --> " + JavaBoy.hexWord(addr) + ", ");
-        if ((addr < 0x8000)) {
-            if (!running) {
-                cartridge.debuggerAddressWrite(addr, data);
-            } else {
-                cartridge.addressWrite(addr, data);
-                //    System.out.println("Tried to write to ROM! PC = " + JavaBoy.hexWord(pc) + ", Data = " + JavaBoy.hexByte(JavaBoy.unsign((byte) data)));
-            }
-        } else if (addr < 0xA000) {
-            try {
-                graphicsChip.addressWrite(addr - 0x8000, (byte) data);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                System.out.println("Error address " + addr);
-            }
-        } else if (addr < 0xC000) {
-            // RAM Bank write
-            //   System.out.println("RAM bank write! + " + JavaBoy.hexWord(addr) + " = " + JavaBoy.hexByte(data) + " at " + JavaBoy.hexWord(pc));
-            cartridge.addressWrite(addr, data);
-        } else if (addr < 0xE000) {
-            mainRam[addr - 0xC000] = (byte) data;
-        } else if (addr < 0xFE00) {
-            mainRam[addr - 0xE000] = (byte) data;
-        } else if (addr < 0xFF00) {
-            oam[addr - 0xFE00] = (byte) data;
-        } else if (addr <= 0xFFFF) {
-            if (addr == 0xFF80) {
-                //    System.out.println("Register write: " + JavaBoy.hexWord(addr) + " = " + JavaBoy.hexWord(data));
-            }
-            ioHandler.ioWrite(addr - 0xFF00, (short) data);
-            //   registers[addr - 0xFF00] = (byte) data;
-        } else {
-            System.out.println("Attempt to write to address " + JavaBoy.hexWord(addr));
-        }
     }
 
     /**
@@ -464,30 +360,30 @@ class Dmgcpu {
         switch (regNum) {
             case 0:
                 b = (short) data;
-                return;
+                break;
             case 1:
                 c = (short) data;
-                return;
+                break;
             case 2:
                 d = (short) data;
-                return;
+                break;
             case 3:
                 e = (short) data;
-                return;
+                break;
             case 4:
                 hl = (hl & 0x00FF) | (data << 8);
-                return;
+                break;
             case 5:
                 hl = (hl & 0xFF00) | data;
-                return;
+                break;
             case 6:
                 addressWrite(hl, data);
-                return;
+                break;
             case 7:
                 a = (short) data;
-                return;
+                break;
             default:
-                return;
+                break;
         }
     }
 
@@ -564,27 +460,21 @@ class Dmgcpu {
             if ((intFlags & ieReg & INT_VBLANK) != 0) {
                 pc = 0x40;                      // Jump to Vblank interrupt address
                 intFlags -= INT_VBLANK;
-                //    System.out.println("VBLANK Interrupt called");
             } else if ((intFlags & ieReg & INT_LCDC) != 0) {
                 pc = 0x48;
                 intFlags -= INT_LCDC;
-                //    System.out.println("LCDC Interrupt called");
             } else if ((intFlags & ieReg & INT_TIMA) != 0) {
                 pc = 0x50;
                 intFlags -= INT_TIMA;
-                //    System.out.println("TIMA Interrupt called");
             } else if ((intFlags & ieReg & INT_SER) != 0) {
                 pc = 0x58;
                 intFlags -= INT_SER;
-                //    System.out.println("TIMA Interrupt called");
             } else if ((intFlags & ieReg & INT_P10) != 0) {    // Joypad interrupt
                 pc = 0x60;
                 intFlags -= INT_P10;
-                //	System.out.println("Joypad int.");
-            } /* Other interrupts go here, not done yet */
+            }
 
             ioHandler.registers[0x0F] = (byte) intFlags;
-            inInterrupt = true;
         }
     }
 
@@ -593,12 +483,10 @@ class Dmgcpu {
      */
     public final void triggerInterrupt(int intr) {
         ioHandler.registers[0x0F] |= intr;
-        //  System.out.println("Triggered:" + intr);
     }
 
     public final void triggerInterruptIfEnabled(int intr) {
         if ((ioHandler.registers[0xFF] & (short) (intr)) != 0) ioHandler.registers[0x0F] |= intr;
-        //  System.out.println("Triggered:" + intr);
     }
 
     /**
@@ -629,15 +517,12 @@ class Dmgcpu {
             if (((ioHandler.registers[0xFF] & INT_LCDC) != 0) &&
                     ((ioHandler.registers[0x41] & 64) != 0) &&
                     (JavaBoy.unsign(ioHandler.registers[0x45]) == cline) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90)) {
-                //    System.out.println("Hblank " + cline);
-                //	 System.out.println("** LCDC Int **");
                 triggerInterrupt(INT_LCDC);
             }
 
             // Trigger on every line
             if (((ioHandler.registers[0xFF] & INT_LCDC) != 0) &&
                     ((ioHandler.registers[0x41] & 0x8) != 0) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90)) {
-                //	 System.out.println("** LCDC Int **");
                 triggerInterrupt(INT_LCDC);
             }
 
@@ -647,7 +532,6 @@ class Dmgcpu {
             }
 
             if (JavaBoy.unsign(ioHandler.registers[0x44]) == 143) {
-                //     System.out.println("VBLANK!");
                 for (int r = 144; r < 170; r++) {
                     graphicsChip.notifyScanline(r);
                 }
@@ -655,15 +539,10 @@ class Dmgcpu {
                     triggerInterrupt(INT_VBLANK);
                     if (((ioHandler.registers[0x41] & 16) != 0) && ((ioHandler.registers[0xFF] & INT_LCDC) != 0)) {
                         triggerInterrupt(INT_LCDC);
-                        //	   System.out.println("VBlank LCDC!");
                     }
                 }
 
                 boolean speedThrottle = true;
-                if (!JavaBoy.runningAsApplet) {
-                    GameBoyScreen g = (GameBoyScreen) applet;
-                    //speedThrottle = g.viewSpeedThrottle.getState();
-                }
                 if ((speedThrottle) && (graphicsChip.frameWaitTime >= 0)) {
                     //      System.out.println("Waiting for " + graphicsChip.frameWaitTime + "ms.");
                     try {
@@ -1888,7 +1767,6 @@ class Dmgcpu {
                     break;
                 case 0xD9:               // RETI
                     interruptsEnabled = true;
-                    inInterrupt = false;
                     pc = (JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp));
                     sp += 2;
                     break;
@@ -2236,14 +2114,14 @@ class Dmgcpu {
         terminate = false;
     }
 
-    public void setBreakpoint(boolean on) {
+    void setBreakpoint(boolean on) {
         breakpointEnable = on;
     }
 
     /**
      * Output a disassembly of the specified number of instructions starting at the speicifed address.
      */
-    public String disassemble(int address, int numInstr) {
+    String disassemble(int address, int numInstr) {
 
         System.out.println("Addr  Data      Instruction");
 

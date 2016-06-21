@@ -1,26 +1,3 @@
-/*
-
-JavaBoy
-                                  
-COPYRIGHT (C) 2001 Neil Millstone and The Victoria University of Manchester
-                                                                         ;;;
-This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2 of the License, or (at your option)
-any later version.        
-
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-more details.
-
-
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA.
-
-*/
-
 import java.awt.*;
 import java.awt.event.*;
 
@@ -34,41 +11,6 @@ class GameBoyScreen extends Frame implements ActionListener,
     GraphicsChip graphicsChip = null;
     JavaBoy applet;
 
-    CheckboxMenuItem viewFrameCounter;
-    CheckboxMenuItem viewSpeedThrottle;
-
-    CheckboxMenuItem viewFrameSkip0;
-    CheckboxMenuItem viewFrameSkip1;
-    CheckboxMenuItem viewFrameSkip2;
-    CheckboxMenuItem viewFrameSkip3;
-    CheckboxMenuItem viewFrameSkip4;
-
-    CheckboxMenuItem soundChannel1Enable;
-    CheckboxMenuItem soundChannel2Enable;
-    CheckboxMenuItem soundChannel3Enable;
-    CheckboxMenuItem soundChannel4Enable;
-
-    CheckboxMenuItem soundFreq11;
-    CheckboxMenuItem soundFreq22;
-    CheckboxMenuItem soundFreq44;
-
-    CheckboxMenuItem soundBuffer200;
-    CheckboxMenuItem soundBuffer300;
-    CheckboxMenuItem soundBuffer400;
-
-    CheckboxMenuItem networkServer;
-    CheckboxMenuItem fileGameboyColor;
-
-    CheckboxMenuItem viewSingle;
-    CheckboxMenuItem viewDouble;
-    CheckboxMenuItem viewTriple;
-    CheckboxMenuItem viewQuadrouple;
-
-    CheckboxMenuItem networkPrinter;
-
-    TextField hostAddress;
-    Dialog connectDialog;
-
     CheckboxMenuItem[] schemes =
             new CheckboxMenuItem[JavaBoy.schemeNames.length];
 
@@ -78,7 +20,7 @@ class GameBoyScreen extends Frame implements ActionListener,
     public GameBoyScreen(String s, JavaBoy a) {
         super(s);
         applet = a;
-        setWindowSize(2);
+        setWindowSize();
 
         this.addComponentListener(this);
 
@@ -141,28 +83,8 @@ class GameBoyScreen extends Frame implements ActionListener,
     /**
      * Resize the Frame to a suitable size for a Gameboy with a magnification given
      */
-    public void setWindowSize(int mag) {
-        setSize(175 + 20, 174 + 20);
-    }
-
-    public void setFrameSkip() {
-        if (applet.dmgcpu != null) {
-            if (viewFrameSkip0.getState()) {
-                graphicsChip.frameSkip = 1;
-            }
-            if (viewFrameSkip1.getState()) {
-                graphicsChip.frameSkip = 2;
-            }
-            if (viewFrameSkip2.getState()) {
-                graphicsChip.frameSkip = 3;
-            }
-            if (viewFrameSkip3.getState()) {
-                graphicsChip.frameSkip = 4;
-            }
-            if (viewFrameSkip4.getState()) {
-                graphicsChip.frameSkip = 5;
-            }
-        }
+    public void setWindowSize() {
+        setSize(400, 400);
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -180,7 +102,7 @@ class GameBoyScreen extends Frame implements ActionListener,
             applet.cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb", this);
             applet.dmgcpu = new Dmgcpu(applet.cartridge, this);
             setGraphicsChip(applet.dmgcpu.graphicsChip);
-//            applet.dmgcpu.allowGbcFeatures = fileGameboyColor.getState();
+            //            applet.dmgcpu.allowGbcFeatures = fileGameboyColor.getState();
             applet.dmgcpu.reset();
             applet.queueDebuggerCommand("s;g");
             applet.dmgcpu.terminate = true;
@@ -196,13 +118,11 @@ class GameBoyScreen extends Frame implements ActionListener,
             Dimension d = getSize();
             int x = (d.width / 2) - (graphicsChip.width / 2);
             int y = (d.height / 2) - (graphicsChip.height / 2);
-            boolean b = graphicsChip.draw(g, x, y + 20, this);
-//            if (viewFrameCounter.getState()) {
-                g.setColor(new Color(255, 255, 255));
-                g.fillRect(0, d.height - 20, d.width, 20);
-                g.setColor(new Color(0, 0, 0));
-                g.drawString(graphicsChip.getFPS() + " frames per second", 10, d.height - 7);
-  //          }
+            graphicsChip.draw(g, x, y + 20, this);
+            g.setColor(new Color(255, 255, 255));
+            g.fillRect(0, d.height - 20, d.width, 20);
+            g.setColor(new Color(0, 0, 0));
+            g.drawString(graphicsChip.getFPS() + " frames per second", 10, d.height - 7);
         }
     }
 }
