@@ -143,15 +143,8 @@ class Dmgcpu {
         }
         ioHandler = new IoHandler(this);
         applet = a;
-        //  reset();
     }
 
-    /**
-     * Clear up memory
-     */
-    public void dispose() {
-        graphicsChip.dispose();
-    }
 
     /**
      * Force the execution thread to stop and return to it's caller

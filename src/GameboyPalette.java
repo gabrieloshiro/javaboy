@@ -1,26 +1,3 @@
-/*
-
-JavaBoy
-                                  
-COPYRIGHT (C) 2001 Neil Millstone and The Victoria University of Manchester
-                                                                        
-This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2 of the License, or (at your option)
-any later version.        
-
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-more details.
-
-
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA.
-
-*/
-
 import java.awt.*;
 
 /**
@@ -34,19 +11,19 @@ class GameboyPalette {
     /**
      * Data for which colour maps to which RGB value
      */
-    short[] data = new short[4];
+    private short[] data = new short[4];
 
-    int[] gbcData = new int[4];
+    private int[] gbcData = new int[4];
 
     /**
      * Default RGB colour values
      */
-    int[] colours = {0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000};
+    private int[] colours = {0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000};
 
     /**
      * Create a palette with the specified colour mappings
      */
-    public GameboyPalette(int c1, int c2, int c3, int c4) {
+    GameboyPalette(int c1, int c2, int c3, int c4) {
         data[0] = (short) c1;
         data[1] = (short) c2;
         data[2] = (short) c3;
@@ -54,26 +31,9 @@ class GameboyPalette {
     }
 
     /**
-     * Create a palette from the internal Gameboy format
-     */
-    public GameboyPalette(int pal) {
-        decodePalette(pal);
-    }
-
-    /**
-     * Change the colour mappings
-     */
-    public void setColours(int c1, int c2, int c3, int c4) {
-        colours[0] = c1;
-        colours[1] = c2;
-        colours[2] = c3;
-        colours[3] = c4;
-    }
-
-    /**
      * Get the palette from the internal Gameboy Color format
      */
-    public byte getGbcColours(int entryNo, boolean high) {
+    byte getGbcColours(int entryNo, boolean high) {
         if (high) {
             return (byte) (gbcData[entryNo] >> 8);
 
@@ -83,11 +43,10 @@ class GameboyPalette {
         }
     }
 
-
     /**
      * Set the palette from the internal Gameboy Color format
      */
-    public void setGbcColours(int entryNo, boolean high, int dat) {
+    void setGbcColours(int entryNo, boolean high, int dat) {
         if (high) {
             gbcData[entryNo] = (gbcData[entryNo] & 0x00FF) | (dat << 8);
 
@@ -102,29 +61,20 @@ class GameboyPalette {
 
         int blue = (gbcData[entryNo] & 0x7C00) >> 7;
 
-
         data[0] = 0;
-
         data[1] = 1;
-
         data[2] = 2;
-
         data[3] = 3;
-
 
         Color c = new Color(red, green, blue);
 
         colours[entryNo] = c.getRGB();
-
-
-        //  System.out.println("Colour " + entryNo + " set to " + red + ", " + green + ", " + blue);
-
     }
 
     /**
      * Set the palette from the internal Gameboy format
      */
-    public void decodePalette(int pal) {
+    void decodePalette(int pal) {
         data[0] = (short) (pal & 0x03);
         data[1] = (short) ((pal & 0x0C) >> 2);
         data[2] = (short) ((pal & 0x30) >> 4);
@@ -134,14 +84,14 @@ class GameboyPalette {
     /**
      * Get the RGB colour value for a specific colour entry
      */
-    public int getRgbEntry(int e) {
+    int getRgbEntry(int e) {
         return colours[data[e]];
     }
 
     /**
      * Get the colour number for a specific colour entry
      */
-    public short getEntry(int e) {
+    short getEntry(int e) {
         return data[e];
     }
 }

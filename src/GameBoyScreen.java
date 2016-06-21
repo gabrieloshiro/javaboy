@@ -8,16 +8,13 @@ import java.awt.event.*;
 
 class GameBoyScreen extends Frame implements ActionListener,
         ComponentListener, ItemListener {
-    GraphicsChip graphicsChip = null;
-    JavaBoy applet;
-
-    CheckboxMenuItem[] schemes =
-            new CheckboxMenuItem[JavaBoy.schemeNames.length];
+    private GraphicsChip graphicsChip = null;
+    private JavaBoy applet;
 
     /**
      * Creates the JavaBoy interface, with the specified title text
      */
-    public GameBoyScreen(String s, JavaBoy a) {
+    GameBoyScreen(String s, JavaBoy a) {
         super(s);
         applet = a;
         setWindowSize();
@@ -33,6 +30,7 @@ class GameBoyScreen extends Frame implements ActionListener,
 
         fileMenu.add(fileOpen);
         for (int r = 0; r < JavaBoy.schemeNames.length; r++) {
+            CheckboxMenuItem[] schemes = new CheckboxMenuItem[JavaBoy.schemeNames.length];
             schemes[r] = new CheckboxMenuItem(JavaBoy.schemeNames[r]);
             schemes[r].addItemListener(this);
             if (r == 0) schemes[r].setState(true);
@@ -46,7 +44,7 @@ class GameBoyScreen extends Frame implements ActionListener,
     /**
      * Sets the current GraphicsChip object which is responsible for drawing the screen
      */
-    public void setGraphicsChip(GraphicsChip g) {
+    private void setGraphicsChip(GraphicsChip g) {
         graphicsChip = g;
     }
 
@@ -57,7 +55,7 @@ class GameBoyScreen extends Frame implements ActionListener,
     /**
      * Clear the frame to white
      */
-    public void clearWindow() {
+    private void clearWindow() {
         Dimension d = getSize();
         Graphics g = getGraphics();
         g.setColor(new Color(255, 255, 255));
@@ -83,30 +81,23 @@ class GameBoyScreen extends Frame implements ActionListener,
     /**
      * Resize the Frame to a suitable size for a Gameboy with a magnification given
      */
-    public void setWindowSize() {
+    private void setWindowSize() {
         setSize(400, 400);
     }
 
     public void actionPerformed(ActionEvent e) {
         if (applet.dmgcpu != null) {
             applet.dmgcpu.terminate = true;
-            if (applet.cartridge != null) applet.cartridge.dispose();
-            if (applet.dmgcpu != null) {
-                applet.dmgcpu.dispose();
-                applet.dmgcpu = null;
-            }
+            applet.dmgcpu = null;
             clearWindow();
         }
 
-        if (true) {
-            applet.cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb", this);
-            applet.dmgcpu = new Dmgcpu(applet.cartridge, this);
-            setGraphicsChip(applet.dmgcpu.graphicsChip);
-            //            applet.dmgcpu.allowGbcFeatures = fileGameboyColor.getState();
-            applet.dmgcpu.reset();
-            applet.queueDebuggerCommand("s;g");
-            applet.dmgcpu.terminate = true;
-        }
+        applet.cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb", this);
+        applet.dmgcpu = new Dmgcpu(applet.cartridge, this);
+        setGraphicsChip(applet.dmgcpu.graphicsChip);
+        applet.dmgcpu.reset();
+        applet.queueDebuggerCommand("s;g");
+        applet.dmgcpu.terminate = true;
     }
 
     @Override

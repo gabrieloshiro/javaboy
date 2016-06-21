@@ -767,16 +767,6 @@ class Cartridge {
         }
     }
 
-    /**
-     * Peforms saving of the battery RAM before the object is discarded
-     */
-    void dispose() {
-        if (!JavaBoy.runningAsApplet) {
-            saveBatteryRam();
-        }
-        disposed = true;
-    }
-
     private boolean verifyChecksum() {
         int checkSum = (JavaBoy.unsign(rom[0x14E]) << 8) + JavaBoy.unsign(rom[0x14F]);
 
