@@ -918,7 +918,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     }
 
     public void windowClosing(WindowEvent e) {
-        dispose();
         System.exit(0);
     }
 
@@ -1012,13 +1011,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
 
     public void run() {
         if (runningAsApplet) {
-            System.out.println("Starting...");
-/*   if (getParameter("AUTOSCRIPT") == null) {
-    executeDebuggerScript("startup.scp");
-   } else {
-    executeDebuggerScript(getParameter("AUTOSCRIPT"));
-   }*/
-
             do {
                 dmgcpu.reset();
                 dmgcpu.execute(-1);
@@ -1026,7 +1018,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
         }
 
         do {
-            //   repaint();
             try {
                 getDebuggerMenuChoice();
                 java.lang.Thread.sleep(1);
@@ -1036,16 +1027,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                 break;
             }
         } while (appletRunning);
-        dispose();
-        System.out.println("Thread terminated");
-    }
-
-    /**
-     * Free up allocated memory
-     */
-    public void dispose() {
-        if (cartridge != null) cartridge.dispose();
-        if (dmgcpu != null) dmgcpu.dispose();
     }
 
     public void init() {
@@ -1054,9 +1035,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     }
 
     public void stop() {
-        System.out.println("Applet stopped");
-        appletRunning = false;
-        if (dmgcpu != null) dmgcpu.terminate = true;
     }
 
 }
