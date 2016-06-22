@@ -99,21 +99,21 @@ class Dmgcpu {
      */
     final short INT_P10 = 0x10;
 
-    String[] registerNames =
+    private String[] registerNames =
             {"B", "C", "D", "E", "H", "L", "(HL)", "A"};
-    String[] aluOperations =
+    private String[] aluOperations =
             {"ADD", "ADC", "SUB", "SBC", "AND", "XOR", "OR", "CP"};
-    String[] shiftOperations =
+    private String[] shiftOperations =
             {"RLC", "RRC", "RL", "RR", "SLA", "SRA", "SWAP", "SRL"};
 
     // 8Kb main system RAM appears at 0xC000 in address space
     // 32Kb for GBC
-    byte[] mainRam = new byte[0x8000];
+    private byte[] mainRam = new byte[0x8000];
 
     // 256 bytes at top of RAM are used mainly for registers
-    byte[] oam = new byte[0x100];
+    private byte[] oam = new byte[0x100];
 
-    Cartridge cartridge;
+    private Cartridge cartridge;
     GraphicsChip graphicsChip;
     IoHandler ioHandler;
     private Component applet;
@@ -121,26 +121,18 @@ class Dmgcpu {
     boolean running = false;
 
     boolean gbcFeatures = true;
-    boolean allowGbcFeatures = true;
+    private boolean allowGbcFeatures = true;
     int gbcRamBank = 1;
 
     /**
      * Create a CPU emulator with the supplied cartridge and game link objects.  Both can be set up
      * or changed later if needed
      */
-    public Dmgcpu(Cartridge c, Component a) {
+    Dmgcpu(Cartridge c, Component a) {
         cartridge = c;
         graphicsChip = new TileBasedGraphicsChip(a, this);
         checkEnableGbc();
-        boolean java1point3 = true;
 
-        String version = System.getProperty("java.version");
-
-        // Sound not supported until Java 1.2
-        java1point3 = !((version.startsWith("1.0") || version.startsWith("1.1")));
-
-        if (java1point3) {
-        }
         ioHandler = new IoHandler(this);
         applet = a;
     }
@@ -149,7 +141,7 @@ class Dmgcpu {
     /**
      * Force the execution thread to stop and return to it's caller
      */
-    public void terminateProcess() {
+    void terminateProcess() {
         terminate = true;
     }
 
@@ -157,7 +149,7 @@ class Dmgcpu {
      * Perform a CPU address space read.  This maps all the relevant objects into the correct parts of
      * the memory
      */
-    public final short addressRead(int addr) {
+    final short addressRead(int addr) {
 
         addr = addr & 0xFFFF;
 
@@ -209,7 +201,7 @@ class Dmgcpu {
      * Performs a CPU address space write.  Maps all of the relevant object into the right parts of
      * memory.
      */
-    public final void addressWrite(int addr, int data) {
+    final void addressWrite(int addr, int data) {
 
         switch (addr & 0xF000) {
             case 0x0000:
@@ -271,7 +263,7 @@ class Dmgcpu {
     /**
      * Sets the value of a register by it's name
      */
-    public boolean setRegister(String reg, int value) {
+    boolean setRegister(String reg, int value) {
         if (reg.equals("a") || reg.equals("acc")) {
             a = (short) value;
         } else if (reg.equals("b")) {
@@ -306,24 +298,24 @@ class Dmgcpu {
         return true;
     }
 
-    public void setBC(int value) {
+    private void setBC(int value) {
         b = (short) ((value & 0xFF00) >> 8);
         c = (short) (value & 0x00FF);
     }
 
-    public void setDE(int value) {
+    private void setDE(int value) {
         d = (short) ((value & 0xFF00) >> 8);
         e = (short) (value & 0x00FF);
     }
 
-    public void setHL(int value) {
+    private void setHL(int value) {
         hl = value;
     }
 
     /**
      * Performs a read of a register by internal register number
      */
-    public final int registerRead(int regNum) {
+    private final int registerRead(int regNum) {
         switch (regNum) {
             case 0:
                 return b;
@@ -349,7 +341,7 @@ class Dmgcpu {
     /**
      * Performs a write of a register by internal register number
      */
-    public final void registerWrite(int regNum, int data) {
+    private final void registerWrite(int regNum, int data) {
         switch (regNum) {
             case 0:
                 b = (short) data;
@@ -380,7 +372,7 @@ class Dmgcpu {
         }
     }
 
-    public void checkEnableGbc() {
+    private void checkEnableGbc() {
         // GBC Cartridge ID
         gbcFeatures = ((cartridge.rom[0x143] & 0x80) == 0x80) && (allowGbcFeatures);
     }
@@ -389,7 +381,7 @@ class Dmgcpu {
     /**
      * Resets the CPU to it's power on state.  Memory contents are not cleared.
      */
-    public void reset() {
+    void reset() {
 
         checkEnableGbc();
         setDoubleSpeedCpu(false);
@@ -422,7 +414,7 @@ class Dmgcpu {
         //  pc = 0x0100;
     }
 
-    public void setDoubleSpeedCpu(boolean enabled) {
+    private void setDoubleSpeedCpu(boolean enabled) {
 
         if (enabled) {
             INSTRS_PER_HBLANK = BASE_INSTRS_PER_HBLANK * 2;
@@ -438,7 +430,7 @@ class Dmgcpu {
      * If an interrupt is enabled an the interrupt register shows that it has occured, jump to
      * the relevant interrupt vector address
      */
-    public final void checkInterrupts() {
+    private final void checkInterrupts() {
         int intFlags = ioHandler.registers[0x0F];
         int ieReg = ioHandler.registers[0xFF];
         if ((intFlags & ieReg) != 0) {
@@ -471,18 +463,18 @@ class Dmgcpu {
     /**
      * Initiate an interrupt of the specified type
      */
-    public final void triggerInterrupt(int intr) {
+    private final void triggerInterrupt(int intr) {
         ioHandler.registers[0x0F] |= intr;
     }
 
-    public final void triggerInterruptIfEnabled(int intr) {
+    final void triggerInterruptIfEnabled(int intr) {
         if ((ioHandler.registers[0xFF] & (short) (intr)) != 0) ioHandler.registers[0x0F] |= intr;
     }
 
     /**
      * Check for interrupts that need to be initiated
      */
-    public final void initiateInterrupts() {
+    private final void initiateInterrupts() {
         if (timaEnabled && ((instrCount % instrsPerTima) == 0)) {
             if (JavaBoy.unsign(ioHandler.registers[05]) == 0) {
                 ioHandler.registers[05] = ioHandler.registers[06]; // Set TIMA modulo
@@ -532,8 +524,7 @@ class Dmgcpu {
                     }
                 }
 
-                boolean speedThrottle = true;
-                if ((speedThrottle) && (graphicsChip.frameWaitTime >= 0)) {
+                if (graphicsChip.frameWaitTime >= 0) {
                     //      System.out.println("Waiting for " + graphicsChip.frameWaitTime + "ms.");
                     try {
                         java.lang.Thread.sleep(graphicsChip.frameWaitTime);
@@ -560,7 +551,7 @@ class Dmgcpu {
                     while (!graphicsChip.frameDone) {
                         java.lang.Thread.sleep(1);
                     }
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ignored) {
                 }
             }
         }
@@ -569,7 +560,7 @@ class Dmgcpu {
     /**
      * Execute the specified number of Gameboy instructions.  Use '-1' to execute forever
      */
-    public final void execute(int numInstr) {
+    final void execute(int numInstr) {
 
         terminate = false;
         short newf;
@@ -1182,15 +1173,7 @@ class Dmgcpu {
                     break;
                 case 0x2F:               // CPL A
                     pc++;
-                    short mask = 0x80;
-/*        short result = 0;
-        for (int n = 0; n < 8; n++) {
-         if ((a & mask) == 0) {
-          result |= mask;
-         } else {
-         }
-         mask >>= 1;
-        }*/
+                    short mask;
                     a = (short) ((~a) & 0x00FF);
                     f = (short) ((f & (F_CARRY | F_ZERO)) | F_SUBTRACT | F_HALFCARRY);
                     break;
@@ -1549,7 +1532,7 @@ class Dmgcpu {
                                 registerWrite(regNum, data);
                                 break;
                             case 0x28:          // SRA r
-                                short topBit = 0;
+                                short topBit;
 
                                 topBit = (short) (data & 0x80);
                                 if ((data & 0x01) == 0x01) {
@@ -2107,7 +2090,7 @@ class Dmgcpu {
             short b3 = JavaBoy.unsign(addressRead(address + 2));
             short b2 = JavaBoy.unsign(offset);
 
-            String instr = new String("Unknown Opcode! (" + Integer.toHexString(JavaBoy.unsign(b1)) + ")");
+            String instr = "Unknown Opcode! (" + Integer.toHexString(JavaBoy.unsign(b1)) + ")";
             byte instrLength = 1;
 
             switch (b1) {
