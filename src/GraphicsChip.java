@@ -113,7 +113,7 @@ abstract class GraphicsChip {
      * The current frame has finished drawing
      */
     boolean frameDone = false;
-    int averageFPS = 0;
+    private int averageFPS = 0;
     long startTime = 0;
 
     /**
@@ -131,15 +131,15 @@ abstract class GraphicsChip {
      */
     boolean hiBgTileMapAddress = false;
     Dmgcpu dmgcpu;
-    Component applet;
+    private Component applet;
     int tileStart = 0;
     int vidRamStart = 0;
 
 
     /**
-     * Create a new GraphicsChip connected to the speicfied CPU
+     * Create a new GraphicsChip connected to the specified CPU
      */
-    public GraphicsChip(Component a, Dmgcpu d) {
+    GraphicsChip(Component a, Dmgcpu d) {
         dmgcpu = d;
 
         backgroundPalette = new GameboyPalette(0, 1, 2, 3);
@@ -177,7 +177,7 @@ abstract class GraphicsChip {
     /**
      * Calculate the number of frames per second for the current sampling period
      */
-    public void calculateFPS() {
+    void calculateFPS() {
         if (startTime == 0) {
             startTime = System.currentTimeMillis();
         }
@@ -200,15 +200,15 @@ abstract class GraphicsChip {
     /**
      * Return the number of frames per second achieved in the previous sampling period.
      */
-    public int getFPS() {
+    int getFPS() {
         return averageFPS;
     }
 
-    public int getWidth() {
+    int getWidth() {
         return width;
     }
 
-    public int getHeight() {
+    int getHeight() {
         return height;
     }
 

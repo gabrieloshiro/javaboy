@@ -474,7 +474,7 @@ class Dmgcpu {
     /**
      * Check for interrupts that need to be initiated
      */
-    private final void initiateInterrupts() {
+    private void initiateInterrupts() {
         if (timaEnabled && ((instrCount % instrsPerTima) == 0)) {
             if (JavaBoy.unsign(ioHandler.registers[05]) == 0) {
                 ioHandler.registers[05] = ioHandler.registers[06]; // Set TIMA modulo

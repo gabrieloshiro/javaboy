@@ -60,14 +60,9 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
 
     private Image doubleBuffer;
 
-    static int[] keyCodes = {38, 40, 37, 39, 90, 88, 10, 8};
+    private static int[] keyCodes = {38, 40, 37, 39, 90, 88, 10, 8};
 
     private boolean keyListener = false;
-
-    /**
-     * True if the image size changed last frame, and we need to repaint the background
-     */
-    private boolean imageSizeChanged = false;
 
     private int stripTimer = 0;
 
@@ -128,7 +123,10 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
             int x = getSize().width / 2 - dmgcpu.graphicsChip.getWidth() / 2;
             int y = getSize().height / 2 - dmgcpu.graphicsChip.getHeight() / 2;
 
-            if ((stripTimer > stripLength) && (!fullFrame) && (!imageSizeChanged)) {
+            /*
+      True if the image size changed last frame, and we need to repaint the background
+     */
+            if ((stripTimer > stripLength) && (!fullFrame)) {
 
                 dmgcpu.graphicsChip.draw(g, x, y, this);
 
@@ -450,14 +448,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                         System.out.println("Invalid number of parameters to 'p' command.");
                     } catch (NumberFormatException e) {
                         System.out.println("Error parsing hex value.");
-                    }
-                    break;
-                case 'k':
-                    try {
-                        String keyName = st.nextToken();
-                        dmgcpu.ioHandler.toggleKey(keyName);
-                    } catch (java.util.NoSuchElementException e) {
-                        System.out.println("Invalid number of parameters to 'k' command.");
                     }
                     break;
                 case 'r':

@@ -37,7 +37,7 @@ class IoHandler {
     /**
      * Reference to the current CPU object
      */
-    Dmgcpu dmgcpu;
+    private Dmgcpu dmgcpu;
 
     /**
      * Current state of the button, true = pressed.
@@ -49,7 +49,7 @@ class IoHandler {
     /**
      * Create an IoHandler for the specified CPU
      */
-    public IoHandler(Dmgcpu d) {
+    IoHandler(Dmgcpu d) {
         dmgcpu = d;
         reset();
     }
@@ -57,7 +57,7 @@ class IoHandler {
     /**
      * Initialize IO to initial power on state
      */
-    public void reset() {
+    void reset() {
         System.out.println("Hardware reset");
         for (int r = 0; r < 0xFF; r++) {
             ioWrite(r, (short) 0x00);
@@ -67,48 +67,11 @@ class IoHandler {
         hdmaRunning = false;
     }
 
-    /**
-     * Press/release a Gameboy button by name
-     */
-    public void toggleKey(String keyName) {
-
-        if (keyName.equals("a")) {
-            padA = !padA;
-            System.out.println("- A is now " + padA);
-        } else if (keyName.equals("b")) {
-            padB = !padB;
-            System.out.println("- B is now " + padB);
-        } else if (keyName.equals("up")) {
-            padUp = !padUp;
-            System.out.println("- Up is now " + padUp);
-        } else if (keyName.equals("down")) {
-            padDown = !padDown;
-            System.out.println("- Down is now " + padDown);
-        } else if (keyName.equals("left")) {
-            padLeft = !padLeft;
-            System.out.println("- Left is now " + padLeft);
-        } else if (keyName.equals("right")) {
-            padRight = !padRight;
-            System.out.println("- Right is now " + padRight);
-        } else if (keyName.equals("select")) {
-            padSelect = !padSelect;
-            System.out.println("- Select is now " + padSelect);
-        } else if (keyName.equals("start")) {
-            padStart = !padStart;
-            System.out.println("- Start is now " + padStart);
-        } else {
-            System.out.println("- Key name '" + keyName + "' not recognised");
-        }
-    }
-
-
-    public void performHdma() {
+    void performHdma() {
         int dmaSrc = (JavaBoy.unsign(registers[0x51]) << 8) +
                 (JavaBoy.unsign(registers[0x52]) & 0xF0);
         int dmaDst = ((JavaBoy.unsign(registers[0x53]) & 0x1F) << 8) +
                 (JavaBoy.unsign(registers[0x54]) & 0xF0) + 0x8000;
-
-        //  System.out.println("Copied 16 bytes from " + JavaBoy.hexWord(dmaSrc) + " to " + JavaBoy.hexWord(dmaDst));
 
         for (int r = 0; r < 16; r++) {
             dmgcpu.addressWrite(dmaDst + r, dmgcpu.addressRead(dmaSrc + r));
@@ -135,17 +98,8 @@ class IoHandler {
     /**
      * Read data from IO Ram
      */
-    public short ioRead(int num) {
-        if (num <= 0x4B) {
-            //   System.out.println("Read of register " + JavaBoy.hexByte(num) + " at " + JavaBoy.hexWord(dmgcpu.pc));
-        }
-
+    short ioRead(int num) {
         switch (num) {
-            // Read Handlers go here
-            //   case 0x00 :
-            // System.out.println("Reading Joypad register");
-            //return registers[num];
-
             case 0x41:         // LCDSTAT
 
                 int output = 0;
@@ -169,14 +123,7 @@ class IoHandler {
                         output |= 3;
                     }
                 }
-
-
-                //    System.out.println("Checking LCDSTAT");
                 return (byte) (output | (registers[0x41] & 0xF8));
-
-            //   case 0x44 :
-            //    System.out.println("Checking LCDY at " + JavaBoy.hexWord(dmgcpu.pc));
-            //    return registers[num];
 
             case 0x55:
                 return registers[0x55];
@@ -213,7 +160,7 @@ class IoHandler {
     /**
      * Write data to IO Ram
      */
-    public void ioWrite(int num, short data) {
+    void ioWrite(int num, short data) {
 
         if (num <= 0x4B) {
             //  System.out.println("Write of register " + JavaBoy.hexByte(num) + " to " + JavaBoy.hexWord(data) + " at " + JavaBoy.hexWord(dmgcpu.pc));
@@ -368,8 +315,6 @@ class IoHandler {
                 break;
 
             case 0x25:           // Stereo select
-                int chanData;
-
                 registers[0x25] = (byte) data;
 
                 break;

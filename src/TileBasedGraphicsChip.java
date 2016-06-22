@@ -473,21 +473,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
             drawSprites(back, 1);
         }
 
-/*  back.setColor(new Color(255, 255, 255));
-  back.fillRect(0, 0, 160, 144);
-  for (int r = 0; r < 384; r++) {
-   tiles[r].validate(videoRam, r << 4, TILE_BKG);
-   tiles[r].draw(back, 8 * (r % 20), 8 * (r / 20), TILE_BKG);
-  }*/
-
-
         g.drawImage(backBuffer, startX, startY, null);
-
-/*  if (mag == 1) {
-   g.drawImage(backBuffer, startX, startY, null);
-  } else {
-   g.drawImage(backBuffer, startX, startY, width, height, null);
-  }*/
 
         frameDone = true;
         return true;
@@ -501,7 +487,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
      * The images are only created when needed, by calling
      * updateImage().  They can then be drawn by calling draw().
      */
-    class GameboyTile {
+    private class GameboyTile {
 
         Image[] image = new Image[64];
 
@@ -523,7 +509,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
         /**
          * Intialize a new Gameboy tile
          */
-        public GameboyTile(Component a) {
+        GameboyTile(Component a) {
             allocateImage(TILE_BKG, a);
             this.a = a;
         }
@@ -531,7 +517,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
         /**
          * Allocate memory for the tile image with the specified attributes
          */
-        public void allocateImage(int attribs, Component a) {
+        void allocateImage(int attribs, Component a) {
             source[attribs] = new MemoryImageSource(8 * magnify, 8 * magnify,
                     new DirectColorModel(32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000),
                     imageData, 0, 8 * magnify);
@@ -542,7 +528,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
         /**
          * Free memory used by this tile
          */
-        public void dispose() {
+        void dispose() {
             for (int r = 0; r < 64; r++) {
                 if (image[r] != null) {
                     image[r].flush();
@@ -555,7 +541,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
          * Returns true if this tile does not contian a valid image for the tile with the specified
          * attributes
          */
-        public boolean invalid(int attribs) {
+        boolean invalid(int attribs) {
             return (!valid[attribs]);
         }
 
@@ -563,7 +549,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
          * Create the image of a tile in the tile cache by reading the relevant data from video
          * memory
          */
-        public void updateImage(byte[] videoRam, int offset, int attribs) {
+        void updateImage(byte[] videoRam, int offset, int attribs) {
             int px, py;
             int rgbValue;
 
@@ -611,19 +597,8 @@ class TileBasedGraphicsChip extends GraphicsChip {
                     int pixelColorUpper = (videoRam[offset + (py * 2) + 1] & (0x80 >> px)) >> (7 - px);
 
                     int entryNumber = (pixelColorUpper * 2) + pixelColorLower;
-                    int pixelColor = pal.getEntry(entryNumber);
+                    pal.getEntry(entryNumber);
 
-/*     switch (pixelColor) {
-      case 0 : rgbValue = 0xFFFFFFFF;
-               break;
-      case 1 : rgbValue = 0xFFAAAAAA;
-               break;
-      case 2 : rgbValue = 0xFF555555;
-               break;
-      default :
-      case 3 : rgbValue = 0xFF000000;
-               break;
-     }*/
                     rgbValue = pal.getRgbEntry(entryNumber);
 
      /* Turn on transparency for background */
@@ -633,13 +608,6 @@ class TileBasedGraphicsChip extends GraphicsChip {
                             rgbValue &= 0x00FFFFFF;
                         }
                     }
-/*     if ((entryNumber == 0) &&  ( ( (attribs & TILE_OBJ1) != 0) ||
-                                  ( (attribs & TILE_OBJ2) != 0) ) ) {
-      rgbValue &= 0x00FFFFFF;
-     } else if ((entryNumber == 0) &&
-         ((attribs & (TILE_OBJ1 | TILE_OBJ2)) == 0)) {
-      rgbValue &= 0x00FFFFFF;
-     } */
 
                     for (int cy = 0; cy < magnify; cy++) {
                         for (int cx = 0; cx < magnify; cx++) {
@@ -704,7 +672,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
         /**
          * Invalidate this tile
          */
-        public void invalidate() {
+        void invalidate() {
             for (int r = 0; r < 64; r++) {
                 valid[r] = false;
                 if (image[r] != null) image[r].flush();
