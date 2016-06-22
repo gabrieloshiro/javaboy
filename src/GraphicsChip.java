@@ -222,7 +222,5 @@ abstract class GraphicsChip {
 
     abstract public void notifyScanline(int line);
 
-    abstract public void invalidateAll();
-
     abstract public boolean isFrameReady();
 }

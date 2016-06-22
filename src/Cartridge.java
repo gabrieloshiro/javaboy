@@ -37,14 +37,14 @@ class Cartridge {
      * Translation between ROM size byte contained in the ROM header, and the number
      * of 16Kb ROM banks the cartridge will contain
      */
-    final int[][] romSizeTable = {{0, 2}, {1, 4}, {2, 8}, {3, 16}, {4, 32},
+    private final int[][] romSizeTable = {{0, 2}, {1, 4}, {2, 8}, {3, 16}, {4, 32},
             {5, 64}, {6, 128}, {7, 256}, {0x52, 72}, {0x53, 80}, {0x54, 96}};
 
     /**
      * Contains strings of the standard names of the cartridge mapper chips, indexed by
      * cartridge type
      */
-    final String[] cartTypeTable =
+    private final String[] cartTypeTable =
             {"ROM Only",             /* 00 */
                     "ROM+MBC1",             /* 01 */
                     "ROM+MBC1+RAM",         /* 02 */
@@ -80,37 +80,36 @@ class Cartridge {
     /**
      * RTC Reg names
      */
-    final byte SECONDS = 0;
-    final byte MINUTES = 1;
-    final byte HOURS = 2;
-    final byte DAYS_LO = 3;
-    final byte DAYS_HI = 4;
-
+    private final byte SECONDS = 0;
+    private final byte MINUTES = 1;
+    private final byte HOURS = 2;
+    private final byte DAYS_LO = 3;
+    private final byte DAYS_HI = 4;
 
     /**
      * Contains the complete ROM image of the cartridge
      */
-    public byte[] rom;
+    byte[] rom;
 
     /**
      * Contains the RAM on the cartridge
      */
-    public byte[] ram = new byte[0x10000];
+    private byte[] ram = new byte[0x10000];
 
     /**
      * Number of 16Kb ROM banks
      */
-    int numBanks;
+    private int numBanks;
 
     /**
      * Cartridge type - index into cartTypeTable[][]
      */
-    int cartType;
+    private int cartType;
 
     /**
      * Starting address of the ROM bank at 0x4000 in CPU address space
      */
-    int pageStart = 0x4000;
+    private int pageStart = 0x4000;
 
     /**
      * The bank number which is currently mapped at 0x4000 in CPU address space
@@ -121,36 +120,34 @@ class Cartridge {
      * The bank which has been saved when the debugger changes the ROM mapping.  The mapping is
      * restored from this register when execution resumes
      */
-    int savedBank = -1;
+    private int savedBank = -1;
 
     /**
      * The RAM bank number which is currently mapped at 0xA000 in CPU address space
      */
-    int ramBank;
-    int ramPageStart;
+    private int ramBank;
+    private int ramPageStart;
 
-    boolean mbc1LargeRamMode = false;
-    boolean ramEnabled, disposed = false;
-    Component applet;
+    private boolean mbc1LargeRamMode = false;
+    private boolean ramEnabled;
+    private Component applet;
 
     /**
      * The filename of the currently loaded ROM
      */
-    String romFileName;
+    private String romFileName;
 
-    String cartName;
+    private String cartName;
 
-    boolean cartridgeReady = false;
-
-    boolean needsReset = false;
+    private boolean cartridgeReady = false;
 
     /**
      * Real time clock registers.  Only used on MBC3
      */
-    int[] RTCReg = new int[5];
-    long realTimeStart;
-    long lastSecondIncrement;
-    String romIntFileName;
+    private int[] RTCReg = new int[5];
+    private long realTimeStart;
+    private long lastSecondIncrement;
+    private String romIntFileName;
 
     /**
      * Create a cartridge object, loading ROM and any associated battery RAM from the cartridge
@@ -159,15 +156,9 @@ class Cartridge {
     public Cartridge(String romFileName, Component a) {
         applet = a; /* 5823 */
         this.romFileName = romFileName;
-        InputStream is = null;
+        InputStream is;
         try {
-/*   if (JavaBoy.runningAsApplet) {
-    Applet myApplet = (Applet) a;
-    is = new URL(myApplet.getDocumentBase(), romFileName).openStream();
-   } else {
-    is = new FileInputStream(new File(romFileName));
-   }*/
-            is = openRom(romFileName, a);
+            is = openRom(romFileName);
             byte[] firstBank = new byte[0x04000];
 
             int total = 0x04000;
@@ -179,8 +170,6 @@ class Cartridge {
 
             numBanks = lookUpCartSize(firstBank[0x0148]);   // Determine the number of 16kb rom banks
 
-            //   is.close();
-            //   is = new FileInputStream(new File(romFileName));
             rom = new byte[0x04000 * numBanks];   // Recreate the ROM array with the correct size
 
             // Copy first bank into main rom array
@@ -196,10 +185,6 @@ class Cartridge {
 
             JavaBoy.debugLog("Loaded ROM '" + romFileName + "'.  " + numBanks + " banks, " + (numBanks * 16) + "Kb.  " + getNumRAMBanks() + " RAM banks.");
             JavaBoy.debugLog("Type: " + cartTypeTable[cartType] + " (" + JavaBoy.hexByte(cartType) + ")");
-
-            if (!verifyChecksum() && (a instanceof Frame)) {
-                //new ModalDialog((Frame) a, "Warning", "This cartridge has an invalid checksum.", "It may not execute correctly.");
-            }
 
             // Set up the real time clock
             Calendar rightNow = Calendar.getInstance();
@@ -223,15 +208,10 @@ class Cartridge {
 
         } catch (IOException e) {
             System.out.println("Error opening ROM image '" + romFileName + "'!");
-        } catch (IndexOutOfBoundsException e) {
-            //            new ModalDialog((Frame) a, "Error",
-            //                    "Loading the ROM image failed.",
-            //                    "The file is not a valid Gameboy ROM.");
         }
-
     }
 
-    public void update() {
+    void update() {
         // Update the realtime clock from the system time
         long millisSinceLastUpdate = System.currentTimeMillis() - lastSecondIncrement;
 
@@ -269,7 +249,7 @@ class Cartridge {
         }
     }
 
-    private InputStream openRom(String romFileName, Component a) {
+    private InputStream openRom(String romFileName) {
 
         try {
             romIntFileName = stripExtention(romFileName);
@@ -284,7 +264,7 @@ class Cartridge {
      * Returns the byte currently mapped to a CPU address.  Addr must be in the range 0x0000 - 0x4000 or
      * 0xA000 - 0xB000 (for RAM access)
      */
-    public final byte addressRead(int addr) {
+    final byte addressRead(int addr) {
         if ((addr >= 0xA000) && (addr <= 0xBFFF)) {
             switch (cartType) {
                 case 0x0F:
@@ -377,7 +357,7 @@ class Cartridge {
     /**
      * Restore the saved mapper state
      */
-    public void restoreMapping() {
+    void restoreMapping() {
         if (savedBank != -1) {
             System.out.println("- ROM Mapping restored to bank " + JavaBoy.hexByte(savedBank));
             addressWrite(0x2000, savedBank);
@@ -390,7 +370,7 @@ class Cartridge {
      * writes to ROM do not cause a mapping change, but actually write to the ROM.  This is usefull
      * for patching parts of code.  Only used by the debugger.
      */
-    public void debuggerAddressWrite(int addr, int data) {
+    void debuggerAddressWrite(int addr, int data) {
         if (cartType == 0) {
             rom[addr] = (byte) data;
         } else {
@@ -405,7 +385,7 @@ class Cartridge {
     /**
      * Writes to an address in CPU address space.  Writes to ROM may cause a mapping change.
      */
-    public final void addressWrite(int addr, int data) {
+    final void addressWrite(int addr, int data) {
         int ramAddress;
 
 
@@ -522,7 +502,7 @@ class Cartridge {
 
     }
 
-    public int getNumRAMBanks() {
+    private int getNumRAMBanks() {
         switch (rom[0x149]) {
             case 0: {
                 return 0;
@@ -541,57 +521,12 @@ class Cartridge {
         return 0;
     }
 
-    private boolean verifyChecksum() {
-        int checkSum = (JavaBoy.unsign(rom[0x14E]) << 8) + JavaBoy.unsign(rom[0x14F]);
-
-        int total = 0;                   // Calculate ROM checksum
-        for (int r = 0; r < rom.length; r++) {
-            if ((r != 0x14E) && (r != 0x14F)) {
-                total = (total + JavaBoy.unsign(rom[r])) & 0x0000FFFF;
-            }
-        }
-
-        return checkSum == total;
-    }
-
     /**
      * Gets the cartridge name
      */
     String getCartName() {
         return cartName;
     }
-
-    /**
-     * Outputs information about the loaded cartridge to stdout.
-     */
-    void outputCartInfo() {
-        boolean checksumOk;
-
-        cartName = new String(rom, 0x0134, 16);
-        // Extract the game name from the cartridge header
-
-        checksumOk = verifyChecksum();
-
-        // Remove NULLs from the end of the cart name
-        String s = "";
-        for (int r = 0; r < cartName.length(); r++) {
-            if (((int) cartName.charAt(r) != 0) && ((int) cartName.charAt(r) >= 32) && ((int) cartName.charAt(r) <= 127)) {
-                s += cartName.charAt(r);
-            }
-        }
-        cartName = s;
-
-        String infoString = "ROM Info: Name = " + cartName + ", Size = " + (numBanks * 128) + "Kbit, ";
-
-        if (checksumOk) {
-            infoString = infoString + "Checksum Ok.";
-        } else {
-            infoString = infoString + "Checksum invalid!";
-        }
-
-        JavaBoy.debugLog(infoString);
-    }
-
 
     /**
      * Returns the number of 16Kb banks in a cartridge from the header size byte.

@@ -91,15 +91,6 @@ class TileBasedGraphicsChip extends GraphicsChip {
     }
 
     /**
-     * Invalidate all tiles in the tile cache
-     */
-    public void invalidateAll() {
-        for (int r = 0; r < 384 * 2; r++) {
-            tiles[r].invalidate();
-        }
-    }
-
-    /**
      * Set the size of the Gameboy window.
      */
     public void setMagnify(int m) {
@@ -172,9 +163,6 @@ class TileBasedGraphicsChip extends GraphicsChip {
                     tiles[tileNum].draw(back, spriteX, spriteY, spriteAttrib);
                 }
 
-                //   back.drawString("" + tileNum, spriteX * 2, spriteY * 2);
-                //   System.out.println("Sprite " + i + ": " + spriteX + ", " + spriteY);
-
                 if (doubledSprites) {
                     if (tiles[tileNum + 1].invalid(spriteAttrib)) {
                         tiles[tileNum + 1].validate(videoRam, vidRamAddress + 16, spriteAttrib);
@@ -204,7 +192,6 @@ class TileBasedGraphicsChip extends GraphicsChip {
 
         if (line == 0) {
             clearFrameBuffer();
-   /*if (spritesEnabledThisFrame)*/
             drawSprites(backBuffer.getGraphics(), 1);
             spritesEnabledThisFrame = spritesEnabled;
             windowStopLine = 144;

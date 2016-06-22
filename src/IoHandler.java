@@ -267,18 +267,6 @@ class IoHandler {
                         registers[0x02] &= 0x7F;
                     }
                 }
-
-/*    if (dmgcpu.gameLink == null) {  // Simulate no gameboy present
-     if ((registers[0x02] & 0x01) == 1) {
-	  //System.out.println("Sent byte: " + JavaBoy.hexByte(JavaBoy.unsign(registers[0x01])));
-      registers[0x01] = (byte) 0xFF; // when no LAN connection
-      dmgcpu.triggerInterrupt(dmgcpu.INT_SER);
-      registers[0x02] &= 0x7F;
-     }
-    } else if (((JavaBoy.unsign(data) & 0x81) == 0x81) && (dmgcpu.gameLink != null)) {
-     dmgcpu.gameLink.send(registers[0x01]);
-    }
-//    System.out.println(JavaBoy.hexWord(dmgcpu.pc));*/
                 break;
 
             case 0x04:           // DIV
