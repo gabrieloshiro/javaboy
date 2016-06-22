@@ -179,7 +179,7 @@ class IoHandler {
             //    return registers[num];
 
             case 0x55:
-                return (byte) (registers[0x55]);
+                return registers[0x55];
 
             case 0x69:       // GBC BG Sprite palette
 
@@ -286,11 +286,7 @@ class IoHandler {
                 break;
 
             case 0x07:           // TAC
-                if ((data & 0x04) == 0) {
-                    dmgcpu.timaEnabled = false;
-                } else {
-                    dmgcpu.timaEnabled = true;
-                }
+                dmgcpu.timaEnabled = (data & 0x04) != 0;
 
                 int instrsPerSecond = dmgcpu.INSTRS_PER_VBLANK * 60;
                 int clockFrequency = (data & 0x03);
@@ -414,35 +410,19 @@ class IoHandler {
                 //    System.out.println("LCDC write at " + JavaBoy.hexWord(dmgcpu.pc) + " = " + JavaBoy.hexWord(data));
                 dmgcpu.graphicsChip.bgEnabled = true;
 
-                if ((data & 0x20) == 0x20) {     // BIT 5
-                    dmgcpu.graphicsChip.winEnabled = true;
-                } else {
-                    dmgcpu.graphicsChip.winEnabled = false;
-                }
+                // BIT 5
+                dmgcpu.graphicsChip.winEnabled = (data & 0x20) == 0x20;
 
-                if ((data & 0x10) == 0x10) {     // BIT 4
-                    dmgcpu.graphicsChip.bgWindowDataSelect = true;
-                } else {
-                    dmgcpu.graphicsChip.bgWindowDataSelect = false;
-                }
+                // BIT 4
+                dmgcpu.graphicsChip.bgWindowDataSelect = (data & 0x10) == 0x10;
 
-                if ((data & 0x08) == 0x08) {
-                    dmgcpu.graphicsChip.hiBgTileMapAddress = true;
-                } else {
-                    dmgcpu.graphicsChip.hiBgTileMapAddress = false;
-                }
+                dmgcpu.graphicsChip.hiBgTileMapAddress = (data & 0x08) == 0x08;
 
-                if ((data & 0x04) == 0x04) {      // BIT 2
-                    dmgcpu.graphicsChip.doubledSprites = true;
-                } else {
-                    dmgcpu.graphicsChip.doubledSprites = false;
-                }
+                // BIT 2
+                dmgcpu.graphicsChip.doubledSprites = (data & 0x04) == 0x04;
 
-                if ((data & 0x02) == 0x02) {     // BIT 1
-                    dmgcpu.graphicsChip.spritesEnabled = true;
-                } else {
-                    dmgcpu.graphicsChip.spritesEnabled = false;
-                }
+                // BIT 1
+                dmgcpu.graphicsChip.spritesEnabled = (data & 0x02) == 0x02;
 
                 if ((data & 0x01) == 0x00) {     // BIT 0
                     dmgcpu.graphicsChip.bgEnabled = false;

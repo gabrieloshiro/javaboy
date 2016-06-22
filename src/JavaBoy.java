@@ -746,7 +746,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                         int addr = Integer.valueOf(st.nextToken(), 16).intValue();
                         System.out.println("- Setting breakpoint at " + JavaBoy.hexWord(addr));
                         breakpointAddr = (short) addr;
-                        breakpointInstr = (short) dmgcpu.addressRead(addr);
+                        breakpointInstr = dmgcpu.addressRead(addr);
                         breakpointBank = (short) cartridge.currentBank;
                         dmgcpu.addressWrite(addr, 0x52);
                         dmgcpu.setBreakpoint(true);
@@ -764,11 +764,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                 case 'n':
                     try {
                         int state = Integer.valueOf(st.nextToken(), 16).intValue();
-                        if (state == 1) {
-                            dmgcpu.interruptsEnabled = true;
-                        } else {
-                            dmgcpu.interruptsEnabled = false;
-                        }
+                        dmgcpu.interruptsEnabled = state == 1;
                     } catch (java.util.NoSuchElementException e) {
                         // Nothing!
                     } catch (NumberFormatException e) {

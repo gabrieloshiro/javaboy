@@ -78,14 +78,6 @@ class Cartridge {
                     "ROM+MBC5+RUMBLE+RAM+BATTERY"  /* 1E */};
 
     /**
-     * Compressed file types
-     */
-    final byte bNotCompressed = 0;
-    final byte bZip = 1;
-    final byte bJar = 2;
-    final byte bGZip = 3;
-
-    /**
      * RTC Reg names
      */
     final byte SECONDS = 0;
@@ -267,7 +259,7 @@ class Cartridge {
         }
     }
 
-    String stripExtention(String filename) {
+    private String stripExtention(String filename) {
         int dotPosition = filename.lastIndexOf('.');
 
         if (dotPosition != -1) {
@@ -277,80 +269,15 @@ class Cartridge {
         }
     }
 
-    public InputStream openRom(String romFileName, Component a) {
-        byte bFormat;
-        boolean bFoundGBROM = false;
-        String romName = "None";
+    private InputStream openRom(String romFileName, Component a) {
 
-        if (romFileName.toUpperCase().indexOf("ZIP") > -1) {
-            bFormat = bZip;
-        } else if (romFileName.toUpperCase().indexOf("JAR") > -1) {
-            bFormat = bZip;
-        } else if (romFileName.toUpperCase().indexOf("GZ") > -1) {
-            bFormat = bGZip;
-        } else {
-            bFormat = bNotCompressed;
-        }
-
-        // Simplest case, open plain gb or gbc file.
-        if (bFormat == bNotCompressed) {
-            try {
-                romIntFileName = stripExtention(romFileName);
-                return new FileInputStream(new File(romFileName));
-            } catch (Exception e) {
-                System.out.println("Cant open file");
-                return null;
-            }
-        }
-
-        // Should the ROM be loaded from a ZIP compressed file?
-        if (bFormat == bZip) {
-            System.out.println("Loading ZIP Compressed ROM");
-
-            java.util.zip.ZipInputStream zip;
-
-            try {
-
-                zip = new java.util.zip.ZipInputStream(new java.io.FileInputStream(romFileName));
-
-                // Check for valid files (GB or GBC ending in filename)
-                java.util.zip.ZipEntry ze;
-
-                while ((ze = zip.getNextEntry()) != null) {
-                    String str = ze.getName();
-                    if (str.toUpperCase().indexOf(".GB") > -1 || str.toUpperCase().indexOf(".GBC") > -1) {
-                        bFoundGBROM = true;
-                        romIntFileName = stripExtention(str);
-                        romName = str;
-                        // Leave loop if a ROM was found.
-                        break;
-                    }
-                }
-                // Show an error if no ROM file was found in the ZIP
-                if (!bFoundGBROM) {
-                    System.err.println("No GBx ROM found!");
-                    throw new java.io.IOException("ERROR");
-                }
-                return zip;
-            } catch (Exception e) {
-                System.out.println(e);
-                return null;
-            }
-        }
-
-        if (bFormat == bGZip) {
-            System.out.println("Loading GZIP Compressed ROM");
+        try {
             romIntFileName = stripExtention(romFileName);
-            try {
-                return new java.util.zip.GZIPInputStream(new java.io.FileInputStream(romFileName));
-            } catch (Exception e) {
-                System.out.println("Can't open file");
-                return null;
-            }
+            return new FileInputStream(new File(romFileName));
+        } catch (Exception e) {
+            System.out.println("Cant open file");
+            return null;
         }
-
-        // Will never get here
-        return null;
     }
 
     /**
@@ -503,19 +430,11 @@ class Cartridge {
                     if (bankNo == 0) bankNo = 1;
                     mapRom((currentBank & 0x60) | bankNo);
                 } else if ((addr >= 0x6000) && (addr <= 0x7FFF)) {
-                    if ((data & 1) == 1) {
-                        mbc1LargeRamMode = true;
-                        //      ram = new byte[0x8000];
-                    } else {
-                        mbc1LargeRamMode = false;
-                        //      ram = new byte[0x2000];
-                    }
+                    //      ram = new byte[0x8000];
+                    //      ram = new byte[0x2000];
+                    mbc1LargeRamMode = (data & 1) == 1;
                 } else if (addr <= 0x1FFF) {
-                    if ((data & 0x0F) == 0x0A) {
-                        ramEnabled = true;
-                    } else {
-                        ramEnabled = false;
-                    }
+                    ramEnabled = (data & 0x0F) == 0x0A;
                 } else if ((addr <= 0x5FFF) && (addr >= 0x4000)) {
                     if (mbc1LargeRamMode) {
                         ramBank = (data & 0x03);

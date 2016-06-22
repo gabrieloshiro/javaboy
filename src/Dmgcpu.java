@@ -381,11 +381,8 @@ class Dmgcpu {
     }
 
     public void checkEnableGbc() {
-        if (((cartridge.rom[0x143] & 0x80) == 0x80) && (allowGbcFeatures)) { // GBC Cartridge ID
-            gbcFeatures = true;
-        } else {
-            gbcFeatures = false;
-        }
+        // GBC Cartridge ID
+        gbcFeatures = ((cartridge.rom[0x143] & 0x80) == 0x80) && (allowGbcFeatures);
     }
 
 
