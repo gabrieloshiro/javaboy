@@ -41,7 +41,7 @@ class Dmgcpu {
     /**
      * Zero flag
      */
-    private final short  F_ZERO = 0x80;
+    private final short F_ZERO = 0x80;
     /**
      * Subtract/negative flag
      */
@@ -558,21 +558,13 @@ class Dmgcpu {
 
                 ioHandler.registers[0x44] = 0;
                 graphicsChip.frameDone = false;
-                if (JavaBoy.runningAsApplet) {
-                    ((JavaBoy) (applet)).drawNextFrame();
-                } else {
-                    ((GameBoyScreen) (applet)).repaint();
-                }
+                applet.repaint();
                 try {
                     while (!graphicsChip.frameDone) {
                         java.lang.Thread.sleep(1);
                     }
                 } catch (InterruptedException e) {
-                    // Nothing.
                 }
-
-
-                //     System.out.println("LCDC reset");
             }
         }
     }
@@ -590,12 +582,6 @@ class Dmgcpu {
         int b1, b2, b3, offset;
 
         for (int r = 0; (r != numInstr) && (!terminate); r++) {
-
-/*   GameBoyScreen j = (GameBoyScreen) applet;
-   if (j.viewFrameCounter.getState()) {
-    System.out.print(" " + JavaBoy.hexWord(pc) + ":" + JavaBoy.hexByte(cartridge.currentBank));
-   }*/
-            //   System.out.print(" " + JavaBoy.hexWord(pc) + ":" + JavaBoy.hexByte(cartridge.currentBank));
             instrCount++;
 
             b1 = JavaBoy.unsign(addressRead(pc));

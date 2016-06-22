@@ -22,7 +22,6 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
 
-import java.applet.Applet;
 import java.awt.*;
 import java.io.*;
 import java.util.Calendar;
@@ -210,10 +209,6 @@ class Cartridge {
                 //new ModalDialog((Frame) a, "Warning", "This cartridge has an invalid checksum.", "It may not execute correctly.");
             }
 
-            if (!JavaBoy.runningAsApplet) {
-                loadBatteryRam();
-            }
-
             // Set up the real time clock
             Calendar rightNow = Calendar.getInstance();
 
@@ -301,11 +296,7 @@ class Cartridge {
         if (bFormat == bNotCompressed) {
             try {
                 romIntFileName = stripExtention(romFileName);
-                if (JavaBoy.runningAsApplet) {
-                    return new java.net.URL(((Applet) (a)).getDocumentBase(), romFileName).openStream();
-                } else {
-                    return new FileInputStream(new File(romFileName));
-                }
+                return new FileInputStream(new File(romFileName));
             } catch (Exception e) {
                 System.out.println("Cant open file");
                 return null;
@@ -320,12 +311,7 @@ class Cartridge {
 
             try {
 
-                if (JavaBoy.runningAsApplet) {
-                    zip = new java.util.zip.ZipInputStream(new java.net.URL(((Applet) (a)).getDocumentBase(), romFileName).openStream());
-                } else {
-                    zip = new java.util.zip.ZipInputStream(new java.io.FileInputStream(romFileName));
-                }
-
+                zip = new java.util.zip.ZipInputStream(new java.io.FileInputStream(romFileName));
 
                 // Check for valid files (GB or GBC ending in filename)
                 java.util.zip.ZipEntry ze;
@@ -342,14 +328,8 @@ class Cartridge {
                 }
                 // Show an error if no ROM file was found in the ZIP
                 if (!bFoundGBROM) {
-                    if (JavaBoy.runningAsApplet) {
-                        //new ModalDialog((Frame) a, "Error", "No GBx ROM found!", "");
-                    }
                     System.err.println("No GBx ROM found!");
                     throw new java.io.IOException("ERROR");
-                }
-                if (!JavaBoy.runningAsApplet) {
-                    System.out.println("Found " + romName);
                 }
                 return zip;
             } catch (Exception e) {
@@ -362,11 +342,7 @@ class Cartridge {
             System.out.println("Loading GZIP Compressed ROM");
             romIntFileName = stripExtention(romFileName);
             try {
-                if (JavaBoy.runningAsApplet) {
-                    return new java.util.zip.GZIPInputStream(new java.net.URL(((Applet) (a)).getDocumentBase(), romFileName).openStream());
-                } else {
-                    return new java.util.zip.GZIPInputStream(new java.io.FileInputStream(romFileName));
-                }
+                return new java.util.zip.GZIPInputStream(new java.io.FileInputStream(romFileName));
             } catch (Exception e) {
                 System.out.println("Can't open file");
                 return null;
@@ -382,11 +358,6 @@ class Cartridge {
      * 0xA000 - 0xB000 (for RAM access)
      */
     public final byte addressRead(int addr) {
-        //  if (disposed) System.out.println("oh.  dodgy cartridge");
-
-        //  if (cartType == 0) {
-        //   return (byte) (rom[addr] & 0x00FF);
-        //  } else {
         if ((addr >= 0xA000) && (addr <= 0xBFFF)) {
             switch (cartType) {
                 case 0x0F:
@@ -408,9 +379,9 @@ class Cartridge {
             }
         }
         if (addr < 0x4000) {
-            return (byte) (rom[addr]);
+            return rom[addr];
         } else {
-            return (byte) (rom[pageStart + addr - 0x4000]);
+            return rom[pageStart + addr - 0x4000];
         }
         //  }
     }
@@ -419,7 +390,7 @@ class Cartridge {
     /**
      * Returns a string summary of the current mapper status
      */
-    public String getMapInfo() {
+    String getMapInfo() {
         String out;
         switch (cartType) {
             case 0 /* No mapper */ :
@@ -460,21 +431,21 @@ class Cartridge {
     /**
      * Maps a ROM bank into the CPU address space at 0x4000
      */
-    public void mapRom(int bankNo) {
+    void mapRom(int bankNo) {
         //  addressWrite(0x2000, bank);
         //  if (bankNo == 0) bankNo = 1;
         currentBank = bankNo;
         pageStart = 0x4000 * bankNo;
     }
 
-    public void reset() {
+    void reset() {
         mapRom(1);
     }
 
     /**
      * Save the current mapper state
      */
-    public void saveMapping() {
+    void saveMapping() {
         if ((cartType != 0) && (savedBank == -1)) savedBank = currentBank;
     }
 
@@ -510,7 +481,7 @@ class Cartridge {
      * Writes to an address in CPU address space.  Writes to ROM may cause a mapping change.
      */
     public final void addressWrite(int addr, int data) {
-        int ramAddress = 0;
+        int ramAddress;
 
 
         switch (cartType) {
@@ -600,18 +571,6 @@ class Cartridge {
                     }
 
                 }
-/*	if ((addr >= 0x6000) && (addr <= 0x7FFF)) {
-     if ((data & 1) == 1) {
-      mbc1LargeRamMode = true;
-      System.out.println("Small Ram");
-//      ram = new byte[0x8000];
-     } else {
-      mbc1LargeRamMode = false;
-      System.out.println("Large Ram");
-//      ram = new byte[0x2000];
-     }
-	}*/
-
                 break;
 
 
@@ -665,108 +624,6 @@ class Cartridge {
         return 0;
     }
 
-    /**
-     * Read an image of battery RAM into memory if the current cartridge mapper supports it.
-     * The filename is the same as the ROM filename, but with a .SAV extention.
-     * # *  Files are compatible with VGB-DOS.
-     */
-    public void loadBatteryRam() {
-        String saveRamFileName = romFileName;
-        int numRamBanks;
-
-        try {
-            int dotPosition = romFileName.lastIndexOf('.');
-
-            if (dotPosition != -1) {
-                saveRamFileName = romFileName.substring(0, dotPosition) + ".sav";
-            } else {
-                saveRamFileName = romFileName + ".sav";
-            }
-
-/*   if (rom[0x149] == 0x03) {
-    numRamBanks = 4;
-   } else {
-    numRamBanks = 1;
-   }*/
-            numRamBanks = getNumRAMBanks();
-
-            if ((cartType == 3) || (cartType == 9) || (cartType == 0x1B) || (cartType == 0x1E) || (cartType == 0x10) || (cartType == 0x13)) {
-                FileInputStream is = new FileInputStream(new File(saveRamFileName));
-                is.read(ram, 0, numRamBanks * 8192);
-                is.close();
-                System.out.println("Read SRAM from '" + saveRamFileName + "'");
-            }
-            if (cartType == 6) {
-                FileInputStream is = new FileInputStream(new File(saveRamFileName));
-                is.read(ram, 0, 512);
-                is.close();
-                System.out.println("Read SRAM from '" + saveRamFileName + "'");
-            }
-
-
-        } catch (IOException e) {
-            System.out.println("Error loading battery RAM from '" + saveRamFileName + "'");
-        }
-    }
-
-    public int getBatteryRamSize() {
-        int numRamBanks;
-        if (rom[0x149] == 0x06) {
-            return 512;
-        } else {
-            return getNumRAMBanks() * 8192;
-        }
-    }
-
-    public byte[] getBatteryRam() {
-        return ram;
-    }
-
-    public boolean canSave() {
-        return (cartType == 3) || (cartType == 9) || (cartType == 0x1B) || (cartType == 0x1E) || (cartType == 6) || (cartType == 0x10) || (cartType == 0x13);
-    }
-
-    /**
-     * Writes an image of battery RAM to disk, if the current cartridge mapper supports it.
-     */
-    public void saveBatteryRam() {
-        String saveRamFileName = romFileName;
-        int numRamBanks;
-
-/*  if (rom[0x149] == 0x03) {
-   numRamBanks = 4;
-  } else {
-   numRamBanks = 1;
-  }*/
-        numRamBanks = getNumRAMBanks();
-
-        try {
-            int dotPosition = romFileName.lastIndexOf('.');
-
-            if (dotPosition != -1) {
-                saveRamFileName = romFileName.substring(0, dotPosition) + ".sav";
-            } else {
-                saveRamFileName = romFileName + ".sav";
-            }
-
-            if ((cartType == 3) || (cartType == 9) || (cartType == 0x1B) || (cartType == 0x1E) || (cartType == 0x10) || (cartType == 0x13)) {
-                FileOutputStream os = new FileOutputStream(new File(saveRamFileName));
-                os.write(ram, 0, numRamBanks * 8192);
-                os.close();
-                System.out.println("Written SRAM to '" + saveRamFileName + "'");
-            }
-            if (cartType == 6) {
-                FileOutputStream os = new FileOutputStream(new File(saveRamFileName));
-                os.write(ram, 0, 512);
-                os.close();
-                System.out.println("Written SRAM to '" + saveRamFileName + "'");
-            }
-
-        } catch (IOException e) {
-            System.out.println("Error saving battery RAM to '" + saveRamFileName + "'");
-        }
-    }
-
     private boolean verifyChecksum() {
         int checkSum = (JavaBoy.unsign(rom[0x14E]) << 8) + JavaBoy.unsign(rom[0x14F]);
 
@@ -796,11 +653,7 @@ class Cartridge {
         cartName = new String(rom, 0x0134, 16);
         // Extract the game name from the cartridge header
 
-        //  JavaBoy.debugLog(rom[0x14F]+ " "+ rom[0x14E]);
-
-
         checksumOk = verifyChecksum();
-
 
         // Remove NULLs from the end of the cart name
         String s = "";
@@ -811,8 +664,7 @@ class Cartridge {
         }
         cartName = s;
 
-        String infoString = "ROM Info: Name = " + cartName +
-                ", Size = " + (numBanks * 128) + "Kbit, ";
+        String infoString = "ROM Info: Name = " + cartName + ", Size = " + (numBanks * 128) + "Kbit, ";
 
         if (checksumOk) {
             infoString = infoString + "Checksum Ok.";
