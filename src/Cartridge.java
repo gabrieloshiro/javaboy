@@ -359,8 +359,6 @@ class Cartridge {
      * Maps a ROM bank into the CPU address space at 0x4000
      */
     void mapRom(int bankNo) {
-        //  addressWrite(0x2000, bank);
-        //  if (bankNo == 0) bankNo = 1;
         currentBank = bankNo;
         pageStart = 0x4000 * bankNo;
     }

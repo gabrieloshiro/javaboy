@@ -1,92 +1,9 @@
-/*
-
-JavaBoy
-                                  
-COPYRIGHT (C) 2001 Neil Millstone and The Victoria University of Manchester
-                                                                         ;;;
-This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2 of the License, or (at your option)
-any later version.        
-
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-more details.
-
-
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA.
-
-Version 0.9
-
-Applet Mode Changes (when running on a web page)
-- Fixed ROMS with save RAM not loading when on a web page - Done
-- Applets can be sized other than 1x - Done
-- Applets show strip showing current ROM and other info displayed at start - Done
-- Applets have options menu providing control change, size change, frameskip change, sound toggle - Done
-- Applets have a parameter to turn sound on/off in the applet tag - Done
-
-Application Mode Changes (when running stand-alone)
-- Half-fixed keyboard controls sometimes not starting in application version - Done
-- Fixed random keypressed causing an exception when no ROM loaded - Done
-
-General changes
-- ROMS can optionally be loaded from ZIP/JAR and GZip compressed files (code contributed by Stealth Software)
-
-Emulation Changes
-- Much more accurate emulation of sound channel 4 (noise) - Done
-- Flipped double height sprites are now handled properly - Done
-
-Version 0.91
-
-Applet Mode Changes
-- Switch menu from click to double-click to avoid problem with setting focus - Done
-- Added Save to Web feature - Done
-- Added reset option to menu - Done
-- Fixed bad update to border when applet window covered (only on microsoft vm) - Done
-
-Emulation Changes
-- Fixed printing of HDMA data to console slowing down games - Done
-
-Version 0.92
-
-Emulation Changes
-- Fixed LCDC interrupt LCY flag.  Fixes crash in 'Max' and graphical corruption on
-  intro to 'Rayman', 'Donkey Kong Country GBC', and probably others. !!! Check Max Again !!!
-- Fixed problem when grabbing the next instruction when executing right next to the 
-  end of memory.  Fixes crahes on 'G&W Gallery 3', 'Millipede/Centipede' and others
-- Fixed P10-P13 interrupt handling.  Fixes controls in Double Dragon 3 menus, 
-  Lawnmower Man, and others.
-- Added hack to unscramble status bars on many games (Aladdin, Pokemon Pinball)
-  that change bank address just before the window starts
-- Changed sprite hiding behaviour.  Now sprites are turned on if they're visible anywhere
-  in the frame.  Doesn't properly support sprite raster effects, but stops them from
-  disappearing. (Elevator Action, Mortal Kombat 4)
-- Fixed debug breakpoint detection (Micro Machines 2, Monster Race 2, others)
-- Changed VBlank line to fix white screen on startup (Home Alone, Dragon Tales)  (check!)
-- Added extra condition to LCD interrupts - that the display should be enabled.  Max works again.
-- Keep on at Mahjong.  Probably display disabled so interrupt never occurs.
-- Note: broken robocop 2, exact instruction timings needed.  poo.  Only worked becuase of bad vblank line.
-- Check mario golf problem.  Did it work before?
-- Fixed comparison with LCY register, Austin Powers - Oh Behave! now works, and GTA status bar isn't scrambled.
-- Found out that on the GBC, the BG enable doesn't do anything(?).  Fixes Dragon Ball Z.
-- Fixed crash when Super Mario Bros DX tries to access the printer
-- Found odd bug where tiles wouldn't validate properly until they were drawn.  Happens on the window layer.  SMBDX shows it up on the Enter/Print menu
-- SF2 broken, but workings when I increase CPU speed.  That breaks music in Pinball Fantasies and Gradius 2 though.  Needs accurate CPU timings.
-- Fix online save RAM bugs
-
-New Features
-- Added support for MBC3 mapper chip.  MBC3 games now work (Pokemon Blue/Crystal mainly.  Gold/silver still doesn't work)
-- Added the MBC3 real time clock.  Pokemon Gold/Silver now work, as well as Harvest Moon GB.
-- Added emulation of the Game Boy Printer (only in application mode for now)
-*/
-
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.StringTokenizer;
+
+import static java.lang.Integer.*;
 
 /**
  * This is the main controlling class which contains the main() method
@@ -97,7 +14,7 @@ import java.util.StringTokenizer;
 // w = 160
 // h = 144
 
-public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener, WindowListener, MouseListener, ActionListener, ItemListener {
+public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener, ActionListener {
     private static final String hexChars = "0123456789ABCDEF";
     private boolean fullFrame = true;
 
@@ -106,31 +23,8 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
      * A scheme can be activated using the view menu when JavaBoy is
      * running as an application.
      */
-    static public String[] schemeNames =
+    static String[] schemeNames =
             {"Standard colours", "LCD shades", "Midnight garden", "Psychadelic"};
-
-    /**
-     * This array contains the actual data for the colour schemes.
-     * These are only using in DMG mode.
-     * The first four values control the BG palette, the second four
-     * are the OBJ0 palette, and the third set of four are OBJ1.
-     */
-    static public int[][] schemeColours =
-            {{0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000,
-                    0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000,
-                    0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000},
-
-                    {0xFFFFFFC0, 0xFFC2C41E, 0xFF949600, 0xFF656600,
-                            0xFFFFFFC0, 0xFFC2C41E, 0xFF949600, 0xFF656600,
-                            0xFFFFFFC0, 0xFFC2C41E, 0xFF949600, 0xFF656600},
-
-                    {0xFFC0C0FF, 0xFF4040FF, 0xFF0000FF, 0xFF000080,
-                            0xFFC0FFC0, 0xFF00C000, 0xFF008000, 0xFF004000,
-                            0xFFC0FFC0, 0xFF00C000, 0xFF008000, 0xFF004000},
-
-                    {0xFFFFC0FF, 0xFF8080FF, 0xFFC000C0, 0xFF800080,
-                            0xFFFFFF40, 0xFFC0C000, 0xFFFF4040, 0xFF800000,
-                            0xFF80FFFF, 0xFF00C0C0, 0xFF008080, 0xFF004000}};
 
     /**
      * When emulation running, references the currently loaded cartridge
@@ -143,71 +37,51 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     Dmgcpu dmgcpu;
 
     /**
-     * When emulation running, references the current graphics chip implementation
-     */
-    GraphicsChip graphicsChip;
-
-    /**
      * Stores the byte which was overwritten at the breakpoint address by the breakpoint instruction
      */
-    short breakpointInstr;
+    private short breakpointInstr;
 
     /**
      * When set, stores the RAM address of a breakpoint.
      */
-    short breakpointAddr = -1;
+    private short breakpointAddr = -1;
 
-    short breakpointBank;
-
-    /**
-     * When running as an application, contains a reference to the interface frame object
-     */
-    GameBoyScreen mainWindow;
+    private short breakpointBank;
 
     /**
      * Stores commands queued to be executed by the debugger
      */
-    String debuggerQueue = null;
+    private String debuggerQueue = null;
 
     /**
      * True when the commands in debuggerQueue have yet to be executed
      */
-    boolean debuggerPending = false;
+    private boolean debuggerPending = false;
 
-    /**
-     * True when the debugger console interface is active
-     */
-    boolean debuggerActive = false;
-
-    Image doubleBuffer;
+    private Image doubleBuffer;
 
     static int[] keyCodes = {38, 40, 37, 39, 90, 88, 10, 8};
 
-    boolean keyListener = false;
-
-    CheckboxMenuItem soundCheck;
+    private boolean keyListener = false;
 
     /**
      * True if the image size changed last frame, and we need to repaint the background
      */
-    boolean imageSizeChanged = false;
+    private boolean imageSizeChanged = false;
 
-    int stripTimer = 0;
-    PopupMenu popupMenu;
-
-    long lastClickTime = 0;
+    private int stripTimer = 0;
 
     /**
      * Outputs a line of debugging information
      */
-    static public void debugLog(String s) {
+    static void debugLog(String s) {
         System.out.println("Debug: " + s);
     }
 
     /**
      * Returns the unsigned value (0 - 255) of a signed byte
      */
-    static public short unsign(byte b) {
+    static short unsign(byte b) {
         if (b < 0) {
             return (short) (256 + b);
         } else {
@@ -218,7 +92,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     /**
      * Returns the unsigned value (0 - 255) of a signed 8-bit value stored in a short
      */
-    static public short unsign(short b) {
+    static short unsign(short b) {
         if (b < 0) {
             return (short) (256 + b);
         } else {
@@ -229,9 +103,9 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     /**
      * Returns a string representation of an 8-bit number in hexadecimal
      */
-    static public String hexByte(int b) {
-        String s = new Character(hexChars.charAt(b >> 4)).toString();
-        s = s + new Character(hexChars.charAt(b & 0x0F)).toString();
+    static String hexByte(int b) {
+        String s = Character.toString(hexChars.charAt(b >> 4));
+        s = s + Character.toString(hexChars.charAt(b & 0x0F));
 
         return s;
     }
@@ -239,8 +113,8 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     /**
      * Returns a string representation of an 16-bit number in hexadecimal
      */
-    static public String hexWord(int w) {
-        return new String(hexByte((w & 0x0000FF00) >> 8) + hexByte(w & 0x000000FF));
+    static String hexWord(int w) {
+        return hexByte((w & 0x0000FF00) >> 8) + hexByte(w & 0x000000FF);
     }
 
     /**
@@ -255,17 +129,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
             int y = getSize().height / 2 - dmgcpu.graphicsChip.getHeight() / 2;
 
             if ((stripTimer > stripLength) && (!fullFrame) && (!imageSizeChanged)) {
-   /* if ((imageSizeChanged) || (fullFrame)) {
-     if (dmgcpu.graphicsChip.isFrameReady()) {
-	  g.setColor(new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)));
- 	  g.fillRect(0, 0, getSize().width, getSize().height);
- 	  imageSizeChanged = false;
-   	  if (fullFrame) {
-	   System.out.println("fullframe is " + fullFrame + " at "+ System.currentTimeMillis());
-	  }
-
-	 }
-	}*/
 
                 dmgcpu.graphicsChip.draw(g, x, y, this);
 
@@ -331,65 +194,12 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
 
     }
 
-    /**
-     * Checks for mouse clicks when running as an applet
-     */
-    public void mouseClicked(MouseEvent e) {
-        long doubleClickTime = (System.currentTimeMillis() - lastClickTime);
-
-        if (doubleClickTime <= 250) {
-            popupMenu.show(e.getComponent(), e.getX(), e.getY());
-        }
-        //  System.out.println("Click! " + );
-        lastClickTime = System.currentTimeMillis();
-    }
-
-    public void mouseEntered(MouseEvent e) {
-
-    }
-
-    public void mouseExited(MouseEvent e) {
-
-    }
-
-    public void mousePressed(MouseEvent e) {
-
-    }
-
-    public void mouseReleased(MouseEvent e) {
-
-    }
-
     public void actionPerformed(ActionEvent e) {
-    }
-
-    public void itemStateChanged(ItemEvent e) {
-
-    }
-
-
-    /**
-     * Activate the console debugger interface
-     */
-    public void activateDebugger() {
-        debuggerActive = true;
-    }
-
-    /**
-     * Deactivate the console debugger interface
-     */
-    public void deactivateDebugger() {
-        debuggerActive = false;
     }
 
     public void update(Graphics g) {
         paint(g);
         fullFrame = true;
-    }
-
-    public void drawNextFrame() {
-        fullFrame = false;
-        repaint();
     }
 
     public void keyTyped(KeyEvent e) {
@@ -435,7 +245,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                 break;
             case KeyEvent.VK_F5:
                 dmgcpu.terminateProcess();
-                activateDebugger();
                 System.out.println("- Break into debugger");
                 break;
         }
@@ -474,7 +283,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     /**
      * Output a debugger command list to the console
      */
-    public void displayDebuggerHelp() {
+    private void displayDebuggerHelp() {
         System.out.println("Enter a command followed by it's parameters (all values in hex):");
         System.out.println("?                     Display this help screen");
         System.out.println("c [script]            Execute _c_ommands from script file [default.scp]");
@@ -501,7 +310,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     /**
      * Output a standard hex dump of memory to the console
      */
-    public void hexDump(int address, int length) {
+    private void hexDump(int address, int length) {
         int start = address & 0xFFF0;
         int lines = length / 16;
         if (lines == 0) lines = 1;
@@ -527,7 +336,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     /**
      * Output the current register values to the console
      */
-    public void showRegisterValues() {
+    private void showRegisterValues() {
         System.out.println("- Register values");
         System.out.print("A = " + JavaBoy.hexWord(dmgcpu.a) + "    BC = " + JavaBoy.hexWord(dmgcpu.b) + JavaBoy.hexWord(dmgcpu.c));
         System.out.print("    DE = " + JavaBoy.hexByte(dmgcpu.d) + JavaBoy.hexByte(dmgcpu.e));
@@ -540,27 +349,19 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     /**
      * Execute any pending debugger commands, or get a command from the console and execute it
      */
-    public void getDebuggerMenuChoice() {
-        String command = new String("");
-        char b = 0;
+    private void getDebuggerMenuChoice() {
         if (dmgcpu != null) dmgcpu.terminate = false;
 
-        if (!debuggerActive) {
-            if (debuggerPending) {
-                debuggerPending = false;
-                executeDebuggerCommand(debuggerQueue);
-            }
-        } else {
-            System.out.println();
-            System.out.print("Enter command ('?' for help)> ");
-
+        if (debuggerPending) {
+            debuggerPending = false;
+            executeDebuggerCommand(debuggerQueue);
         }
     }
 
     /**
      * Execute debugger commands contained in a text file
      */
-    public void executeDebuggerScript(String fn) {
+    private void executeDebuggerScript(String fn) {
         InputStream is;
         BufferedReader in;
         try {
@@ -582,7 +383,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     /**
      * Queue a debugger command for later execution
      */
-    public void queueDebuggerCommand(String command) {
+    void queueDebuggerCommand(String command) {
         debuggerQueue = command;
         debuggerPending = true;
     }
@@ -590,7 +391,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     /**
      * Execute a debugger command which can consist of many commands separated by semicolons
      */
-    public void executeDebuggerCommand(String commands) {
+    private void executeDebuggerCommand(String commands) {
         StringTokenizer commandTokens = new StringTokenizer(commands, ";");
 
         while (commandTokens.hasMoreTokens()) {
@@ -598,7 +399,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
         }
     }
 
-    public void setupKeyboard() {
+    private void setupKeyboard() {
         if (!keyListener) {
             addKeyListener(this);
             keyListener = true;
@@ -608,7 +409,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     /**
      * Execute a single debugger command
      */
-    public void executeSingleDebuggerCommand(String command) {
+    private void executeSingleDebuggerCommand(String command) {
         StringTokenizer st = new StringTokenizer(command, " \n");
 
         try {
@@ -618,8 +419,8 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                     break;
                 case 'd':
                     try {
-                        int address = Integer.valueOf(st.nextToken(), 16).intValue();
-                        int length = Integer.valueOf(st.nextToken(), 16).intValue();
+                        int address = valueOf(st.nextToken(), 16);
+                        int length = valueOf(st.nextToken(), 16);
                         System.out.println("- Dumping " + JavaBoy.hexWord(length) + " instructions starting from " + JavaBoy.hexWord(address));
                         hexDump(address, length);
                     } catch (java.util.NoSuchElementException e) {
@@ -630,8 +431,8 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                     break;
                 case 'i':
                     try {
-                        int address = Integer.valueOf(st.nextToken(), 16).intValue();
-                        int length = Integer.valueOf(st.nextToken(), 16).intValue();
+                        int address = valueOf(st.nextToken(), 16);
+                        int length = valueOf(st.nextToken(), 16);
                         System.out.println("- Dissasembling " + JavaBoy.hexWord(length) + " instructions starting from " + JavaBoy.hexWord(address));
                         dmgcpu.disassemble(address, length);
                     } catch (java.util.NoSuchElementException e) {
@@ -642,7 +443,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                     break;
                 case 'p':
                     try {
-                        int length = Integer.valueOf(st.nextToken(), 16).intValue();
+                        int length = valueOf(st.nextToken(), 16);
                         System.out.println("- Dissasembling " + JavaBoy.hexWord(length) + " instructions starting from program counter (" + JavaBoy.hexWord(dmgcpu.pc) + ")");
                         dmgcpu.disassemble(dmgcpu.pc, length);
                     } catch (java.util.NoSuchElementException e) {
@@ -663,7 +464,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                     try {
                         String reg = st.nextToken();
                         try {
-                            int val = Integer.valueOf(st.nextToken(), 16).intValue();
+                            int val = valueOf(st.nextToken(), 16);
                             if (dmgcpu.setRegister(reg, val)) {
                                 System.out.println("- Set register " + reg + " to " + JavaBoy.hexWord(val) + ".");
                             } else {
@@ -697,15 +498,10 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                         System.out.println("* Script execution finished");
                     }
                     break;
-                case 'q':
-                    cartridge.restoreMapping();
-                    System.out.println("- Quitting debugger");
-                    deactivateDebugger();
-                    break;
                 case 'e':
                     int address;
                     try {
-                        address = Integer.valueOf(st.nextToken(), 16).intValue();
+                        address = valueOf(st.nextToken(), 16);
                     } catch (NumberFormatException e) {
                         System.out.println("Error parsing hex value.");
                         break;
@@ -721,7 +517,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                     }
                     try {
                         while (st.hasMoreTokens()) {
-                            short data = (byte) Integer.valueOf(st.nextToken(), 16).intValue();
+                            short data = (byte) valueOf(st.nextToken(), 16).intValue();
                             dmgcpu.addressWrite(address++, data);
                             //           System.out.print(JavaBoy.hexByte(unsign(data)));
                             //           if (st.hasMoreTokens()) System.out.print(", ");
@@ -743,7 +539,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                             System.out.println("- Clearing original breakpoint");
                             dmgcpu.setBreakpoint(false);
                         }
-                        int addr = Integer.valueOf(st.nextToken(), 16).intValue();
+                        int addr = valueOf(st.nextToken(), 16);
                         System.out.println("- Setting breakpoint at " + JavaBoy.hexWord(addr));
                         breakpointAddr = (short) addr;
                         breakpointInstr = dmgcpu.addressRead(addr);
@@ -763,7 +559,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                     break;
                 case 'n':
                     try {
-                        int state = Integer.valueOf(st.nextToken(), 16).intValue();
+                        int state = valueOf(st.nextToken(), 16);
                         dmgcpu.interruptsEnabled = state == 1;
                     } catch (java.util.NoSuchElementException e) {
                         // Nothing!
@@ -777,7 +573,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                     break;
                 case 'm':
                     try {
-                        int bank = Integer.valueOf(st.nextToken(), 16).intValue();
+                        int bank = valueOf(st.nextToken(), 16);
                         System.out.println("- Mapping ROM bank " + JavaBoy.hexByte(bank) + " to 4000 - 7FFFF");
                         cartridge.saveMapping();
                         cartridge.mapRom(bank);
@@ -789,7 +585,7 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                 case 't':
                     try {
                         cartridge.restoreMapping();
-                        int length = Integer.valueOf(st.nextToken(), 16).intValue();
+                        int length = valueOf(st.nextToken(), 16);
                         System.out.println("- Executing " + JavaBoy.hexWord(length) + " instructions starting from program counter (" + JavaBoy.hexWord(dmgcpu.pc) + ")");
                         dmgcpu.execute(length);
                         if (dmgcpu.pc == breakpointAddr) {
@@ -813,37 +609,13 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
 
     }
 
-
-    public void windowClosed(WindowEvent e) {
-    }
-
-    public void windowClosing(WindowEvent e) {
-        System.exit(0);
-    }
-
-    public void windowDeiconified(WindowEvent e) {
-    }
-
-    public void windowIconified(WindowEvent e) {
-    }
-
-    public void windowOpened(WindowEvent e) {
-    }
-
-    public void windowActivated(WindowEvent e) {
-    }
-
-    public void windowDeactivated(WindowEvent e) {
-    }
-
     /**
      * Initialize JavaBoy when run as an application
      */
-    public JavaBoy() {
-        mainWindow = new GameBoyScreen("JavaBoy 0.92", this);
+    private JavaBoy() {
+        GameBoyScreen mainWindow = new GameBoyScreen("JavaBoy 0.92", this);
         mainWindow.setVisible(true);
         this.requestFocus();
-        mainWindow.addWindowListener(this);
     }
 
     public static void main(String[] args) {
@@ -852,53 +624,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
 
         Thread p = new Thread(javaBoy);
         p.start();
-    }
-
-    public void start() {
-        Thread p = new Thread(this);
-
-        setupKeyboard();
-        System.out.println("JavaBoy (tm) Version 0.92 (c) 2005 Neil Millstone (applet)");
-
-
-        cartridge = new Cartridge(getParameter("ROMIMAGE"), this);
-        dmgcpu = new Dmgcpu(cartridge, this);
-        dmgcpu.graphicsChip.setMagnify(getSize().width / 160);
-        this.requestFocus();
-        p.start();
-
-
-        popupMenu = new java.awt.PopupMenu();
-        popupMenu.add("JavaBoy ");
-        popupMenu.add("-");
-        popupMenu.add("Define Controls");
-        popupMenu.add(soundCheck = new java.awt.CheckboxMenuItem("Sound"));
-        popupMenu.add("-");
-        popupMenu.add("Reset");
-
-
-        popupMenu.add("-");
-        popupMenu.add("Size: 1x");
-        popupMenu.add("Size: 2x");
-        popupMenu.add("Size: 3x");
-        popupMenu.add("Size: 4x");
-        popupMenu.add("-");
-        popupMenu.add("FrameSkip: 0");
-        popupMenu.add("FrameSkip: 1");
-        popupMenu.add("FrameSkip: 2");
-        popupMenu.add("FrameSkip: 3");
-        popupMenu.add("-");
-        popupMenu.add("JavaBoy Website");
-        popupMenu.addActionListener(this);
-
-        soundCheck.addItemListener(this);
-
-
-        addMouseListener(this);
-        add(popupMenu);
-
-        cartridge.outputCartInfo();
-
     }
 
     public void run() {
@@ -917,9 +642,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     public void init() {
         requestFocus();
         doubleBuffer = createImage(getSize().width, getSize().height);
-    }
-
-    public void stop() {
     }
 
 }
