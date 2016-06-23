@@ -30,13 +30,6 @@ public class JavaBoy extends Frame implements ActionListener {
     Dmgcpu dmgcpu;
 
     /**
-     * When set, stores the RAM address of a breakpoint.
-     */
-    private short breakpointAddr = -1;
-
-    private short breakpointBank;
-
-    /**
      * Stores commands queued to be executed by the debugger
      */
     private String debuggerQueue = null;
@@ -414,30 +407,6 @@ public class JavaBoy extends Frame implements ActionListener {
                         System.out.println("Error parsing hex value.");
                     }
                     break;
-                case 'b':
-                    try {
-                        if (breakpointAddr != -1) {
-                            cartridge.saveMapping();
-                            cartridge.mapRom(breakpointBank);
-                            //dmgcpu.addressWrite(breakpointAddr, breakpointInstr);
-                            cartridge.restoreMapping();
-                            breakpointAddr = -1;
-                            System.out.println("- Clearing original breakpoint");
-                            dmgcpu.setBreakpoint(false);
-                        }
-                        int addr = valueOf(st.nextToken(), 16);
-                        System.out.println("- Setting breakpoint at " + JavaBoy.hexWord(addr));
-                        breakpointAddr = (short) addr;
-                        //breakpointInstr = dmgcpu.addressRead(addr);
-                        breakpointBank = (short) cartridge.currentBank;
-                        dmgcpu.addressWrite(addr, 0x52);
-                        dmgcpu.setBreakpoint(true);
-                    } catch (java.util.NoSuchElementException e) {
-                        System.out.println("Invalid number of parameters to 'b' command.");
-                    } catch (NumberFormatException e) {
-                        System.out.println("Error parsing hex value.");
-                    }
-                    break;
                 case 'g':
                     cartridge.restoreMapping();
                     dmgcpu.execute(-1);
@@ -467,26 +436,6 @@ public class JavaBoy extends Frame implements ActionListener {
                         System.out.println(cartridge.getMapInfo());
                     }
                     break;
-                case 't':
-                    try {
-                        cartridge.restoreMapping();
-                        int length = valueOf(st.nextToken(), 16);
-                        System.out.println("- Executing " + JavaBoy.hexWord(length) + " instructions starting from program counter (" + JavaBoy.hexWord(dmgcpu.pc) + ")");
-                        dmgcpu.execute(length);
-                        if (dmgcpu.pc == breakpointAddr) {
-//                            dmgcpu.addressWrite(breakpointAddr, breakpointInstr);
-                            breakpointAddr = -1;
-                            System.out.println("- Breakpoint instruction restored");
-                        }
-                    } catch (java.util.NoSuchElementException e) {
-                        System.out.println("- Executing instruction at program counter (" + JavaBoy.hexWord(dmgcpu.pc) + ")");
-                        dmgcpu.execute(1);
-                    } catch (NumberFormatException e) {
-                        System.out.println("Error parsing hex value.");
-                    }
-                    break;
-                default:
-                    System.out.println("Command not recognized.  Try looking at the help page.");
             }
         } catch (java.util.NoSuchElementException e) {
             // Do nothing
