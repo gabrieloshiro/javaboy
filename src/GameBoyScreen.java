@@ -7,7 +7,7 @@ import java.awt.event.*;
  */
 
 class GameBoyScreen extends Frame implements ActionListener,
-        ComponentListener, ItemListener {
+        ComponentListener {
     private GraphicsChip graphicsChip = null;
     private JavaBoy applet;
 
@@ -29,13 +29,6 @@ class GameBoyScreen extends Frame implements ActionListener,
         Menu fileMenu = new Menu("File");
 
         fileMenu.add(fileOpen);
-        for (int r = 0; r < JavaBoy.schemeNames.length; r++) {
-            CheckboxMenuItem[] schemes = new CheckboxMenuItem[JavaBoy.schemeNames.length];
-            schemes[r] = new CheckboxMenuItem(JavaBoy.schemeNames[r]);
-            schemes[r].addItemListener(this);
-            if (r == 0) schemes[r].setState(true);
-        }
-
         menuBar.add(fileMenu);
         setMenuBar(menuBar);
 
@@ -86,22 +79,12 @@ class GameBoyScreen extends Frame implements ActionListener,
     }
 
     public void actionPerformed(ActionEvent e) {
-        if (applet.dmgcpu != null) {
-            applet.dmgcpu.terminate = true;
-            applet.dmgcpu = null;
-            clearWindow();
-        }
-
         applet.cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb", this);
         applet.dmgcpu = new Dmgcpu(applet.cartridge, this);
         setGraphicsChip(applet.dmgcpu.graphicsChip);
         applet.dmgcpu.reset();
         applet.queueDebuggerCommand("s;g");
         applet.dmgcpu.terminate = true;
-    }
-
-    @Override
-    public void itemStateChanged(ItemEvent e) {
     }
 
     public void paint(Graphics g) {
