@@ -35,17 +35,16 @@ class TileBasedGraphicsChip extends GraphicsChip {
     /**
      * Tile cache
      */
-    GameboyTile[] tiles = new GameboyTile[384 * 2];
+    private GameboyTile[] tiles = new GameboyTile[384 * 2];
 
     // Hacks to allow some raster effects to work.  Or at least not to break as badly.
-    boolean savedWindowDataSelect = false;
-    boolean spritesEnabledThisFrame = false;
+    private boolean savedWindowDataSelect = false;
 
-    boolean windowEnableThisLine = false;
-    int windowStopLine = 144;
+    private boolean windowEnableThisLine = false;
+    private int windowStopLine = 144;
 
 
-    public TileBasedGraphicsChip(Component a, Dmgcpu d) {
+    TileBasedGraphicsChip(Component a, Dmgcpu d) {
         super(a, d);
         for (int r = 0; r < 384 * 2; r++) {
             tiles[r] = new GameboyTile(a);
@@ -103,10 +102,9 @@ class TileBasedGraphicsChip extends GraphicsChip {
     /**
      * Draw sprites into the back buffer which have the given priority
      */
-    public void drawSprites(Graphics back, int priority) {
+    private void drawSprites(Graphics back, int priority) {
 
-        int tileBankStart = 0;
-        int vidRamAddress = 0;
+        int vidRamAddress;
 
         // Draw sprites
         for (int i = 0; i < 40; i++) {
@@ -127,7 +125,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
                     if ((attributes & 0x08) != 0) {
                         vidRamAddress = 0x2000 + (tileNum << 4);
                         tileNum += 384;
-                        tileBankStart = 0x2000;
+                        //tileBankStart = 0x2000;
                     } else {
                         vidRamAddress = tileNum << 4;
                     }
@@ -193,13 +191,13 @@ class TileBasedGraphicsChip extends GraphicsChip {
         if (line == 0) {
             clearFrameBuffer();
             drawSprites(backBuffer.getGraphics(), 1);
-            spritesEnabledThisFrame = spritesEnabled;
+            //spritesEnabledThisFrame = spritesEnabled;
             windowStopLine = 144;
             windowEnableThisLine = winEnabled;
         }
 
         // SpritesEnabledThisFrame should be true if sprites were ever on this frame
-        if (spritesEnabled) spritesEnabledThisFrame = true;
+        //if (spritesEnabled) spritesEnabledThisFrame = true;
 
         if (windowEnableThisLine) {
             if (!winEnabled) {
@@ -217,7 +215,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
             savedWindowDataSelect = bgWindowDataSelect;
         }
 
-        // Can't disable background on GBC (?!).  Apperently not, according to BGB
+        // Can't disable background on GBC (?!).  Apparently not, according to BGB
         if ((!bgEnabled) && (!dmgcpu.gbcFeatures)) return;
 
         int xPixelOfs = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x43]) % 8;
@@ -303,7 +301,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
     /**
      * Clears the frame buffer to the background colour
      */
-    public void clearFrameBuffer() {
+    private void clearFrameBuffer() {
         Graphics back = backBuffer.getGraphics();
         back.setColor(new Color(backgroundPalette.getRgbEntry(0)));
         back.fillRect(0, 0, 160 * mag, 144 * mag);
@@ -329,79 +327,6 @@ class TileBasedGraphicsChip extends GraphicsChip {
             framesDrawn++;
         }
         Graphics back = backBuffer.getGraphics();
-
-/*  g.setColor(new Color(255,0,0));
-  g.drawRect(5,5, 10, 10);*/
-        //  System.out.println("- Drawing");
-        //  for (int r = 0; r < 384; r++) {
-        //   if (!spriteTiles[r].valid) System.out.println("Generating image for tile " + r);
-        //   tiles[r].validate(videoRam, r << 4, backgroundPalette, TILE_BKG);
-        //  }
-
-/*  for (int r = 0; r < 20; r++) {
-   bgTiles[r].draw(g, 8 * r, 0);
-  }*/
-
-
-        //  drawSprites(back, 1);
-
-
-        // Draw bg layer
-/*
-  int xTileOfs = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x43]) / 8;
-  int yTileOfs = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x42]) / 8;
-  int xPixelOfs = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x43]) % 8;
-  int yPixelOfs = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x42]) % 8;
-
-  int bgStartAddress;
-  if (hiBgTileMapAddress) {
-   bgStartAddress = 0x1C00;  /* 1C00 
-  } else {
-   bgStartAddress = 0x1800;
-  }
-
-  int tileAddress = 0;
-  int attribs = 0;
-
-  
-  for (int y = 0; y < 19; y++) {
-   for (int x = 0; x < 21; x++) {
-    int attributeData = 0;
-
-
-    tileAddress = bgStartAddress +
-       (((y + yTileOfs) % 32) * 32) + ((x + xTileOfs) % 32);
-    attributeData = JavaBoy.unsign(videoRam[tileAddress + 0x2000]);
-
-    if (bgWindowDataSelect) {
-     tileNum = JavaBoy.unsign(videoRam[tileAddress]);
-    } else {
-     tileNum = 256 + videoRam[tileAddress];
-    }
-
-    if (dmgcpu.gbcFeatures) {
-     attribs = (attributeData & 0x07) << 2;
-
-     if ((attributeData & 0x20) != 0) {
-      attribs |= TILE_FLIPX;
-     }
-     if ((attributeData & 0x40) != 0) {
-      attribs |= TILE_FLIPY;
-     }
-
-    } else {
-     attribs = TILE_BKG;
-    }
-
-    if (tiles[tileNum + tileStart].invalid(attribs)) {
-     tiles[tileNum + tileStart].validate(videoRam, tileNum << 4 + vidMemStart, attribs);
-    }
-    tiles[tileNum + tileStart].
-       draw(back, (8 * x) - xPixelOfs, (8 * y) - yPixelOfs, attribs);
-   }
-  }
-*/
-
 
   /* Draw window */
         if (winEnabled) {
@@ -466,7 +391,6 @@ class TileBasedGraphicsChip extends GraphicsChip {
         }
 
         // Draw sprites if the flag was on at any time during this frame
- /* if (spritesEnabledThisFrame) */
         drawSprites(back, 0);
 
         if ((spritesEnabled) && (dmgcpu.gbcFeatures)) {
@@ -493,7 +417,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
 
         /**
          * True, if the tile's image in the image[] array is a valid representation of the tile as it
-         * appers in video memory.
+         * appears in video memory.
          */
         boolean[] valid = new boolean[64];
 
@@ -559,10 +483,6 @@ class TileBasedGraphicsChip extends GraphicsChip {
 
             GameboyPalette pal;
 
-            if (offset == 0x31E0) {
-                //	 System.out.println("window updated with " + JavaBoy.hexByte(attribs) + " xflip = " + (attribs & TILE_FLIPX) + "  yflip = " + (attribs & TILE_FLIPY));
-            }
-
             if (dmgcpu.gbcFeatures) {
                 if (attribs < 32) {
                     pal = gbcBackground[attribs >> 2];
@@ -626,14 +546,14 @@ class TileBasedGraphicsChip extends GraphicsChip {
         /**
          * Draw the tile with the specified attributes into the graphics context given
          */
-        public void draw(Graphics g, int x, int y, int attribs) {
+        void draw(Graphics g, int x, int y, int attribs) {
             g.drawImage(image[attribs], x * magnify, y * magnify, null);
         }
 
         /**
          * Ensure that the tile is valid
          */
-        public void validate(byte[] videoRam, int offset, int attribs) {
+        void validate(byte[] videoRam, int offset, int attribs) {
             if (!valid[attribs]) {
                 updateImage(videoRam, offset, attribs);
             }
@@ -642,7 +562,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
         /**
          * Change the magnification of the tile
          */
-        public void setMagnify(int m) {
+        void setMagnify(int m) {
             for (int r = 0; r < 64; r++) {
                 valid[r] = false;
                 source[r] = null;
@@ -658,7 +578,7 @@ class TileBasedGraphicsChip extends GraphicsChip {
         /**
          * Invalidate tile with the specified palette, including all flipped versions.
          */
-        public void invalidate(int attribs) {
+        void invalidate(int attribs) {
             valid[attribs] = false;       /* Invalidate original image and */
             if (image[attribs] != null) image[attribs].flush();
             valid[attribs + 1] = false;   /* all flipped versions in cache */
