@@ -206,13 +206,11 @@ class IoHandler {
 
                 registers[0x02] = (byte) data;
 
-                if (false) {                    // Game Link is connected to serial port
-                } else {
-                    if ((registers[0x02] & 0x01) == 1) {
-                        registers[0x01] = (byte) 0xFF; // when no LAN connection, always receive 0xFF from port.  Simulates empty socket.
-                        if (dmgcpu.running) dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_SER);
-                        registers[0x02] &= 0x7F;
-                    }
+
+                if ((registers[0x02] & 0x01) == 1) {
+                    registers[0x01] = (byte) 0xFF; // when no LAN connection, always receive 0xFF from port.  Simulates empty socket.
+                    dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_SER);
+                    registers[0x02] &= 0x7F;
                 }
                 break;
 

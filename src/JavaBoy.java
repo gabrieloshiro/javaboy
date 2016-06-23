@@ -165,8 +165,6 @@ public class JavaBoy extends Frame implements ActionListener {
      * Execute any pending debugger commands, or get a command from the console and execute it
      */
     private void getDebuggerMenuChoice() {
-        if (dmgcpu != null) dmgcpu.terminate = false;
-
         if (debuggerPending) {
             debuggerPending = false;
             executeDebuggerCommand(debuggerQueue);
@@ -185,7 +183,7 @@ public class JavaBoy extends Frame implements ActionListener {
             in = new BufferedReader(new InputStreamReader(is));
 
             String line;
-            while (((line = in.readLine()) != null) && (!dmgcpu.terminate)) {
+            while ((line = in.readLine()) != null) {
                 executeDebuggerCommand(line);
             }
 
@@ -395,7 +393,6 @@ public class JavaBoy extends Frame implements ActionListener {
         dmgcpu.reset();
         debuggerQueue = "s;g";
         debuggerPending = true;
-        dmgcpu.terminate = true;
     }
 
 }

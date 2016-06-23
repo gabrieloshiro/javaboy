@@ -117,8 +117,6 @@ class Dmgcpu {
     GraphicsChip graphicsChip;
     IoHandler ioHandler;
     private Component applet;
-    boolean terminate;
-    boolean running = false;
 
     boolean gbcFeatures = true;
     private boolean allowGbcFeatures = true;
@@ -135,14 +133,6 @@ class Dmgcpu {
 
         ioHandler = new IoHandler(this);
         applet = a;
-    }
-
-
-    /**
-     * Force the execution thread to stop and return to it's caller
-     */
-    void terminateProcess() {
-        terminate = true;
     }
 
     /**
@@ -212,12 +202,7 @@ class Dmgcpu {
             case 0x5000:
             case 0x6000:
             case 0x7000:
-                if (!running) {
-                    cartridge.debuggerAddressWrite(addr, data);
-                } else {
-                    cartridge.addressWrite(addr, data);
-                    //    System.out.println("Tried to write to ROM! PC = " + JavaBoy.hexWord(pc) + ", Data = " + JavaBoy.hexByte(JavaBoy.unsign((byte) data)));
-                }
+                cartridge.addressWrite(addr, data);
                 break;
 
             case 0x8000:
@@ -562,14 +547,12 @@ class Dmgcpu {
      */
     final void execute(int numInstr) {
 
-        terminate = false;
         short newf;
         int dat;
-        running = true;
         graphicsChip.startTime = System.currentTimeMillis();
         int b1, b2, b3, offset;
 
-        for (int r = 0; (r != numInstr) && (!terminate); r++) {
+        while (true) {
             instrCount++;
 
             b1 = JavaBoy.unsign(addressRead(pc));
@@ -1324,26 +1307,16 @@ class Dmgcpu {
                         f = (short) (f & F_ZERO);
                     }
                     break;
-                case 0x52:               // Debug breakpoint (LD D, D)
-                    // As this insturction is used in games (why?) only break here if the breakpoint is on in the debugger
-                    if (breakpointEnable) {
-                        terminate = true;
-                        System.out.println("- Breakpoint reached");
-                    } else {
-                        pc++;
-                    }
+                case 0x52:
+                    pc++;
                     break;
 
                 case 0x76:               // HALT
                     interruptsEnabled = true;
-                    //		System.out.println("Halted, pc = " + JavaBoy.hexWord(pc));
                     while (ioHandler.registers[0x0F] == 0) {
                         initiateInterrupts();
                         instrCount++;
                     }
-
-                    //		System.out.println("intrcount: " + instrCount + " IE: " + JavaBoy.hexByte(ioHandler.registers[0xFF]));
-                    //		System.out.println(" Finished halt");
                     pc++;
                     break;
                 case 0xAF:               // XOR A, A (== LD A, 0)
@@ -2034,7 +2007,6 @@ class Dmgcpu {
 
                     } else {
                         System.out.println("Unrecognized opcode (" + JavaBoy.hexByte(b1) + ")");
-                        terminate = true;
                         pc++;
                         break;
                     }
@@ -2061,20 +2033,7 @@ class Dmgcpu {
 
 
             initiateInterrupts();
-
-
-/*   if ((hl & 0xFFFF0000) != 0) {
-    terminate = true;
-    System.out.println("Overflow in HL!");
-   }*/
-
         }
-        running = false;
-        terminate = false;
-    }
-
-    void setBreakpoint(boolean on) {
-        breakpointEnable = on;
     }
 
     /**
