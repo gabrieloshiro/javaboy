@@ -40,14 +40,6 @@ public class JavaBoy extends Frame implements ActionListener {
     private boolean debuggerPending = false;
 
     private Image doubleBuffer;
-    private int stripTimer = 0;
-
-    /**
-     * Outputs a line of debugging information
-     */
-    static void debugLog(String s) {
-        System.out.println("Debug: " + s);
-    }
 
     /**
      * Returns the unsigned value (0 - 255) of a signed byte
@@ -102,7 +94,7 @@ public class JavaBoy extends Frame implements ActionListener {
             /*
       True if the image size changed last frame, and we need to repaint the background
      */
-            if ((stripTimer > stripLength) && (!fullFrame)) {
+            if (!fullFrame) {
 
                 dmgcpu.graphicsChip.draw(g, x, y, this);
 
@@ -115,37 +107,6 @@ public class JavaBoy extends Frame implements ActionListener {
 
                     dmgcpu.graphicsChip.draw(bufferGraphics, x, y, this);
 
-
-                    int stripPos = getSize().height - 40;
-                    if (stripTimer < 10) {
-                        stripPos = getSize().height - (stripTimer * 4);
-                    }
-                    if (stripTimer >= stripLength - 10) {
-                        stripPos = getSize().height - 40 + ((stripTimer - (stripLength - 10)) * 4);
-                    }
-
-                    bufferGraphics.setColor(new Color(0, 0, 255));
-                    bufferGraphics.fillRect(0, stripPos, getSize().width, 44);
-
-                    bufferGraphics.setColor(new Color(128, 128, 255));
-                    bufferGraphics.fillRect(0, stripPos, getSize().width, 2);
-
-                    if (stripTimer < stripLength) {
-                        if (stripTimer < stripLength / 2) {
-                            bufferGraphics.setColor(new Color(255, 255, 255));
-                            bufferGraphics.drawString("JavaBoy - Neil Millstone", 2, stripPos + 12);
-                            bufferGraphics.setColor(new Color(255, 255, 255));
-                            bufferGraphics.drawString("www.millstone.demon.co.uk", 2, stripPos + 24);
-                            bufferGraphics.drawString("/download/javaboy", 2, stripPos + 36);
-                        } else {
-                            bufferGraphics.setColor(new Color(255, 255, 255));
-                            bufferGraphics.drawString("ROM: " + cartridge.getCartName(), 2, stripPos + 12);
-                            bufferGraphics.drawString("Double click for options", 2, stripPos + 24);
-                            bufferGraphics.drawString("Emulator version: 0.92", 2, stripPos + 36);
-                        }
-                    }
-
-                    stripTimer++;
                     g.drawImage(doubleBuffer, 0, 0, this);
                 } else {
                     dmgcpu.graphicsChip.draw(bufferGraphics, x, y, this);

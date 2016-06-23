@@ -408,7 +408,7 @@ class Dmgcpu {
         setBC(0x0013);
         setDE(0x00D8);
         setHL(0x014D);
-        JavaBoy.debugLog("CPU reset");
+        System.out.println("CPU reset");
 
         ioHandler.reset();
         //  pc = 0x0100;

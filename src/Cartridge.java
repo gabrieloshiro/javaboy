@@ -130,16 +130,6 @@ class Cartridge {
 
     private boolean mbc1LargeRamMode = false;
     private boolean ramEnabled;
-    private Component applet;
-
-    /**
-     * The filename of the currently loaded ROM
-     */
-    private String romFileName;
-
-    private String cartName;
-
-    private boolean cartridgeReady = false;
 
     /**
      * Real time clock registers.  Only used on MBC3
@@ -147,18 +137,16 @@ class Cartridge {
     private int[] RTCReg = new int[5];
     private long realTimeStart;
     private long lastSecondIncrement;
-    private String romIntFileName;
 
     /**
      * Create a cartridge object, loading ROM and any associated battery RAM from the cartridge
      * filename given.  Loads via the web if JavaBoy is running as an applet
      */
     public Cartridge(String romFileName, Component a) {
-        applet = a; /* 5823 */
-        this.romFileName = romFileName;
         InputStream is;
         try {
-            is = openRom(romFileName);
+            is = new FileInputStream(new File(romFileName));
+
             byte[] firstBank = new byte[0x04000];
 
             int total = 0x04000;
@@ -183,8 +171,8 @@ class Cartridge {
             } while (total > 0);
             is.close();
 
-            JavaBoy.debugLog("Loaded ROM '" + romFileName + "'.  " + numBanks + " banks, " + (numBanks * 16) + "Kb.  " + getNumRAMBanks() + " RAM banks.");
-            JavaBoy.debugLog("Type: " + cartTypeTable[cartType] + " (" + JavaBoy.hexByte(cartType) + ")");
+            System.out.println("Loaded ROM '" + romFileName + "'.  " + numBanks + " banks, " + (numBanks * 16) + "Kb.  " + getNumRAMBanks() + " RAM banks.");
+            System.out.println("Type: " + cartTypeTable[cartType] + " (" + JavaBoy.hexByte(cartType) + ")");
 
             // Set up the real time clock
             Calendar rightNow = Calendar.getInstance();
@@ -202,9 +190,6 @@ class Cartridge {
 
             realTimeStart = System.currentTimeMillis();
             lastSecondIncrement = realTimeStart;
-
-
-            cartridgeReady = true;
 
         } catch (IOException e) {
             System.out.println("Error opening ROM image '" + romFileName + "'!");
@@ -236,27 +221,6 @@ class Cartridge {
                 }
             }
             lastSecondIncrement = System.currentTimeMillis();
-        }
-    }
-
-    private String stripExtention(String filename) {
-        int dotPosition = filename.lastIndexOf('.');
-
-        if (dotPosition != -1) {
-            return filename.substring(0, dotPosition);
-        } else {
-            return filename;
-        }
-    }
-
-    private InputStream openRom(String romFileName) {
-
-        try {
-            romIntFileName = stripExtention(romFileName);
-            return new FileInputStream(new File(romFileName));
-        } catch (Exception e) {
-            System.out.println("Cant open file");
-            return null;
         }
     }
 
@@ -519,13 +483,6 @@ class Cartridge {
             }
         }
         return 0;
-    }
-
-    /**
-     * Gets the cartridge name
-     */
-    String getCartName() {
-        return cartName;
     }
 
     /**
