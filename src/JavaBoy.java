@@ -1,9 +1,8 @@
 import java.awt.*;
-import java.awt.event.*;
 import java.io.*;
 import java.util.StringTokenizer;
 
-import static java.lang.Integer.*;
+import static java.lang.Integer.valueOf;
 
 /**
  * This is the main controlling class which contains the main() method
@@ -14,7 +13,7 @@ import static java.lang.Integer.*;
 // w = 160
 // h = 144
 
-public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener, ActionListener {
+public class JavaBoy extends java.applet.Applet implements Runnable {
     private static final String hexChars = "0123456789ABCDEF";
     private boolean fullFrame = true;
 
@@ -59,11 +58,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
     private boolean debuggerPending = false;
 
     private Image doubleBuffer;
-
-    private static int[] keyCodes = {38, 40, 37, 39, 90, 88, 10, 8};
-
-    private boolean keyListener = false;
-
     private int stripTimer = 0;
 
     /**
@@ -192,90 +186,9 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
 
     }
 
-    public void actionPerformed(ActionEvent e) {
-    }
-
     public void update(Graphics g) {
         paint(g);
         fullFrame = true;
-    }
-
-    public void keyTyped(KeyEvent e) {
-    }
-
-    public void keyPressed(KeyEvent e) {
-        int key = e.getKeyCode();
-
-        if (key == keyCodes[0]) {
-            dmgcpu.ioHandler.padUp = true;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[1]) {
-            dmgcpu.ioHandler.padDown = true;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[2]) {
-            dmgcpu.ioHandler.padLeft = true;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[3]) {
-            dmgcpu.ioHandler.padRight = true;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[4]) {
-            dmgcpu.ioHandler.padA = true;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[5]) {
-            dmgcpu.ioHandler.padB = true;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[6]) {
-            dmgcpu.ioHandler.padStart = true;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[7]) {
-            dmgcpu.ioHandler.padSelect = true;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        }
-
-        switch (key) {
-            case KeyEvent.VK_F1:
-                if (dmgcpu.graphicsChip.frameSkip != 1)
-                    dmgcpu.graphicsChip.frameSkip--;
-                break;
-            case KeyEvent.VK_F2:
-                if (dmgcpu.graphicsChip.frameSkip != 10)
-                    dmgcpu.graphicsChip.frameSkip++;
-                break;
-            case KeyEvent.VK_F5:
-                dmgcpu.terminateProcess();
-                System.out.println("- Break into debugger");
-                break;
-        }
-    }
-
-    public void keyReleased(KeyEvent e) {
-        int key = e.getKeyCode();
-
-        if (key == keyCodes[0]) {
-            dmgcpu.ioHandler.padUp = false;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[1]) {
-            dmgcpu.ioHandler.padDown = false;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[2]) {
-            dmgcpu.ioHandler.padLeft = false;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[3]) {
-            dmgcpu.ioHandler.padRight = false;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[4]) {
-            dmgcpu.ioHandler.padA = false;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[5]) {
-            dmgcpu.ioHandler.padB = false;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[6]) {
-            dmgcpu.ioHandler.padStart = false;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        } else if (key == keyCodes[7]) {
-            dmgcpu.ioHandler.padSelect = false;
-            dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_P10);
-        }
     }
 
     /**
@@ -394,13 +307,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
 
         while (commandTokens.hasMoreTokens()) {
             executeSingleDebuggerCommand(commandTokens.nextToken());
-        }
-    }
-
-    private void setupKeyboard() {
-        if (!keyListener) {
-            addKeyListener(this);
-            keyListener = true;
         }
     }
 
@@ -543,7 +449,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable, KeyListener
                     }
                     break;
                 case 'g':
-                    setupKeyboard();
                     cartridge.restoreMapping();
                     dmgcpu.execute(-1);
                     break;
