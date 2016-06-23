@@ -195,13 +195,6 @@ public class JavaBoy extends Frame implements ActionListener {
         }
     }
 
-    /**
-     * Queue a debugger command for later execution
-     */
-    void queueDebuggerCommand(String command) {
-        debuggerQueue = command;
-        debuggerPending = true;
-    }
 
     /**
      * Execute a debugger command which can consist of many commands separated by semicolons
@@ -400,7 +393,8 @@ public class JavaBoy extends Frame implements ActionListener {
         cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb");
         dmgcpu = new Dmgcpu(cartridge, this);
         dmgcpu.reset();
-        queueDebuggerCommand("s;g");
+        debuggerQueue = "s;g";
+        debuggerPending = true;
         dmgcpu.terminate = true;
     }
 
