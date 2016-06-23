@@ -13,7 +13,7 @@ import static java.lang.Integer.valueOf;
 // w = 160
 // h = 144
 
-public class JavaBoy extends java.applet.Applet implements Runnable {
+public class JavaBoy extends Frame {
     private static final String hexChars = "0123456789ABCDEF";
     private boolean fullFrame = true;
 
@@ -517,11 +517,13 @@ public class JavaBoy extends java.applet.Applet implements Runnable {
         System.out.println("JavaBoy (tm) Version 0.92 (c) 2005 Neil Millstone (application)");
         JavaBoy javaBoy = new JavaBoy();
 
-        Thread p = new Thread(javaBoy);
-        p.start();
+        javaBoy.go();
     }
 
-    public void run() {
+    private void go() {
+        requestFocus();
+        doubleBuffer = createImage(getSize().width, getSize().height);
+
         do {
             try {
                 getDebuggerMenuChoice();
@@ -532,11 +534,6 @@ public class JavaBoy extends java.applet.Applet implements Runnable {
                 break;
             }
         } while (true);
-    }
-
-    public void init() {
-        requestFocus();
-        doubleBuffer = createImage(getSize().width, getSize().height);
     }
 
 }
