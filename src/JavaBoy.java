@@ -162,19 +162,6 @@ public class JavaBoy extends Frame implements ActionListener {
     }
 
     /**
-     * Output the current register values to the console
-     */
-    private void showRegisterValues() {
-        System.out.println("- Register values");
-        System.out.print("A = " + JavaBoy.hexWord(dmgcpu.a) + "    BC = " + JavaBoy.hexWord(dmgcpu.b) + JavaBoy.hexWord(dmgcpu.c));
-        System.out.print("    DE = " + JavaBoy.hexByte(dmgcpu.d) + JavaBoy.hexByte(dmgcpu.e));
-        System.out.print("    HL = " + JavaBoy.hexWord(dmgcpu.hl));
-        System.out.print("    PC = " + JavaBoy.hexWord(dmgcpu.pc));
-        System.out.println("    SP = " + JavaBoy.hexWord(dmgcpu.sp));
-        System.out.println("F = " + JavaBoy.hexByte(unsign((short) dmgcpu.f)));
-    }
-
-    /**
      * Execute any pending debugger commands, or get a command from the console and execute it
      */
     private void getDebuggerMenuChoice() {
@@ -235,9 +222,6 @@ public class JavaBoy extends Frame implements ActionListener {
 
         try {
             switch (st.nextToken().charAt(0)) {
-                case '?':
-                    //displayDebuggerHelp();
-                    break;
                 case 'd':
                     try {
                         int address = valueOf(st.nextToken(), 16);
@@ -289,7 +273,7 @@ public class JavaBoy extends Frame implements ActionListener {
                             System.out.println("Error parsing hex value.");
                         }
                     } catch (java.util.NoSuchElementException e) {
-                        showRegisterValues();
+                        //showRegisterValues();
                     }
                     break;
                 case 's':
