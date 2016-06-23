@@ -397,7 +397,7 @@ public class JavaBoy extends Frame implements ActionListener {
     }
 
     public void actionPerformed(ActionEvent e) {
-        cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb", this);
+        cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb");
         dmgcpu = new Dmgcpu(cartridge, this);
         dmgcpu.reset();
         queueDebuggerCommand("s;g");

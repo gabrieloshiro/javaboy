@@ -22,8 +22,10 @@ Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
 
-import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Calendar;
 
 /**
@@ -142,7 +144,7 @@ class Cartridge {
      * Create a cartridge object, loading ROM and any associated battery RAM from the cartridge
      * filename given.  Loads via the web if JavaBoy is running as an applet
      */
-    public Cartridge(String romFileName, Component a) {
+    Cartridge(String romFileName) {
         InputStream is;
         try {
             is = new FileInputStream(new File(romFileName));
