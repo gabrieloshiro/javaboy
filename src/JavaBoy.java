@@ -84,48 +84,34 @@ public class JavaBoy extends Frame implements ActionListener {
      * When running as an applet, updates the screen when necessary
      */
     public void paint(Graphics g) {
-        if (dmgcpu != null) {
-            int stripLength = 300;
+        if (dmgcpu == null) return;
+        
+        // Centre the GB image
+        int x = getSize().width / 2 - dmgcpu.graphicsChip.getWidth() / 2;
+        int y = getSize().height / 2 - dmgcpu.graphicsChip.getHeight() / 2;
 
-            // Centre the GB image
-            int x = getSize().width / 2 - dmgcpu.graphicsChip.getWidth() / 2;
-            int y = getSize().height / 2 - dmgcpu.graphicsChip.getHeight() / 2;
+        /*
+              True if the image size changed last frame, and we need to repaint the background
+             */
+        if (!fullFrame) {
 
-            /*
-      True if the image size changed last frame, and we need to repaint the background
-     */
-            if (!fullFrame) {
-
-                dmgcpu.graphicsChip.draw(g, x, y, this);
-
-            } else {
-                Graphics bufferGraphics = doubleBuffer.getGraphics();
-
-                if (dmgcpu.graphicsChip.isFrameReady()) {
-                    bufferGraphics.setColor(new Color(255, 255, 255));
-                    bufferGraphics.fillRect(0, 0, getSize().width, getSize().height);
-
-                    dmgcpu.graphicsChip.draw(bufferGraphics, x, y, this);
-
-                    g.drawImage(doubleBuffer, 0, 0, this);
-                } else {
-                    dmgcpu.graphicsChip.draw(bufferGraphics, x, y, this);
-                }
-
-            }
+            dmgcpu.graphicsChip.draw(g, x, y, this);
 
         } else {
-            g.setColor(new Color(0, 0, 0));
-            g.fillRect(0, 0, 160, 144);
-            g.setColor(new Color(255, 255, 255));
-            g.drawRect(0, 0, 160, 144);
-            g.drawString("JavaBoy (tm)", 10, 10);
-            g.drawString("Version 0.92", 10, 20);
+            Graphics bufferGraphics = doubleBuffer.getGraphics();
 
-            g.drawString("Charging flux capacitor...", 10, 40);
-            g.drawString("Loading game ROM...", 10, 50);
+            if (dmgcpu.graphicsChip.isFrameReady()) {
+                bufferGraphics.setColor(new Color(255, 255, 255));
+                bufferGraphics.fillRect(0, 0, getSize().width, getSize().height);
+
+                dmgcpu.graphicsChip.draw(bufferGraphics, x, y, this);
+
+                g.drawImage(doubleBuffer, 0, 0, this);
+            } else {
+                dmgcpu.graphicsChip.draw(bufferGraphics, x, y, this);
+            }
+
         }
-
 
     }
 
@@ -136,36 +122,13 @@ public class JavaBoy extends Frame implements ActionListener {
     }
 
     /**
-     * Output a standard hex dump of memory to the console
-     */
-    private void hexDump(int address, int length) {
-        int start = address & 0xFFF0;
-        int lines = length / 16;
-        if (lines == 0) lines = 1;
-
-        for (int l = 0; l < lines; l++) {
-            System.out.print(JavaBoy.hexWord(start + (l * 16)) + "   ");
-            for (int r = start + (l * 16); r < start + (l * 16) + 16; r++) {
-                System.out.print(JavaBoy.hexByte(unsign(dmgcpu.addressRead(r))) + " ");
-            }
-            System.out.print("   ");
-            for (int r = start + (l * 16); r < start + (l * 16) + 16; r++) {
-                char c = (char) dmgcpu.addressRead(r);
-                if ((c >= 32) && (c <= 128)) {
-                    System.out.print(c);
-                } else {
-                    System.out.print(".");
-                }
-            }
-            System.out.println("");
-        }
-    }
-
-    /**
      * Execute any pending debugger commands, or get a command from the console and execute it
      */
     private void getDebuggerMenuChoice() {
         if (debuggerPending) {
+
+            System.out.println("debuggerPending = true");
+
             debuggerPending = false;
             executeDebuggerCommand(debuggerQueue);
         }
@@ -218,7 +181,7 @@ public class JavaBoy extends Frame implements ActionListener {
                         int address = valueOf(st.nextToken(), 16);
                         int length = valueOf(st.nextToken(), 16);
                         System.out.println("- Dumping " + JavaBoy.hexWord(length) + " instructions starting from " + JavaBoy.hexWord(address));
-                        hexDump(address, length);
+                        //hexDump(address, length);
                     } catch (java.util.NoSuchElementException e) {
                         System.out.println("Invalid number of parameters to 'd' command.");
                     } catch (NumberFormatException e) {
