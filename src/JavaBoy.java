@@ -30,11 +30,6 @@ public class JavaBoy extends Frame implements ActionListener {
     Dmgcpu dmgcpu;
 
     /**
-     * Stores the byte which was overwritten at the breakpoint address by the breakpoint instruction
-     */
-    private short breakpointInstr;
-
-    /**
      * When set, stores the RAM address of a breakpoint.
      */
     private short breakpointAddr = -1;
@@ -424,7 +419,7 @@ public class JavaBoy extends Frame implements ActionListener {
                         if (breakpointAddr != -1) {
                             cartridge.saveMapping();
                             cartridge.mapRom(breakpointBank);
-                            dmgcpu.addressWrite(breakpointAddr, breakpointInstr);
+                            //dmgcpu.addressWrite(breakpointAddr, breakpointInstr);
                             cartridge.restoreMapping();
                             breakpointAddr = -1;
                             System.out.println("- Clearing original breakpoint");
@@ -433,7 +428,7 @@ public class JavaBoy extends Frame implements ActionListener {
                         int addr = valueOf(st.nextToken(), 16);
                         System.out.println("- Setting breakpoint at " + JavaBoy.hexWord(addr));
                         breakpointAddr = (short) addr;
-                        breakpointInstr = dmgcpu.addressRead(addr);
+                        //breakpointInstr = dmgcpu.addressRead(addr);
                         breakpointBank = (short) cartridge.currentBank;
                         dmgcpu.addressWrite(addr, 0x52);
                         dmgcpu.setBreakpoint(true);
@@ -479,7 +474,7 @@ public class JavaBoy extends Frame implements ActionListener {
                         System.out.println("- Executing " + JavaBoy.hexWord(length) + " instructions starting from program counter (" + JavaBoy.hexWord(dmgcpu.pc) + ")");
                         dmgcpu.execute(length);
                         if (dmgcpu.pc == breakpointAddr) {
-                            dmgcpu.addressWrite(breakpointAddr, breakpointInstr);
+//                            dmgcpu.addressWrite(breakpointAddr, breakpointInstr);
                             breakpointAddr = -1;
                             System.out.println("- Breakpoint instruction restored");
                         }
@@ -541,7 +536,7 @@ public class JavaBoy extends Frame implements ActionListener {
         queueDebuggerCommand("s;g");
         dmgcpu.terminate = true;
     }
-    
+
 }
 
 
