@@ -510,7 +510,8 @@ public class JavaBoy extends Frame {
     private JavaBoy() {
         GameBoyScreen mainWindow = new GameBoyScreen("JavaBoy 0.92", this);
         mainWindow.setVisible(true);
-        this.requestFocus();
+        requestFocus();
+        doubleBuffer = createImage(getSize().width, getSize().height);
     }
 
     public static void main(String[] args) {
@@ -521,18 +522,8 @@ public class JavaBoy extends Frame {
     }
 
     private void go() {
-        requestFocus();
-        doubleBuffer = createImage(getSize().width, getSize().height);
-
         do {
-            try {
-                getDebuggerMenuChoice();
-                java.lang.Thread.sleep(1);
-                this.requestFocus();
-            } catch (InterruptedException e) {
-                System.out.println("Interrupted!");
-                break;
-            }
+            getDebuggerMenuChoice();
         } while (true);
     }
 
