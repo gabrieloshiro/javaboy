@@ -11,11 +11,11 @@ class Dmgcpu {
     /**
      * Registers: 8-bit
      */
-    int a, b, c, d, e, f;
+    private int a, b, c, d, e, f;
     /**
      * Registers: 16-bit
      */
-    int sp, pc, hl;
+    private int sp, pc, hl;
 
     /**
      * The number of instructions that have been executed since the
@@ -32,11 +32,6 @@ class Dmgcpu {
 
     boolean timaEnabled = false;
     int instrsPerTima = 6000;
-
-    /**
-     * Enable the breakpoint flag.  As breakpoint instruction is used in some games, this is used to skip over it unless the breakpoint is actually in use
-     */
-    private boolean breakpointEnable = false;
 
     /**
      * Zero flag
@@ -99,13 +94,6 @@ class Dmgcpu {
      */
     final short INT_P10 = 0x10;
 
-    private String[] registerNames =
-            {"B", "C", "D", "E", "H", "L", "(HL)", "A"};
-    private String[] aluOperations =
-            {"ADD", "ADC", "SUB", "SBC", "AND", "XOR", "OR", "CP"};
-    private String[] shiftOperations =
-            {"RLC", "RRC", "RL", "RR", "SLA", "SRA", "SWAP", "SRL"};
-
     // 8Kb main system RAM appears at 0xC000 in address space
     // 32Kb for GBC
     private byte[] mainRam = new byte[0x8000];
@@ -119,7 +107,6 @@ class Dmgcpu {
     private Component applet;
 
     boolean gbcFeatures = true;
-    private boolean allowGbcFeatures = true;
     int gbcRamBank = 1;
 
     /**
@@ -359,7 +346,7 @@ class Dmgcpu {
 
     private void checkEnableGbc() {
         // GBC Cartridge ID
-        gbcFeatures = ((cartridge.rom[0x143] & 0x80) == 0x80) && (allowGbcFeatures);
+        gbcFeatures = ((cartridge.rom[0x143] & 0x80) == 0x80);
     }
 
 
@@ -415,7 +402,7 @@ class Dmgcpu {
      * If an interrupt is enabled an the interrupt register shows that it has occured, jump to
      * the relevant interrupt vector address
      */
-    private final void checkInterrupts() {
+    private void checkInterrupts() {
         int intFlags = ioHandler.registers[0x0F];
         int ieReg = ioHandler.registers[0xFF];
         if ((intFlags & ieReg) != 0) {
@@ -448,7 +435,7 @@ class Dmgcpu {
     /**
      * Initiate an interrupt of the specified type
      */
-    private final void triggerInterrupt(int intr) {
+    private void triggerInterrupt(int intr) {
         ioHandler.registers[0x0F] |= intr;
     }
 
@@ -545,7 +532,7 @@ class Dmgcpu {
     /**
      * Execute the specified number of Gameboy instructions.  Use '-1' to execute forever
      */
-    final void execute(int numInstr) {
+    final void execute() {
 
         short newf;
         int dat;
@@ -2034,556 +2021,5 @@ class Dmgcpu {
 
             initiateInterrupts();
         }
-    }
-
-    /**
-     * Output a disassembly of the specified number of instructions starting at the speicifed address.
-     */
-    String disassemble(int address, int numInstr) {
-
-        System.out.println("Addr  Data      Instruction");
-
-        for (int r = 0; r < numInstr; r++) {
-            short b1 = JavaBoy.unsign(addressRead(address));
-            short offset = addressRead(address + 1);
-            short b3 = JavaBoy.unsign(addressRead(address + 2));
-            short b2 = JavaBoy.unsign(offset);
-
-            String instr = "Unknown Opcode! (" + Integer.toHexString(JavaBoy.unsign(b1)) + ")";
-            byte instrLength = 1;
-
-            switch (b1) {
-                case 0x00:
-                    instr = "NOP";
-                    break;
-                case 0x01:
-                    instr = "LD BC, " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-                case 0x02:
-                    instr = "LD (BC), A";
-                    break;
-                case 0x03:
-                    instr = "INC BC";
-                    break;
-                case 0x04:
-                    instr = "INC B";
-                    break;
-                case 0x05:
-                    instr = "DEC B";
-                    break;
-                case 0x06:
-                    instr = "LD B, " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0x07:
-                    instr = "RLC A";
-                    break;
-                case 0x08:
-                    instr = "LD (" + JavaBoy.hexWord((b3 << 8) + b2) + "), SP";
-                    instrLength = 3;        // Non Z80
-                    break;
-                case 0x09:
-                    instr = "ADD HL, BC";
-                    break;
-                case 0x0A:
-                    instr = "LD A, (BC)";
-                    break;
-                case 0x0B:
-                    instr = "DEC BC";
-                    break;
-                case 0x0C:
-                    instr = "INC C";
-                    break;
-                case 0x0D:
-                    instr = "DEC C";
-                    break;
-                case 0x0E:
-                    instr = "LD C, " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0x0F:
-                    instr = "RRC A";
-                    break;
-                case 0x10:
-                    instr = "STOP";
-                    instrLength = 2;  // STOP instruction must be followed by a NOP
-                    break;
-                case 0x11:
-                    instr = "LD DE, " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-                case 0x12:
-                    instr = "LD (DE), A";
-                    break;
-                case 0x13:
-                    instr = "INC DE";
-                    break;
-                case 0x14:
-                    instr = "INC D";
-                    break;
-                case 0x15:
-                    instr = "DEC D";
-                    break;
-                case 0x16:
-                    instr = "LD D, " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0x17:
-                    instr = "RL A";
-                    break;
-                case 0x18:
-                    instr = "JR " + JavaBoy.hexWord(address + 2 + offset);
-                    instrLength = 2;
-                    break;
-                case 0x19:
-                    instr = "ADD HL, DE";
-                    break;
-                case 0x1A:
-                    instr = "LD A, (DE)";
-                    break;
-                case 0x1B:
-                    instr = "DEC DE";
-                    break;
-                case 0x1C:
-                    instr = "INC E";
-                    break;
-                case 0x1D:
-                    instr = "DEC E";
-                    break;
-                case 0x1E:
-                    instr = "LD E, " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0x1F:
-                    instr = "RR A";
-                    break;
-                case 0x20:
-                    instr = "JR NZ, " + JavaBoy.hexWord(address + 2 + offset) + ": " + offset;
-
-                    instrLength = 2;
-                    break;
-                case 0x21:
-                    instr = "LD HL, " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-                case 0x22:
-                    instr = "LD (HL+), A";     // Non Z80
-                    break;
-                case 0x23:
-                    instr = "INC HL";
-                    break;
-                case 0x24:
-                    instr = "INC H";
-                    break;
-                case 0x25:
-                    instr = "DEC H";
-                    break;
-                case 0x26:
-                    instr = "LD H, " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0x27:
-                    instr = "DAA";
-                    break;
-                case 0x28:
-                    instr = "JR Z, " + JavaBoy.hexWord(address + 2 + offset);
-                    instrLength = 2;
-                    break;
-                case 0x29:
-                    instr = "ADD HL, HL";
-                    break;
-                case 0x2A:
-                    instr = "LDI A, (HL)";
-                    break;
-                case 0x2B:
-                    instr = "DEC HL";
-                    break;
-                case 0x2C:
-                    instr = "INC L";
-                    break;
-                case 0x2D:
-                    instr = "DEC L";
-                    break;
-                case 0x2E:
-                    instr = "LD L, " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0x2F:
-                    instr = "CPL";
-                    break;
-                case 0x30:
-                    instr = "JR NC, " + JavaBoy.hexWord(address + 2 + offset);
-                    instrLength = 2;
-                    break;
-                case 0x31:
-                    instr = "LD SP, " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-                case 0x32:
-                    instr = "LD (HL-), A";
-                    break;
-                case 0x33:
-                    instr = "INC SP";
-                    break;
-                case 0x34:
-                    instr = "INC (HL)";
-                    break;
-                case 0x35:
-                    instr = "DEC (HL)";
-                    break;
-                case 0x36:
-                    instr = "LD (HL), " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0x37:
-                    instr = "SCF";     // Set carry flag?
-                    break;
-                case 0x38:
-                    instr = "JR C, " + JavaBoy.hexWord(address + 2 + offset);
-                    instrLength = 2;
-                    break;
-                case 0x39:
-                    instr = "ADD HL, SP";
-                    break;
-                case 0x3A:
-                    instr = "LD A, (HL-)";
-                    break;
-                case 0x3B:
-                    instr = "DEC SP";
-                    break;
-                case 0x3C:
-                    instr = "INC A";
-                    break;
-                case 0x3D:
-                    instr = "DEC A";
-                    break;
-                case 0x3E:
-                    instr = "LD A, " + JavaBoy.hexByte(JavaBoy.unsign(b2));
-                    instrLength = 2;
-                    break;
-                case 0x3F:
-                    instr = "CCF";   // Clear carry flag?
-                    break;
-
-                case 0x76:
-                    instr = "HALT";
-                    break;
-
-                // 0x40 - 0x7F = LD Reg, Reg - see below
-                // 0x80 - 0xBF = ALU ops - see below
-
-                case 0xC0:
-                    instr = "RET NZ";
-                    break;
-                case 0xC1:
-                    instr = "POP BC";
-                    break;
-                case 0xC2:
-                    instr = "JP NZ, " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-                case 0xC3:
-                    instr = "JP " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-                case 0xC4:
-                    instr = "CALL NZ, " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-                case 0xC5:
-                    instr = "PUSH BC";
-                    break;
-                case 0xC6:
-                    instr = "ADD A, " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0xC7:
-                    instr = "RST 00";      // Is this an interrupt call?
-                    break;
-                case 0xC8:
-                    instr = "RET Z";
-                    break;
-                case 0xC9:
-                    instr = "RET";
-                    break;
-                case 0xCA:
-                    instr = "JP Z, " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-
-                // 0xCB = Shifts (see below)
-
-                case 0xCC:
-                    instr = "CALL Z, " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-                case 0xCD:
-                    instr = "CALL " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-                case 0xCE:
-                    instr = "ADC A, " + JavaBoy.hexByte(b2);  // Signed or unsigned?
-                    instrLength = 2;
-                    break;
-                case 0xCF:
-                    instr = "RST 08";      // Is this an interrupt call?
-                    break;
-                case 0xD0:
-                    instr = "RET NC";
-                    break;
-                case 0xD1:
-                    instr = "POP DE";
-                    break;
-                case 0xD2:
-                    instr = "JP NC, " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-
-                // 0xD3: Unknown
-
-                case 0xD4:
-                    instr = "CALL NC, " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-                case 0xD5:
-                    instr = "PUSH DE";
-                    break;
-                case 0xD6:
-                    instr = "SUB A, " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0xD7:
-                    instr = "RST 10";
-                    break;
-                case 0xD8:
-                    instr = "RET C";
-                    break;
-                case 0xD9:
-                    instr = "RETI";
-                    break;
-                case 0xDA:
-                    instr = "JP C, " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-
-                // 0xDB: Unknown
-
-                case 0xDC:
-                    instr = "CALL C, " + JavaBoy.hexWord((b3 << 8) + b2);
-                    instrLength = 3;
-                    break;
-
-                // 0xDD: Unknown
-
-                case 0xDE:
-                    instr = "SBC A, " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0xDF:
-                    instr = "RST 18";
-                    break;
-                case 0xE0:
-                    instr = "LDH (FF" + JavaBoy.hexByte(b2 & 0xFF) + "), A";
-                    instrLength = 2;
-                    break;
-                case 0xE1:
-                    instr = "POP HL";
-                    break;
-                case 0xE2:
-                    instr = "LDH (FF00 + C), A";
-                    break;
-
-                // 0xE3 - 0xE4: Unknown
-
-                case 0xE5:
-                    instr = "PUSH HL";
-                    break;
-                case 0xE6:
-                    instr = "AND " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0xE7:
-                    instr = "RST 20";
-                    break;
-                case 0xE8:
-                    instr = "ADD SP, " + JavaBoy.hexByte(offset);
-                    instrLength = 2;
-                    break;
-                case 0xE9:
-                    instr = "JP (HL)";
-                    break;
-                case 0xEA:
-                    instr = "LD (" + JavaBoy.hexWord((b3 << 8) + b2) + "), A";
-                    instrLength = 3;
-                    break;
-
-                // 0xEB - 0xED: Unknown
-
-                case 0xEE:
-                    instr = "XOR " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0xEF:
-                    instr = "RST 28";
-                    break;
-                case 0xF0:
-                    instr = "LDH A, (FF" + JavaBoy.hexByte(b2) + ")";
-                    instrLength = 2;
-                    break;
-                case 0xF1:
-                    instr = "POP AF";
-                    break;
-                case 0xF2:
-                    instr = "LD A, (FF00 + C)";              // What's this for?
-                    break;
-                case 0xF3:
-                    instr = "DI";
-                    break;
-
-                // 0xF4: Unknown
-
-                case 0xF5:
-                    instr = "PUSH AF";
-                    break;
-                case 0xF6:
-                    instr = "OR " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0xF7:
-                    instr = "RST 30";
-                    break;
-                case 0xF8:
-                    instr = "LD HL, SP + " + JavaBoy.hexByte(offset);  // Check this one, docs disagree
-                    instrLength = 2;
-                    break;
-                case 0xF9:
-                    instr = "LD SP, HL";
-                    break;
-                case 0xFA:
-                    instr = "LD A, (" + JavaBoy.hexWord((b3 << 8) + b2) + ")";
-                    instrLength = 3;
-                    break;
-                case 0xFB:
-                    instr = "EI";
-                    break;
-
-                // 0xFC - 0xFD: Unknown
-
-                case 0xFE:
-                    instr = "CP " + JavaBoy.hexByte(b2);
-                    instrLength = 2;
-                    break;
-                case 0xFF:
-                    instr = "RST 38";
-                    break;
-            }
-
-            // The following section handles LD Reg, Reg instructions
-            // Bit 7 6 5 4 3 2 1 0    D = Dest register
-            //     0 1 D D D S S S    S = Source register
-            // The exception to this rule is 0x76, which is HALT, and takes
-            // the place of LD (HL), (HL)
-
-            if ((JavaBoy.unsign(b1) >= 0x40) && (JavaBoy.unsign(b1) <= 0x7F) && (
-                    (JavaBoy.unsign(b1) != 0x76))) {
-    /* 0x76 is HALT, and takes the place of LD (HL), (HL) */
-                int sourceRegister = b1 & 0x07;         /* Lower 3 bits */
-                int destRegister = (b1 & 0x38) >> 3;    /* Bits 5 - 3 */
-
-                //    System.out.println("LD Op src" + sourceRegister + " dest " + destRegister);
-
-                instr = "LD " + registerNames[destRegister] + ", " +
-                        registerNames[sourceRegister];
-            }
-
-            // The following section handles arithmetic instructions
-            // Bit 7 6 5 4 3 2 1 0    Operation       Opcode
-            //     1 0 0 0 0 R R R    Add             ADD
-            //     1 0 0 0 1 R R R    Add with carry  ADC
-            //     1 0 0 1 0 R R R    Subtract        SUB
-            //     1 0 0 1 1 R R R    Sub with carry  SBC
-            //     1 0 1 0 0 R R R    Logical and     AND
-            //     1 0 1 0 1 R R R    Logical xor     XOR
-            //     1 0 1 1 0 R R R    Logical or      OR
-            //     1 0 1 1 1 R R R    Compare?        CP
-
-            if ((JavaBoy.unsign(b1) >= 0x80) && (JavaBoy.unsign(b1) <= 0xBF)) {
-                int sourceRegister = JavaBoy.unsign(b1) & 0x07;
-                int operation = (JavaBoy.unsign(b1) & 0x38) >> 3;
-
-                //   System.out.println("ALU Op " + operation + " reg " + sourceRegister);
-
-                instr = aluOperations[operation] + " A, " + registerNames[sourceRegister];
-            }
-
-            // The following section handles shift instructions
-            // These are formed by the byte 0xCB followed by the this:
-            // Bit 7 6 5 4 3 2 1 0    Operation             Opcode
-            //     0 0 0 0 0 R R R    Rotate Left Carry     RLC
-            //     0 0 0 0 1 R R R    Rotate Right Carry    RRC
-            //     0 0 0 1 0 R R R    Rotate Left           RL
-            //     0 0 0 1 1 R R R    Rotate Right          RR
-            //     0 0 1 0 0 R R R    Arith. Shift Left     SLA
-            //     0 0 1 0 1 R R R    Arith. Shift Right    SRA
-            //     0 0 1 1 0 R R R    Hi/Lo Nibble Swap     SWAP
-            //     0 0 1 1 1 R R R    Shift Right Logical   SRL
-            //     0 1 N N N R R R    Bit Test n            BIT
-            //     1 0 N N N R R R    Reset Bit n           RES
-            //     1 1 N N N R R R    Set Bit n             SET
-
-            if (JavaBoy.unsign(b1) == 0xCB) {
-                int operation;
-                int sourceRegister;
-                int bitNumber;
-
-                instrLength = 2;
-
-                switch ((JavaBoy.unsign(b2) & 0xC0) >> 6) {
-                    case 0:
-                        operation = (JavaBoy.unsign(b2) & 0x38) >> 3;
-                        sourceRegister = JavaBoy.unsign(b2) & 0x07;
-                        instr = shiftOperations[operation] + " " + registerNames[sourceRegister];
-                        break;
-                    case 1:
-                        bitNumber = (JavaBoy.unsign(b2) & 0x38) >> 3;
-                        sourceRegister = JavaBoy.unsign(b2) & 0x07;
-                        instr = "BIT " + bitNumber + ", " + registerNames[sourceRegister];
-                        break;
-                    case 2:
-                        bitNumber = (JavaBoy.unsign(b2) & 0x38) >> 3;
-                        sourceRegister = JavaBoy.unsign(b2) & 0x07;
-                        instr = "RES " + bitNumber + ", " + registerNames[sourceRegister];
-                        break;
-                    case 3:
-                        bitNumber = (JavaBoy.unsign(b2) & 0x38) >> 3;
-                        sourceRegister = JavaBoy.unsign(b2) & 0x07;
-                        instr = "SET " + bitNumber + ", " + registerNames[sourceRegister];
-                        break;
-                }
-            }
-
-
-            System.out.print(JavaBoy.hexWord(address) + ": " + JavaBoy.hexByte(JavaBoy.unsign(b1)));
-
-            if (instrLength >= 2) {
-                System.out.print(" " + JavaBoy.hexByte(JavaBoy.unsign(b2)));
-            } else {
-                System.out.print("   ");
-            }
-
-            if (instrLength == 3) {
-                System.out.print(" " + JavaBoy.hexByte(JavaBoy.unsign(b3)) + "  ");
-            } else {
-                System.out.print("     ");
-            }
-
-
-            System.out.println(instr);
-            address += instrLength;
-        }
-
-
-        return null;
     }
 }

@@ -22,12 +22,12 @@ public class JavaBoy extends Frame implements ActionListener {
     /**
      * When emulation running, references the currently loaded cartridge
      */
-    Cartridge cartridge;
+    private Cartridge cartridge;
 
     /**
      * When emulation running, references the current CPU object
      */
-    Dmgcpu dmgcpu;
+    private Dmgcpu dmgcpu;
 
     /**
      * Stores commands queued to be executed by the debugger
@@ -85,7 +85,7 @@ public class JavaBoy extends Frame implements ActionListener {
      */
     public void paint(Graphics g) {
         if (dmgcpu == null) return;
-        
+
         // Centre the GB image
         int x = getSize().width / 2 - dmgcpu.graphicsChip.getWidth() / 2;
         int y = getSize().height / 2 - dmgcpu.graphicsChip.getHeight() / 2;
@@ -188,29 +188,6 @@ public class JavaBoy extends Frame implements ActionListener {
                         System.out.println("Error parsing hex value.");
                     }
                     break;
-                case 'i':
-                    try {
-                        int address = valueOf(st.nextToken(), 16);
-                        int length = valueOf(st.nextToken(), 16);
-                        System.out.println("- Dissasembling " + JavaBoy.hexWord(length) + " instructions starting from " + JavaBoy.hexWord(address));
-                        dmgcpu.disassemble(address, length);
-                    } catch (java.util.NoSuchElementException e) {
-                        System.out.println("Invalid number of parameters to 'i' command.");
-                    } catch (NumberFormatException e) {
-                        System.out.println("Error parsing hex value.");
-                    }
-                    break;
-                case 'p':
-                    try {
-                        int length = valueOf(st.nextToken(), 16);
-                        System.out.println("- Dissasembling " + JavaBoy.hexWord(length) + " instructions starting from program counter (" + JavaBoy.hexWord(dmgcpu.pc) + ")");
-                        dmgcpu.disassemble(dmgcpu.pc, length);
-                    } catch (java.util.NoSuchElementException e) {
-                        System.out.println("Invalid number of parameters to 'p' command.");
-                    } catch (NumberFormatException e) {
-                        System.out.println("Error parsing hex value.");
-                    }
-                    break;
                 case 'r':
                     try {
                         String reg = st.nextToken();
@@ -281,7 +258,7 @@ public class JavaBoy extends Frame implements ActionListener {
                     break;
                 case 'g':
                     cartridge.restoreMapping();
-                    dmgcpu.execute(-1);
+                    dmgcpu.execute();
                     break;
                 case 'n':
                     try {
