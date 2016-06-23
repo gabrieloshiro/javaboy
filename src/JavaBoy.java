@@ -1,4 +1,6 @@
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.StringTokenizer;
 
@@ -13,17 +15,9 @@ import static java.lang.Integer.valueOf;
 // w = 160
 // h = 144
 
-public class JavaBoy extends Frame {
+public class JavaBoy extends Frame implements ActionListener {
     private static final String hexChars = "0123456789ABCDEF";
     private boolean fullFrame = true;
-
-    /**
-     * These strings contain all the names for the colour schemes.
-     * A scheme can be activated using the view menu when JavaBoy is
-     * running as an application.
-     */
-    static String[] schemeNames =
-            {"Standard colours", "LCD shades", "Midnight garden", "Psychadelic"};
 
     /**
      * When emulation running, references the currently loaded cartridge
@@ -186,6 +180,7 @@ public class JavaBoy extends Frame {
 
     }
 
+    @Override
     public void update(Graphics g) {
         paint(g);
         fullFrame = true;
@@ -508,8 +503,20 @@ public class JavaBoy extends Frame {
      * Initialize JavaBoy when run as an application
      */
     private JavaBoy() {
-        GameBoyScreen mainWindow = new GameBoyScreen("JavaBoy 0.92", this);
-        mainWindow.setVisible(true);
+        setSize(400, 400);
+
+        MenuBar menuBar = new MenuBar();
+
+        MenuItem fileOpen = new MenuItem("Open ROM");
+        fileOpen.setActionCommand("Open ROM");
+        fileOpen.addActionListener(this);
+        Menu fileMenu = new Menu("File");
+
+        fileMenu.add(fileOpen);
+        menuBar.add(fileMenu);
+        setMenuBar(menuBar);
+
+        setVisible(true);
         requestFocus();
         doubleBuffer = createImage(getSize().width, getSize().height);
     }
@@ -527,6 +534,14 @@ public class JavaBoy extends Frame {
         } while (true);
     }
 
+    public void actionPerformed(ActionEvent e) {
+        cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb", this);
+        dmgcpu = new Dmgcpu(cartridge, this);
+        dmgcpu.reset();
+        queueDebuggerCommand("s;g");
+        dmgcpu.terminate = true;
+    }
+    
 }
 
 
