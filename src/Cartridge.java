@@ -43,11 +43,102 @@ class Cartridge {
             {5, 64}, {6, 128}, {7, 256}, {0x52, 72}, {0x53, 80}, {0x54, 96}};
 
     /**
-     * Contains strings of the standard names of the cartridge mapper chips, indexed by
-     * cartridge type
+     * RTC Reg names
      */
-    private final String[] cartTypeTable =
-            {"ROM Only",             /* 00 */
+    private final byte SECONDS = 0;
+    private final byte MINUTES = 1;
+    private final byte HOURS = 2;
+    private final byte DAYS_LO = 3;
+    private final byte DAYS_HI = 4;
+
+    /**
+     * Contains the complete ROM image of the cartridge
+     */
+    byte[] rom;
+
+    /**
+     * Contains the RAM on the cartridge
+     */
+    private byte[] ram = new byte[0x10000];
+
+    /**
+     * Cartridge type - index into cartTypeTable[][]
+     */
+    private int cartType;
+
+    /**
+     * Starting address of the ROM bank at 0x4000 in CPU address space
+     */
+    private int pageStart = 0x4000;
+
+    /**
+     * The bank number which is currently mapped at 0x4000 in CPU address space
+     */
+    private int currentBank = 1;
+
+    /**
+     * The bank which has been saved when the debugger changes the ROM mapping.  The mapping is
+     * restored from this register when execution resumes
+     */
+    private int savedBank = -1;
+
+    /**
+     * The RAM bank number which is currently mapped at 0xA000 in CPU address space
+     */
+    private int ramBank;
+    private int ramPageStart;
+
+    private boolean mbc1LargeRamMode = false;
+    private boolean ramEnabled;
+
+    /**
+     * Real time clock registers.  Only used on MBC3
+     */
+    private int[] RTCReg = new int[5];
+    private long lastSecondIncrement;
+
+    /**
+     * Create a cartridge object, loading ROM and any associated battery RAM from the cartridge
+     * filename given.  Loads via the web if JavaBoy is running as an applet
+     */
+    Cartridge(String romFileName) {
+        InputStream is;
+        try {
+            is = new FileInputStream(new File(romFileName));
+
+            byte[] firstBank = new byte[0x04000];
+
+            int total = 0x04000;
+            do {
+                total -= is.read(firstBank, 0x04000 - total, total);      // Read the first bank (bank 0)
+            } while (total > 0);
+
+            cartType = firstBank[0x0147];
+
+            /*
+      Number of 16Kb ROM banks
+     */
+            int numBanks = lookUpCartSize(firstBank[0x0148]);
+
+            rom = new byte[0x04000 * numBanks];   // Recreate the ROM array with the correct size
+
+            // Copy first bank into main rom array
+            for (int r = 0; r < 0x4000; r++) {
+                rom[r] = firstBank[r];
+            }
+
+            total = 0x04000 * (numBanks - 1);           // Calculate total ROM size (first one already loaded)
+            do {                                  // Read ROM into memory
+                total -= is.read(rom, rom.length - total, total); // Read the entire ROM
+            } while (total > 0);
+            is.close();
+
+            System.out.println("Loaded ROM '" + romFileName + "'.  " + numBanks + " banks, " + (numBanks * 16) + "Kb.  " + getNumRAMBanks() + " RAM banks.");
+            /*
+      Contains strings of the standard names of the cartridge mapper chips, indexed by
+      cartridge type
+     */
+            String[] cartTypeTable = {"ROM Only",             /* 00 */
                     "ROM+MBC1",             /* 01 */
                     "ROM+MBC1+RAM",         /* 02 */
                     "ROM+MBC1+RAM+BATTERY", /* 03 */
@@ -78,102 +169,6 @@ class Cartridge {
                     "ROM+MBC5+RUMBLE",      /* 1C */
                     "ROM+MBC5+RUMBLE+RAM",  /* 1D */
                     "ROM+MBC5+RUMBLE+RAM+BATTERY"  /* 1E */};
-
-    /**
-     * RTC Reg names
-     */
-    private final byte SECONDS = 0;
-    private final byte MINUTES = 1;
-    private final byte HOURS = 2;
-    private final byte DAYS_LO = 3;
-    private final byte DAYS_HI = 4;
-
-    /**
-     * Contains the complete ROM image of the cartridge
-     */
-    byte[] rom;
-
-    /**
-     * Contains the RAM on the cartridge
-     */
-    private byte[] ram = new byte[0x10000];
-
-    /**
-     * Number of 16Kb ROM banks
-     */
-    private int numBanks;
-
-    /**
-     * Cartridge type - index into cartTypeTable[][]
-     */
-    private int cartType;
-
-    /**
-     * Starting address of the ROM bank at 0x4000 in CPU address space
-     */
-    private int pageStart = 0x4000;
-
-    /**
-     * The bank number which is currently mapped at 0x4000 in CPU address space
-     */
-    int currentBank = 1;
-
-    /**
-     * The bank which has been saved when the debugger changes the ROM mapping.  The mapping is
-     * restored from this register when execution resumes
-     */
-    private int savedBank = -1;
-
-    /**
-     * The RAM bank number which is currently mapped at 0xA000 in CPU address space
-     */
-    private int ramBank;
-    private int ramPageStart;
-
-    private boolean mbc1LargeRamMode = false;
-    private boolean ramEnabled;
-
-    /**
-     * Real time clock registers.  Only used on MBC3
-     */
-    private int[] RTCReg = new int[5];
-    private long realTimeStart;
-    private long lastSecondIncrement;
-
-    /**
-     * Create a cartridge object, loading ROM and any associated battery RAM from the cartridge
-     * filename given.  Loads via the web if JavaBoy is running as an applet
-     */
-    Cartridge(String romFileName) {
-        InputStream is;
-        try {
-            is = new FileInputStream(new File(romFileName));
-
-            byte[] firstBank = new byte[0x04000];
-
-            int total = 0x04000;
-            do {
-                total -= is.read(firstBank, 0x04000 - total, total);      // Read the first bank (bank 0)
-            } while (total > 0);
-
-            cartType = firstBank[0x0147];
-
-            numBanks = lookUpCartSize(firstBank[0x0148]);   // Determine the number of 16kb rom banks
-
-            rom = new byte[0x04000 * numBanks];   // Recreate the ROM array with the correct size
-
-            // Copy first bank into main rom array
-            for (int r = 0; r < 0x4000; r++) {
-                rom[r] = firstBank[r];
-            }
-
-            total = 0x04000 * (numBanks - 1);           // Calculate total ROM size (first one already loaded)
-            do {                                  // Read ROM into memory
-                total -= is.read(rom, rom.length - total, total); // Read the entire ROM
-            } while (total > 0);
-            is.close();
-
-            System.out.println("Loaded ROM '" + romFileName + "'.  " + numBanks + " banks, " + (numBanks * 16) + "Kb.  " + getNumRAMBanks() + " RAM banks.");
             System.out.println("Type: " + cartTypeTable[cartType] + " (" + JavaBoy.hexByte(cartType) + ")");
 
             // Set up the real time clock
@@ -190,7 +185,7 @@ class Cartridge {
             RTCReg[DAYS_LO] = days & 0x00FF;
             RTCReg[DAYS_HI] = (days & 0x01FF) >> 8;
 
-            realTimeStart = System.currentTimeMillis();
+            long realTimeStart = System.currentTimeMillis();
             lastSecondIncrement = realTimeStart;
 
         } catch (IOException e) {
@@ -328,23 +323,6 @@ class Cartridge {
             System.out.println("- ROM Mapping restored to bank " + JavaBoy.hexByte(savedBank));
             addressWrite(0x2000, savedBank);
             savedBank = -1;
-        }
-    }
-
-    /**
-     * Writes a byte to an address in CPU address space.  Identical to addressWrite() except that
-     * writes to ROM do not cause a mapping change, but actually write to the ROM.  This is usefull
-     * for patching parts of code.  Only used by the debugger.
-     */
-    void debuggerAddressWrite(int addr, int data) {
-        if (cartType == 0) {
-            rom[addr] = (byte) data;
-        } else {
-            if (addr < 0x4000) {
-                rom[addr] = (byte) data;
-            } else {
-                rom[pageStart + addr - 0x4000] = (byte) data;
-            }
         }
     }
 
