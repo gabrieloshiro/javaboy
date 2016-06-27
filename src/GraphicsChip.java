@@ -1,37 +1,13 @@
-/*
-
-JavaBoy
-                                  
-COPYRIGHT (C) 2001 Neil Millstone and The Victoria University of Manchester
-                                                                         ;;;
-This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2 of the License, or (at your option)
-any later version.        
-
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-more details.
-
-
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA.
-
-*/
-
 import java.awt.*;
 import java.awt.image.DirectColorModel;
 import java.awt.image.MemoryImageSource;
-
 
 /**
  * This class is one implementation of the GraphicsChipOld.
  * It performs the output of the graphics screen, including the background, window, and sprite layers.
  * It supports some raster effects, but only ones that happen on a tile row boundary.
  */
-class TileBasedGraphicsChip {
+class GraphicsChip {
 
     /**
      * Tile uses the background palette
@@ -51,17 +27,17 @@ class TileBasedGraphicsChip {
     /**
      * Tile is flipped horizontally
      */
-    static final int TILE_FLIPX = 1;
+    private static final int TILE_FLIPX = 1;
 
     /**
      * Tile is flipped vertically
      */
-    static final int TILE_FLIPY = 2;
+    private static final int TILE_FLIPY = 2;
 
     /**
      * The current contents of the video memory, mapped in at 0x8000 - 0x9FFF
      */
-    byte[] videoRam = new byte[0x8000];
+    private byte[] videoRam = new byte[0x8000];
 
     /**
      * The background palette
@@ -88,24 +64,24 @@ class TileBasedGraphicsChip {
     /**
      * The image containing the Gameboy screen
      */
-    Image backBuffer;
+    private Image backBuffer;
 
     /**
      * The current frame skip value
      */
-    int frameSkip = 2;
+    private int frameSkip = 2;
 
     /**
      * The number of frames that have been drawn so far in the current frame sampling period
      */
-    int framesDrawn = 0;
+    private int framesDrawn = 0;
 
     /**
      * Image magnification
      */
-    int mag = 2;
-    int width = 160 * mag;
-    int height = 144 * mag;
+    private int mag = 2;
+    private int width = 160 * mag;
+    private int height = 144 * mag;
 
     /**
      * Amount of time to wait between frames (ms)
@@ -116,7 +92,6 @@ class TileBasedGraphicsChip {
      * The current frame has finished drawing
      */
     boolean frameDone = false;
-    private int averageFPS = 0;
     long startTime = 0;
 
     /**
@@ -133,8 +108,7 @@ class TileBasedGraphicsChip {
      * Selection of one of two address for the BG tile map.
      */
     boolean hiBgTileMapAddress = false;
-    Dmgcpu dmgcpu;
-    private Component applet;
+    private Dmgcpu dmgcpu;
     int tileStart = 0;
     int vidRamStart = 0;
 
@@ -150,7 +124,7 @@ class TileBasedGraphicsChip {
     private boolean windowEnableThisLine = false;
     private int windowStopLine = 144;
 
-    TileBasedGraphicsChip(Component a, Dmgcpu d) {
+    GraphicsChip(Component a, Dmgcpu d) {
         dmgcpu = d;
 
         backgroundPalette = new GameboyPalette(0, 1, 2, 3);
@@ -163,7 +137,6 @@ class TileBasedGraphicsChip {
         }
 
         backBuffer = a.createImage(160 * mag, 144 * mag);
-        applet = a;
 
         for (int r = 0; r < 384 * 2; r++) {
             tiles[r] = new GameboyTile(a);
@@ -173,13 +146,13 @@ class TileBasedGraphicsChip {
     /**
      * Calculate the number of frames per second for the current sampling period
      */
-    void calculateFPS() {
+    private void calculateFPS() {
         if (startTime == 0) {
             startTime = System.currentTimeMillis();
         }
         if (framesDrawn > 30) {
             long delay = System.currentTimeMillis() - startTime;
-            averageFPS = (int) ((framesDrawn) / (delay / 1000f));
+            int averageFPS = (int) ((framesDrawn) / (delay / 1000f));
             startTime = System.currentTimeMillis();
             int timePerFrame;
 
@@ -193,13 +166,6 @@ class TileBasedGraphicsChip {
         }
     }
 
-    /**
-     * Return the number of frames per second achieved in the previous sampling period.
-     */
-    int getFPS() {
-        return averageFPS;
-    }
-
     int getWidth() {
         return width;
     }
@@ -211,7 +177,7 @@ class TileBasedGraphicsChip {
     /**
      * Flush the tile cache
      */
-    public void dispose() {
+    void dispose() {
         for (int r = 0; r < 384 * 2; r++) {
             if (tiles[r] != null) tiles[r].dispose();
         }
@@ -220,14 +186,14 @@ class TileBasedGraphicsChip {
     /**
      * Reads data from the specified video RAM address
      */
-    public short addressRead(int addr) {
+    short addressRead(int addr) {
         return videoRam[addr + vidRamStart];
     }
 
     /**
      * Writes data to the specified video RAM address
      */
-    public void addressWrite(int addr, byte data) {
+    void addressWrite(int addr, byte data) {
         if (addr < 0x1800) {   // Bkg Tile data area
             tiles[(addr >> 4) + tileStart].invalidate();
             videoRam[addr + vidRamStart] = data;
@@ -240,24 +206,9 @@ class TileBasedGraphicsChip {
      * Invalidates all tiles in the tile cache that have the given attributes.
      * These will be regenerated next time they are drawn.
      */
-    public void invalidateAll(int attribs) {
+    void invalidateAll(int attribs) {
         for (int r = 0; r < 384 * 2; r++) {
             tiles[r].invalidate(attribs);
-        }
-    }
-
-    /**
-     * Set the size of the Gameboy window.
-     */
-    public void setMagnify(int m) {
-        mag = m;
-        width = m * 160;
-        height = m * 144;
-        if (backBuffer != null) backBuffer.flush();
-        backBuffer = applet.createImage(160 * mag, 144 * mag);
-
-        for (int r = 0; r < 384 * 2; r++) {
-            tiles[r].setMagnify(m);
         }
     }
 
@@ -344,7 +295,7 @@ class TileBasedGraphicsChip {
      * This must be called by the CPU for each scanline drawn by the display hardware.  It
      * handles drawing of the background layer
      */
-    public void notifyScanline(int line) {
+    void notifyScanline(int line) {
 
         if ((framesDrawn % frameSkip) != 0) {
             return;
@@ -469,16 +420,15 @@ class TileBasedGraphicsChip {
         back.fillRect(0, 0, 160 * mag, 144 * mag);
     }
 
-    public boolean isFrameReady() {
+    boolean isFrameReady() {
         return (framesDrawn % frameSkip) == 0;
     }
 
     /**
      * Draw the current graphics frame into the given graphics context
      */
-    public boolean draw(Graphics g, int startX, int startY, Component a) {
+    boolean draw(Graphics g, int startX, int startY) {
         int tileNum;
-
 
         calculateFPS();
         if ((framesDrawn % frameSkip) != 0) {
@@ -624,7 +574,7 @@ class TileBasedGraphicsChip {
         }
 
         /**
-         * Returns true if this tile does not contian a valid image for the tile with the specified
+         * Returns true if this tile does not contain a valid image for the tile with the specified
          * attributes
          */
         boolean invalid(int attribs) {
@@ -719,22 +669,6 @@ class TileBasedGraphicsChip {
             if (!valid[attribs]) {
                 updateImage(videoRam, offset, attribs);
             }
-        }
-
-        /**
-         * Change the magnification of the tile
-         */
-        void setMagnify(int m) {
-            for (int r = 0; r < 64; r++) {
-                valid[r] = false;
-                source[r] = null;
-                if (image[r] != null) {
-                    image[r].flush();
-                    image[r] = null;
-                }
-            }
-            magnify = m;
-            imageData = new int[64 * magnify * magnify];
         }
 
         /**

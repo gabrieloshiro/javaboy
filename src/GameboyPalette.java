@@ -75,7 +75,7 @@ class GameboyPalette {
      * Set the palette from the internal Gameboy format
      */
     void decodePalette(int pal) {
-        data[0] = (short) (pal & 0x03);
+        data[0] = (short) ((pal & 0x03) >> 0);
         data[1] = (short) ((pal & 0x0C) >> 2);
         data[2] = (short) ((pal & 0x30) >> 4);
         data[3] = (short) ((pal & 0xC0) >> 6);

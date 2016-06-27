@@ -1,30 +1,7 @@
-/*
-
-JavaBoy
-                                  
-COPYRIGHT (C) 2001 Neil Millstone and The Victoria University of Manchester
-                                                                         ;;;
-This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2 of the License, or (at your option)
-any later version.        
-
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-more details.
-
-
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place - Suite 330, Boston, MA 02111-1307, USA.
-
-*/
-
 /**
  * This class handles all the memory mapped IO in the range
  * FF00 - FF4F.  It also handles high memory accessed by the
- * LDH instruction which is locted at FF50 - FFFF.
+ * LDH instruction which is located at 0xFF50 - 0xFFFF.
  */
 
 class IoHandler {
@@ -38,11 +15,6 @@ class IoHandler {
      * Reference to the current CPU object
      */
     private Dmgcpu dmgcpu;
-
-    /**
-     * Current state of the button, true = pressed.
-     */
-    boolean padLeft, padRight, padUp, padDown, padA, padB, padStart, padSelect;
 
     boolean hdmaRunning;
 
@@ -170,32 +142,32 @@ class IoHandler {
             case 0x00:           // FF00 - Joypad
                 short output = 0x0F;
                 if ((data & 0x10) == 0x00) {   // P14
-                    if (padRight) {
-                        output &= ~1;
-                    }
-                    if (padLeft) {
-                        output &= ~2;
-                    }
-                    if (padUp) {
-                        output &= ~4;
-                    }
-                    if (padDown) {
-                        output &= ~8;
-                    }
+//                    if (padRight) {
+//                        output &= ~1;
+//                    }
+//                    if (padLeft) {
+//                        output &= ~2;
+//                    }
+//                    if (padUp) {
+//                        output &= ~4;
+//                    }
+//                    if (padDown) {
+//                        output &= ~8;
+//                    }
                 }
                 if ((data & 0x20) == 0x00) {   // P15
-                    if (padA) {
-                        output &= ~0x01;
-                    }
-                    if (padB) {
-                        output &= ~0x02;
-                    }
-                    if (padSelect) {
-                        output &= ~0x04;
-                    }
-                    if (padStart) {
-                        output &= ~0x08;
-                    }
+//                    if (padA) {
+//                        output &= ~0x01;
+//                    }
+//                    if (padB) {
+//                        output &= ~0x02;
+//                    }
+//                    if (padSelect) {
+//                        output &= ~0x04;
+//                    }
+//                    if (padStart) {
+//                        output &= ~0x08;
+//                    }
                 }
                 output |= (data & 0xF0);
                 registers[0x00] = (byte) (output);
@@ -394,21 +366,21 @@ class IoHandler {
                 dmgcpu.graphicsChipOld.backgroundPalette.decodePalette(data);
                 if (registers[num] != (byte) data) {
                     registers[num] = (byte) data;
-                    dmgcpu.graphicsChipOld.invalidateAll(TileBasedGraphicsChip.TILE_BKG);
+                    dmgcpu.graphicsChipOld.invalidateAll(GraphicsChip.TILE_BKG);
                 }
                 break;
             case 0x48:           // FF48 - OBJ1 palette
                 dmgcpu.graphicsChipOld.obj1Palette.decodePalette(data);
                 if (registers[num] != (byte) data) {
                     registers[num] = (byte) data;
-                    dmgcpu.graphicsChipOld.invalidateAll(TileBasedGraphicsChip.TILE_OBJ1);
+                    dmgcpu.graphicsChipOld.invalidateAll(GraphicsChip.TILE_OBJ1);
                 }
                 break;
             case 0x49:           // FF49 - OBJ2 palette
                 dmgcpu.graphicsChipOld.obj2Palette.decodePalette(data);
                 if (registers[num] != (byte) data) {
                     registers[num] = (byte) data;
-                    dmgcpu.graphicsChipOld.invalidateAll(TileBasedGraphicsChip.TILE_OBJ2);
+                    dmgcpu.graphicsChipOld.invalidateAll(GraphicsChip.TILE_OBJ2);
                 }
                 break;
 

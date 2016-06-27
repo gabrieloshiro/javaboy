@@ -102,7 +102,7 @@ class Dmgcpu {
     private byte[] oam = new byte[0x100];
 
     private Cartridge cartridge;
-    TileBasedGraphicsChip graphicsChipOld;
+    GraphicsChip graphicsChipOld;
     IoHandler ioHandler;
     private Component applet;
 
@@ -115,7 +115,7 @@ class Dmgcpu {
      */
     Dmgcpu(Cartridge c, Component a) {
         cartridge = c;
-        graphicsChipOld = new TileBasedGraphicsChip(a, this);
+        graphicsChipOld = new GraphicsChip(a, this);
         checkEnableGbc();
 
         ioHandler = new IoHandler(this);

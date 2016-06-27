@@ -95,7 +95,7 @@ public class JavaBoy extends Frame implements ActionListener {
              */
         if (!fullFrame) {
 
-            dmgcpu.graphicsChipOld.draw(g, x, y, this);
+            dmgcpu.graphicsChipOld.draw(g, x, y);
 
         } else {
             Graphics bufferGraphics = doubleBuffer.getGraphics();
@@ -104,11 +104,11 @@ public class JavaBoy extends Frame implements ActionListener {
                 bufferGraphics.setColor(new Color(255, 255, 255));
                 bufferGraphics.fillRect(0, 0, getSize().width, getSize().height);
 
-                dmgcpu.graphicsChipOld.draw(bufferGraphics, x, y, this);
+                dmgcpu.graphicsChipOld.draw(bufferGraphics, x, y);
 
                 g.drawImage(doubleBuffer, 0, 0, this);
             } else {
-                dmgcpu.graphicsChipOld.draw(bufferGraphics, x, y, this);
+                dmgcpu.graphicsChipOld.draw(bufferGraphics, x, y);
             }
 
         }
