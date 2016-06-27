@@ -1,6 +1,4 @@
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.StringTokenizer;
 
@@ -15,7 +13,7 @@ import static java.lang.Integer.valueOf;
 // w = 160
 // h = 144
 
-public class JavaBoy extends Frame implements ActionListener {
+public class JavaBoy extends Frame {
     private static final String hexChars = "0123456789ABCDEF";
     private boolean fullFrame = true;
 
@@ -298,38 +296,23 @@ public class JavaBoy extends Frame implements ActionListener {
     private JavaBoy() {
         setSize(400, 400);
 
-        MenuBar menuBar = new MenuBar();
-
-        MenuItem fileOpen = new MenuItem("Open ROM");
-        fileOpen.setActionCommand("Open ROM");
-        fileOpen.addActionListener(this);
-        Menu fileMenu = new Menu("File");
-
-        fileMenu.add(fileOpen);
-        menuBar.add(fileMenu);
-        setMenuBar(menuBar);
-
         setVisible(true);
         requestFocus();
         doubleBuffer = createImage(getSize().width, getSize().height);
 
-        do {
-            getDebuggerMenuChoice();
-        } while (true);
+        cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb");
+        dmgcpu = new Dmgcpu(cartridge, this);
+        dmgcpu.reset();
+        debuggerQueue = "s;g";
+        debuggerPending = true;
+
+        getDebuggerMenuChoice();
 
     }
 
     public static void main(String[] args) {
         System.out.println("JavaBoy (tm) Version 0.92 (c) 2005 Neil Millstone (application)");
         new JavaBoy();
-    }
-
-    public void actionPerformed(ActionEvent e) {
-        cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb");
-        dmgcpu = new Dmgcpu(cartridge, this);
-        dmgcpu.reset();
-        debuggerQueue = "s;g";
-        debuggerPending = true;
     }
 
 }
