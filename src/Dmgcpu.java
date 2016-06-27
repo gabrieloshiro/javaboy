@@ -102,7 +102,7 @@ class Dmgcpu {
     private byte[] oam = new byte[0x100];
 
     private Cartridge cartridge;
-    GraphicsChip graphicsChip;
+    TileBasedGraphicsChip graphicsChipOld;
     IoHandler ioHandler;
     private Component applet;
 
@@ -115,7 +115,7 @@ class Dmgcpu {
      */
     Dmgcpu(Cartridge c, Component a) {
         cartridge = c;
-        graphicsChip = new TileBasedGraphicsChip(a, this);
+        graphicsChipOld = new TileBasedGraphicsChip(a, this);
         checkEnableGbc();
 
         ioHandler = new IoHandler(this);
@@ -143,7 +143,7 @@ class Dmgcpu {
 
             case 0x8000:
             case 0x9000:
-                return graphicsChip.addressRead(addr - 0x8000);
+                return graphicsChipOld.addressRead(addr - 0x8000);
 
             case 0xA000:
             case 0xB000:
@@ -194,7 +194,7 @@ class Dmgcpu {
 
             case 0x8000:
             case 0x9000:
-                graphicsChip.addressWrite(addr - 0x8000, (byte) data);
+                graphicsChipOld.addressWrite(addr - 0x8000, (byte) data);
                 break;
 
             case 0xA000:
@@ -357,7 +357,7 @@ class Dmgcpu {
 
         checkEnableGbc();
         setDoubleSpeedCpu(false);
-        graphicsChip.dispose();
+        graphicsChipOld.dispose();
         cartridge.reset();
         interruptsEnabled = false;
         ieDelay = -1;
@@ -487,7 +487,7 @@ class Dmgcpu {
 
             if (JavaBoy.unsign(ioHandler.registers[0x44]) == 143) {
                 for (int r = 144; r < 170; r++) {
-                    graphicsChip.notifyScanline(r);
+                    graphicsChipOld.notifyScanline(r);
                 }
                 if (((ioHandler.registers[0x40] & 0x80) != 0) && ((ioHandler.registers[0xFF] & INT_VBLANK) != 0)) {
                     triggerInterrupt(INT_VBLANK);
@@ -496,10 +496,10 @@ class Dmgcpu {
                     }
                 }
 
-                if (graphicsChip.frameWaitTime >= 0) {
-                    //      System.out.println("Waiting for " + graphicsChip.frameWaitTime + "ms.");
+                if (graphicsChipOld.frameWaitTime >= 0) {
+                    //      System.out.println("Waiting for " + graphicsChipOld.frameWaitTime + "ms.");
                     try {
-                        java.lang.Thread.sleep(graphicsChip.frameWaitTime);
+                        java.lang.Thread.sleep(graphicsChipOld.frameWaitTime);
                     } catch (InterruptedException e) {
                         // Nothing.
                     }
@@ -509,7 +509,7 @@ class Dmgcpu {
             }
 
 
-            graphicsChip.notifyScanline(JavaBoy.unsign(ioHandler.registers[0x44]));
+            graphicsChipOld.notifyScanline(JavaBoy.unsign(ioHandler.registers[0x44]));
             ioHandler.registers[0x44] = (byte) (JavaBoy.unsign(ioHandler.registers[0x44]) + 1);
             //	System.out.println("Reg 44 = " + JavaBoy.unsign(ioHandler.registers[0x44]));
 
@@ -517,10 +517,10 @@ class Dmgcpu {
                 //     System.out.println("VBlank");
 
                 ioHandler.registers[0x44] = 0;
-                graphicsChip.frameDone = false;
+                graphicsChipOld.frameDone = false;
                 applet.repaint();
                 try {
-                    while (!graphicsChip.frameDone) {
+                    while (!graphicsChipOld.frameDone) {
                         java.lang.Thread.sleep(1);
                     }
                 } catch (InterruptedException ignored) {
@@ -536,7 +536,7 @@ class Dmgcpu {
 
         short newf;
         int dat;
-        graphicsChip.startTime = System.currentTimeMillis();
+        graphicsChipOld.startTime = System.currentTimeMillis();
         int b1, b2, b3, offset;
 
         while (true) {

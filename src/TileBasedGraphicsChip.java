@@ -27,11 +27,118 @@ import java.awt.image.MemoryImageSource;
 
 
 /**
- * This class is one implementation of the GraphicsChip.
+ * This class is one implementation of the GraphicsChipOld.
  * It performs the output of the graphics screen, including the background, window, and sprite layers.
  * It supports some raster effects, but only ones that happen on a tile row boundary.
  */
-class TileBasedGraphicsChip extends GraphicsChip {
+class TileBasedGraphicsChip {
+
+    /**
+     * Tile uses the background palette
+     */
+    static final int TILE_BKG = 0;
+
+    /**
+     * Tile uses the first sprite palette
+     */
+    static final int TILE_OBJ1 = 4;
+
+    /**
+     * Tile uses the second sprite palette
+     */
+    static final int TILE_OBJ2 = 8;
+
+    /**
+     * Tile is flipped horizontally
+     */
+    static final int TILE_FLIPX = 1;
+
+    /**
+     * Tile is flipped vertically
+     */
+    static final int TILE_FLIPY = 2;
+
+    /**
+     * The current contents of the video memory, mapped in at 0x8000 - 0x9FFF
+     */
+    byte[] videoRam = new byte[0x8000];
+
+    /**
+     * The background palette
+     */
+    GameboyPalette backgroundPalette;
+
+    /**
+     * The first sprite palette
+     */
+    GameboyPalette obj1Palette;
+
+    /**
+     * The second sprite palette
+     */
+    GameboyPalette obj2Palette;
+    GameboyPalette[] gbcBackground = new GameboyPalette[8];
+    GameboyPalette[] gbcSprite = new GameboyPalette[8];
+
+    boolean spritesEnabled = true;
+
+    boolean bgEnabled = true;
+    boolean winEnabled = true;
+
+    /**
+     * The image containing the Gameboy screen
+     */
+    Image backBuffer;
+
+    /**
+     * The current frame skip value
+     */
+    int frameSkip = 2;
+
+    /**
+     * The number of frames that have been drawn so far in the current frame sampling period
+     */
+    int framesDrawn = 0;
+
+    /**
+     * Image magnification
+     */
+    int mag = 2;
+    int width = 160 * mag;
+    int height = 144 * mag;
+
+    /**
+     * Amount of time to wait between frames (ms)
+     */
+    int frameWaitTime = 0;
+
+    /**
+     * The current frame has finished drawing
+     */
+    boolean frameDone = false;
+    private int averageFPS = 0;
+    long startTime = 0;
+
+    /**
+     * Selection of one of two addresses for the BG and Window tile data areas
+     */
+    boolean bgWindowDataSelect = true;
+
+    /**
+     * If true, 8x16 sprites are being used.  Otherwise, 8x8.
+     */
+    boolean doubledSprites = false;
+
+    /**
+     * Selection of one of two address for the BG tile map.
+     */
+    boolean hiBgTileMapAddress = false;
+    Dmgcpu dmgcpu;
+    private Component applet;
+    int tileStart = 0;
+    int vidRamStart = 0;
+
+
     /**
      * Tile cache
      */
@@ -43,12 +150,62 @@ class TileBasedGraphicsChip extends GraphicsChip {
     private boolean windowEnableThisLine = false;
     private int windowStopLine = 144;
 
-
     TileBasedGraphicsChip(Component a, Dmgcpu d) {
-        super(a, d);
+        dmgcpu = d;
+
+        backgroundPalette = new GameboyPalette(0, 1, 2, 3);
+        obj1Palette = new GameboyPalette(0, 1, 2, 3);
+        obj2Palette = new GameboyPalette(0, 1, 2, 3);
+
+        for (int r = 0; r < 8; r++) {
+            gbcBackground[r] = new GameboyPalette(0, 1, 2, 3);
+            gbcSprite[r] = new GameboyPalette(0, 1, 2, 3);
+        }
+
+        backBuffer = a.createImage(160 * mag, 144 * mag);
+        applet = a;
+
         for (int r = 0; r < 384 * 2; r++) {
             tiles[r] = new GameboyTile(a);
         }
+    }
+
+    /**
+     * Calculate the number of frames per second for the current sampling period
+     */
+    void calculateFPS() {
+        if (startTime == 0) {
+            startTime = System.currentTimeMillis();
+        }
+        if (framesDrawn > 30) {
+            long delay = System.currentTimeMillis() - startTime;
+            averageFPS = (int) ((framesDrawn) / (delay / 1000f));
+            startTime = System.currentTimeMillis();
+            int timePerFrame;
+
+            if (averageFPS != 0) {
+                timePerFrame = 1000 / averageFPS;
+            } else {
+                timePerFrame = 100;
+            }
+            frameWaitTime = 17 - timePerFrame + frameWaitTime;
+            framesDrawn = 0;
+        }
+    }
+
+    /**
+     * Return the number of frames per second achieved in the previous sampling period.
+     */
+    int getFPS() {
+        return averageFPS;
+    }
+
+    int getWidth() {
+        return width;
+    }
+
+    int getHeight() {
+        return height;
     }
 
     /**
@@ -93,7 +250,12 @@ class TileBasedGraphicsChip extends GraphicsChip {
      * Set the size of the Gameboy window.
      */
     public void setMagnify(int m) {
-        super.setMagnify(m);
+        mag = m;
+        width = m * 160;
+        height = m * 144;
+        if (backBuffer != null) backBuffer.flush();
+        backBuffer = applet.createImage(160 * mag, 144 * mag);
+
         for (int r = 0; r < 384 * 2; r++) {
             tiles[r].setMagnify(m);
         }
