@@ -232,44 +232,6 @@ class Dmgcpu {
 
     }
 
-    /**
-     * Sets the value of a register by it's name
-     */
-    boolean setRegister(String reg, int value) {
-        if (reg.equals("a") || reg.equals("acc")) {
-            a = (short) value;
-        } else if (reg.equals("b")) {
-            b = (short) value;
-        } else if (reg.equals("c")) {
-            c = (short) value;
-        } else if (reg.equals("d")) {
-            d = (short) value;
-        } else if (reg.equals("e")) {
-            e = (short) value;
-        } else if (reg.equals("f")) {
-            f = (short) value;
-        } else if (reg.equals("h")) {
-            hl = (hl & 0x00FF) | (value << 8);
-        } else if (reg.equals("l")) {
-            hl = (hl & 0xFF00) | value;
-        } else if (reg.equals("sp")) {
-            sp = value;
-        } else if (reg.equals("pc") || reg.equals("ip")) {
-            pc = value;
-        } else if (reg.equals("bc")) {
-            b = (short) (value >> 8);
-            c = (short) (value & 0x00FF);
-        } else if (reg.equals("de")) {
-            d = (short) (value >> 8);
-            e = (short) (value & 0x00FF);
-        } else if (reg.equals("hl")) {
-            hl = value;
-        } else {
-            return false;
-        }
-        return true;
-    }
-
     private void setBC(int value) {
         b = (short) ((value & 0xFF00) >> 8);
         c = (short) (value & 0x00FF);
@@ -287,7 +249,7 @@ class Dmgcpu {
     /**
      * Performs a read of a register by internal register number
      */
-    private final int registerRead(int regNum) {
+    private int registerRead(int regNum) {
         switch (regNum) {
             case 0:
                 return b;
@@ -313,7 +275,7 @@ class Dmgcpu {
     /**
      * Performs a write of a register by internal register number
      */
-    private final void registerWrite(int regNum, int data) {
+    private void registerWrite(int regNum, int data) {
         switch (regNum) {
             case 0:
                 b = (short) data;

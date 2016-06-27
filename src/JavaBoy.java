@@ -83,31 +83,23 @@ public class JavaBoy extends Frame {
      * Initialize JavaBoy when run as an application
      */
     private JavaBoy() {
-        setSize(400, 400);
+        System.out.println("JavaBoy (tm) Version 0.92 (c) 2005 Neil Millstone (application)");
 
+        setSize(400, 400);
         setVisible(true);
         requestFocus();
-        doubleBuffer = createImage(getSize().width, getSize().height);
 
-        /*
-      When emulation running, references the currently loaded cartridge
-     */
+        doubleBuffer = createImage(getSize().width, getSize().height);
         Cartridge cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb");
         dmgcpu = new Dmgcpu(cartridge, this);
-//        dmgcpu.reset();
-
         System.out.println("- CPU Reset");
         dmgcpu.reset();
 
         cartridge.restoreMapping();
         dmgcpu.execute();
-
-
-
     }
 
     public static void main(String[] args) {
-        System.out.println("JavaBoy (tm) Version 0.92 (c) 2005 Neil Millstone (application)");
         new JavaBoy();
     }
 
