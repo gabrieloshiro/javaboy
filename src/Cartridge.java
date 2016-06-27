@@ -169,7 +169,7 @@ class Cartridge {
                     "ROM+MBC5+RUMBLE",      /* 1C */
                     "ROM+MBC5+RUMBLE+RAM",  /* 1D */
                     "ROM+MBC5+RUMBLE+RAM+BATTERY"  /* 1E */};
-            System.out.println("Type: " + cartTypeTable[cartType] + " (" + JavaBoy.hexByte(cartType) + ")");
+            System.out.println("Type: " + cartTypeTable[cartType] + " (" + String.format("%02X", cartType) + ")");
 
             // Set up the real time clock
             Calendar rightNow = Calendar.getInstance();
@@ -266,11 +266,11 @@ class Cartridge {
             case 9:
                 return "This ROM has no mapper.";
             case 1 /* MBC1      */ :
-                return "MBC1: ROM bank " + JavaBoy.hexByte(currentBank) + " mapped to " +
+                return "MBC1: ROM bank " + String.format("%02X", currentBank) + " mapped to " +
                         " 4000 - 7FFFF";
             case 2 /* MBC1+RAM  */ :
             case 3 /* MBC1+RAM+BATTERY */ :
-                out = "MBC1: ROM bank " + JavaBoy.hexByte(currentBank) + " mapped to " +
+                out = "MBC1: ROM bank " + String.format("%02X", currentBank) + " mapped to " +
                         " 4000 - 7FFFF.  ";
                 if (mbc1LargeRamMode) {
                     out = out + "Cartridge is in 16MBit ROM/8KByte RAM Mode.";
@@ -280,17 +280,17 @@ class Cartridge {
                 return out;
             case 5:
             case 6:
-                return "MBC2: ROM bank " + JavaBoy.hexByte(currentBank) + " mapped to 4000 - 7FFF";
+                return "MBC2: ROM bank " + String.format("%02X", currentBank) + " mapped to 4000 - 7FFF";
 
             case 0x19:
             case 0x1C:
-                return "MBC5: ROM bank " + JavaBoy.hexByte(currentBank) + " mapped to 4000 - 7FFF";
+                return "MBC5: ROM bank " + String.format("%02X", currentBank) + " mapped to 4000 - 7FFF";
 
             case 0x1A:
             case 0x1B:
             case 0x1D:
             case 0x1E:
-                return "MBC5: ROM bank " + JavaBoy.hexByte(currentBank) + " mapped to 4000 - 7FFF";
+                return "MBC5: ROM bank " + String.format("%02X", currentBank) + " mapped to 4000 - 7FFF";
 
         }
         return "Unknown mapper.";
@@ -320,7 +320,7 @@ class Cartridge {
      */
     void restoreMapping() {
         if (savedBank != -1) {
-            System.out.println("- ROM Mapping restored to bank " + JavaBoy.hexByte(savedBank));
+            System.out.println("- ROM Mapping restored to bank " + String.format("%02X", savedBank));
             addressWrite(0x2000, savedBank);
             savedBank = -1;
         }

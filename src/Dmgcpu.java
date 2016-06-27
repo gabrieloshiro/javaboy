@@ -23,7 +23,7 @@ class Dmgcpu {
      */
     int instrCount = 0;
 
-    boolean interruptsEnabled = false;
+    private boolean interruptsEnabled = false;
 
     /**
      * Used to implement the IE delay slot
@@ -168,7 +168,7 @@ class Dmgcpu {
                 }
 
             default:
-                System.out.println("Tried to read address " + addr + ".  pc = " + JavaBoy.hexWord(pc));
+                System.out.println("Tried to read address " + addr + ".  pc = " + String.format("%04X", pc));
                 return 0xFF;
         }
 
@@ -219,7 +219,7 @@ class Dmgcpu {
                     try {
                         mainRam[addr - 0xE000] = (byte) data;
                     } catch (ArrayIndexOutOfBoundsException e) {
-                        System.out.println("Address error: " + addr + " pc = " + JavaBoy.hexWord(pc));
+                        System.out.println("Address error: " + addr + " pc = " + String.format("%04X", pc));
                     }
                 } else if (addr < 0xFF00) {
                     oam[addr - 0xFE00] = (byte) data;
@@ -1993,7 +1993,7 @@ class Dmgcpu {
                         registerWrite((b1 & 0x38) >> 3, registerRead(b1 & 0x07));
 
                     } else {
-                        System.out.println("Unrecognized opcode (" + JavaBoy.hexByte(b1) + ")");
+                        System.out.println("Unrecognized opcode (" + String.format("%02X", b1) + ")");
                         pc++;
                         break;
                     }
