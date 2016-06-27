@@ -120,19 +120,6 @@ public class JavaBoy extends Frame {
     }
 
     /**
-     * Execute any pending debugger commands, or get a command from the console and execute it
-     */
-    private void getDebuggerMenuChoice() {
-        if (debuggerPending) {
-
-            System.out.println("debuggerPending = true");
-
-            debuggerPending = false;
-            executeDebuggerCommand(debuggerQueue);
-        }
-    }
-
-    /**
      * Execute debugger commands contained in a text file
      */
     private void executeDebuggerScript(String fn) {
@@ -304,9 +291,12 @@ public class JavaBoy extends Frame {
         dmgcpu = new Dmgcpu(cartridge, this);
         dmgcpu.reset();
         debuggerQueue = "s;g";
-        debuggerPending = true;
 
-        getDebuggerMenuChoice();
+        System.out.println("debuggerPending = true");
+
+        debuggerPending = false;
+        executeDebuggerCommand(debuggerQueue);
+
 
     }
 
