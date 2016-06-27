@@ -312,19 +312,16 @@ public class JavaBoy extends Frame implements ActionListener {
         setVisible(true);
         requestFocus();
         doubleBuffer = createImage(getSize().width, getSize().height);
+
+        do {
+            getDebuggerMenuChoice();
+        } while (true);
+
     }
 
     public static void main(String[] args) {
         System.out.println("JavaBoy (tm) Version 0.92 (c) 2005 Neil Millstone (application)");
-        JavaBoy javaBoy = new JavaBoy();
-
-        javaBoy.go();
-    }
-
-    private void go() {
-        do {
-            getDebuggerMenuChoice();
-        } while (true);
+        new JavaBoy();
     }
 
     public void actionPerformed(ActionEvent e) {
