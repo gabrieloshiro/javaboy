@@ -1,5 +1,4 @@
 import java.awt.*;
-import java.io.*;
 import java.util.StringTokenizer;
 
 import static java.lang.Integer.valueOf;
@@ -31,11 +30,6 @@ public class JavaBoy extends Frame {
      * Stores commands queued to be executed by the debugger
      */
     private String debuggerQueue = null;
-
-    /**
-     * True when the commands in debuggerQueue have yet to be executed
-     */
-    private boolean debuggerPending = false;
 
     private Image doubleBuffer;
 
@@ -118,41 +112,7 @@ public class JavaBoy extends Frame {
         paint(g);
         fullFrame = true;
     }
-
-    /**
-     * Execute debugger commands contained in a text file
-     */
-    private void executeDebuggerScript(String fn) {
-        InputStream is;
-        BufferedReader in;
-        try {
-
-            is = new FileInputStream(new File(fn));
-            in = new BufferedReader(new InputStreamReader(is));
-
-            String line;
-            while ((line = in.readLine()) != null) {
-                executeDebuggerCommand(line);
-            }
-
-            in.close();
-        } catch (IOException e) {
-            System.out.println("Can't open script file '" + fn + "'!");
-        }
-    }
-
-
-    /**
-     * Execute a debugger command which can consist of many commands separated by semicolons
-     */
-    private void executeDebuggerCommand(String commands) {
-        StringTokenizer commandTokens = new StringTokenizer(commands, ";");
-
-        while (commandTokens.hasMoreTokens()) {
-            executeSingleDebuggerCommand(commandTokens.nextToken());
-        }
-    }
-
+    
     /**
      * Execute a single debugger command
      */
@@ -198,18 +158,6 @@ public class JavaBoy extends Frame {
                     break;
                 case 'o':
                     repaint();
-                    break;
-                case 'c':
-                    try {
-                        String fn = st.nextToken();
-                        System.out.println("* Starting execution of script '" + fn + "'");
-                        executeDebuggerScript(fn);
-                        System.out.println("* Script execution finished");
-                    } catch (java.util.NoSuchElementException e) {
-                        System.out.println("* Starting execution of default script");
-                        executeDebuggerScript("default.scp");
-                        System.out.println("* Script execution finished");
-                    }
                     break;
                 case 'e':
                     int address;
@@ -294,8 +242,12 @@ public class JavaBoy extends Frame {
 
         System.out.println("debuggerPending = true");
 
-        debuggerPending = false;
-        executeDebuggerCommand(debuggerQueue);
+        StringTokenizer commandTokens = new StringTokenizer(debuggerQueue, ";");
+
+        while (commandTokens.hasMoreTokens()) {
+            executeSingleDebuggerCommand(commandTokens.nextToken());
+        }
+
 
 
     }
