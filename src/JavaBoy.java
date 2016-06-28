@@ -1,3 +1,5 @@
+import javaboy.Registers;
+
 import java.awt.*;
 
 /**
@@ -91,7 +93,7 @@ public class JavaBoy extends Frame {
 
         doubleBuffer = createImage(getSize().width, getSize().height);
         Cartridge cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb");
-        dmgcpu = new Dmgcpu(cartridge, this);
+        dmgcpu = new Dmgcpu(cartridge, this, new Registers());
         System.out.println("- CPU Reset");
         dmgcpu.reset();
 

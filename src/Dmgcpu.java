@@ -1,3 +1,5 @@
+import javaboy.Registers;
+
 import java.awt.*;
 
 /**
@@ -109,17 +111,21 @@ class Dmgcpu {
     boolean gbcFeatures = true;
     int gbcRamBank = 1;
 
+    Registers r;
+
     /**
      * Create a CPU emulator with the supplied cartridge and game link objects.  Both can be set up
      * or changed later if needed
      */
-    Dmgcpu(Cartridge c, Component a) {
+    Dmgcpu(Cartridge c, Component a, Registers r) {
         cartridge = c;
         graphicsChipOld = new GraphicsChip(a, this);
         checkEnableGbc();
 
         ioHandler = new IoHandler(this);
         applet = a;
+
+        this.r = r;
     }
 
     /**
