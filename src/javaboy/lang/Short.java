@@ -1,4 +1,4 @@
-package javaboy;
+package javaboy.lang;
 
 /**
  * Created by gabrieloshiro on 2016-06-27.
@@ -11,9 +11,18 @@ public class Short {
         intValue(i);
     }
 
-    public Short(Byte b, Byte c) {
-        setHigherByte(b);
-        setLowerByte(c);
+    public Short(Byte high, Byte low) {
+        setValue(high, low);
+    }
+
+    public void setValue(Byte high, Byte low) {
+        setHigherByte(high);
+        setLowerByte(low);
+    }
+
+    public void setValue(Byte high, FlagRegister low) {
+        setHigherByte(high);
+        setLowerByte(low.byteValue());
     }
 
     public int intValue() {
@@ -21,7 +30,7 @@ public class Short {
     }
 
     public void intValue(int value) {
-        this.value = value & 0xFFFF;
+        this.value = value;
     }
 
     public Byte getLowerByte() {

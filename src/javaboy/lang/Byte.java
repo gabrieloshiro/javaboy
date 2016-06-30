@@ -1,4 +1,4 @@
-package javaboy;
+package javaboy.lang;
 
 /**
  * Created by gabrieloshiro on 2016-06-27.
@@ -11,12 +11,16 @@ public class Byte {
         setValue(i);
     }
 
+    public Byte() {
+        this(0);
+    }
+
     public int intValue() {
         return value;
     }
 
     public void setValue(int value) {
-        this.value = value & 0xFF;
+        this.value = value;
     }
 
     public void inc() {
@@ -48,5 +52,16 @@ public class Byte {
         setHigherNibble(getLowerNibble());
         setLowerNibble(higherNibble);
     }
+
+    public Bit getBit(int index) {
+        // TODO verify param
+        return new Bit((value >> index) & 1);
+    }
+
+    public void setBit(int index) {
+        // TODO verify param
+        value = (1 << index) | value;
+    }
+
 
 }
