@@ -88,7 +88,7 @@ class Dmgcpu {
     private byte[] oam = new byte[0x100];
 
     private Cartridge cartridge;
-    GraphicsChip graphicsChipOld;
+    GraphicsChip graphicsChip;
     IoHandler ioHandler;
     private Component applet;
 
@@ -103,7 +103,7 @@ class Dmgcpu {
      */
     Dmgcpu(Cartridge c, Component a, Registers r) {
         cartridge = c;
-        graphicsChipOld = new GraphicsChip(a, this);
+        graphicsChip = new GraphicsChip(a, this);
         checkEnableGbc();
 
         ioHandler = new IoHandler(this);
@@ -133,7 +133,7 @@ class Dmgcpu {
 
             case 0x8000:
             case 0x9000:
-                return graphicsChipOld.addressRead(addr - 0x8000);
+                return graphicsChip.addressRead(addr - 0x8000);
 
             case 0xA000:
             case 0xB000:
@@ -184,7 +184,7 @@ class Dmgcpu {
 
             case 0x8000:
             case 0x9000:
-                graphicsChipOld.addressWrite(addr - 0x8000, (byte) data);
+                graphicsChip.addressWrite(addr - 0x8000, (byte) data);
                 break;
 
             case 0xA000:
@@ -309,7 +309,7 @@ class Dmgcpu {
 
         checkEnableGbc();
         setDoubleSpeedCpu(false);
-        graphicsChipOld.dispose();
+        graphicsChip.dispose();
         cartridge.reset();
         interruptsEnabled = false;
         ieDelay = -1;
@@ -441,7 +441,7 @@ class Dmgcpu {
 
             if (JavaBoy.unsign(ioHandler.registers[0x44]) == 143) {
                 for (int r = 144; r < 170; r++) {
-                    graphicsChipOld.notifyScanline(r);
+                    graphicsChip.notifyScanline(r);
                 }
                 if (((ioHandler.registers[0x40] & 0x80) != 0) && ((ioHandler.registers[0xFF] & INT_VBLANK) != 0)) {
                     triggerInterrupt(INT_VBLANK);
@@ -450,10 +450,10 @@ class Dmgcpu {
                     }
                 }
 
-                if (graphicsChipOld.frameWaitTime >= 0) {
-                    //      System.out.println("Waiting for " + graphicsChipOld.frameWaitTime + "ms.");
+                if (graphicsChip.frameWaitTime >= 0) {
+                    //      System.out.println("Waiting for " + graphicsChip.frameWaitTime + "ms.");
                     try {
-                        java.lang.Thread.sleep(graphicsChipOld.frameWaitTime);
+                        java.lang.Thread.sleep(graphicsChip.frameWaitTime);
                     } catch (InterruptedException e) {
                         // Nothing.
                     }
@@ -463,7 +463,7 @@ class Dmgcpu {
             }
 
 
-            graphicsChipOld.notifyScanline(JavaBoy.unsign(ioHandler.registers[0x44]));
+            graphicsChip.notifyScanline(JavaBoy.unsign(ioHandler.registers[0x44]));
             ioHandler.registers[0x44] = (byte) (JavaBoy.unsign(ioHandler.registers[0x44]) + 1);
             //	System.out.println("Reg 44 = " + JavaBoy.unsign(ioHandler.registers[0x44]));
 
@@ -471,10 +471,10 @@ class Dmgcpu {
                 //     System.out.println("VBlank");
 
                 ioHandler.registers[0x44] = 0;
-                graphicsChipOld.frameDone = false;
+                graphicsChip.frameDone = false;
                 applet.repaint();
                 try {
-                    while (!graphicsChipOld.frameDone) {
+                    while (!graphicsChip.frameDone) {
                         java.lang.Thread.sleep(1);
                     }
                 } catch (InterruptedException ignored) {
@@ -491,7 +491,7 @@ class Dmgcpu {
         FlagRegister newf = new FlagRegister();
 
         int dat;
-        graphicsChipOld.startTime = System.currentTimeMillis();
+        graphicsChip.startTime = System.currentTimeMillis();
         int b1, b2, b3, offset;
 
         while (true) {
@@ -791,9 +791,6 @@ class Dmgcpu {
                     if ((a & 0x80) == 0x80) {
                         newf.cf().set();
                     }
-                    //                    else {
-                    //                        newf.reset();
-                    //                    }
                     a <<= 1;
 
                     if (r.f().cf().intValue() == 1) {

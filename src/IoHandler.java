@@ -104,7 +104,7 @@ class IoHandler {
 
                 if (dmgcpu.gbcFeatures) {
                     int palNumber = (registers[0x68] & 0x38) >> 3;
-                    return dmgcpu.graphicsChipOld.gbcBackground[palNumber].getGbcColours(
+                    return dmgcpu.graphicsChip.gbcBackground[palNumber].getGbcColours(
                             (JavaBoy.unsign(registers[0x68]) & 0x06) >> 1,
                             (JavaBoy.unsign(registers[0x68]) & 0x01) == 1);
                 } else {
@@ -116,7 +116,7 @@ class IoHandler {
 
                 if (dmgcpu.gbcFeatures) {
                     int palNumber = (registers[0x6A] & 0x38) >> 3;
-                    return dmgcpu.graphicsChipOld.gbcSprite[palNumber].getGbcColours(
+                    return dmgcpu.graphicsChip.gbcSprite[palNumber].getGbcColours(
                             (JavaBoy.unsign(registers[0x6A]) & 0x06) >> 1,
                             (JavaBoy.unsign(registers[0x6A]) & 0x01) == 1);
                 } else {
@@ -311,25 +311,25 @@ class IoHandler {
 
             case 0x40:           // LCDC
                 //    System.out.println("LCDC write at " + JavaBoy.hexWord(dmgcpu.pc) + " = " + JavaBoy.hexWord(data));
-                dmgcpu.graphicsChipOld.bgEnabled = true;
+                dmgcpu.graphicsChip.bgEnabled = true;
 
                 // BIT 5
-                dmgcpu.graphicsChipOld.winEnabled = (data & 0x20) == 0x20;
+                dmgcpu.graphicsChip.winEnabled = (data & 0x20) == 0x20;
 
                 // BIT 4
-                dmgcpu.graphicsChipOld.bgWindowDataSelect = (data & 0x10) == 0x10;
+                dmgcpu.graphicsChip.bgWindowDataSelect = (data & 0x10) == 0x10;
 
-                dmgcpu.graphicsChipOld.hiBgTileMapAddress = (data & 0x08) == 0x08;
+                dmgcpu.graphicsChip.hiBgTileMapAddress = (data & 0x08) == 0x08;
 
                 // BIT 2
-                dmgcpu.graphicsChipOld.doubledSprites = (data & 0x04) == 0x04;
+                dmgcpu.graphicsChip.doubledSprites = (data & 0x04) == 0x04;
 
                 // BIT 1
-                dmgcpu.graphicsChipOld.spritesEnabled = (data & 0x02) == 0x02;
+                dmgcpu.graphicsChip.spritesEnabled = (data & 0x02) == 0x02;
 
                 if ((data & 0x01) == 0x00) {     // BIT 0
-                    dmgcpu.graphicsChipOld.bgEnabled = false;
-                    dmgcpu.graphicsChipOld.winEnabled = false;
+                    dmgcpu.graphicsChip.bgEnabled = false;
+                    dmgcpu.graphicsChip.winEnabled = false;
                 }
 
                 registers[0x40] = (byte) data;
@@ -363,31 +363,31 @@ class IoHandler {
                 break;
             case 0x47:           // FF47 - BKG and WIN palette
                 //    System.out.println("Palette created!");
-                dmgcpu.graphicsChipOld.backgroundPalette.decodePalette(data);
+                dmgcpu.graphicsChip.backgroundPalette.decodePalette(data);
                 if (registers[num] != (byte) data) {
                     registers[num] = (byte) data;
-                    dmgcpu.graphicsChipOld.invalidateAll(GraphicsChip.TILE_BKG);
+                    dmgcpu.graphicsChip.invalidateAll(GraphicsChip.TILE_BKG);
                 }
                 break;
             case 0x48:           // FF48 - OBJ1 palette
-                dmgcpu.graphicsChipOld.obj1Palette.decodePalette(data);
+                dmgcpu.graphicsChip.obj1Palette.decodePalette(data);
                 if (registers[num] != (byte) data) {
                     registers[num] = (byte) data;
-                    dmgcpu.graphicsChipOld.invalidateAll(GraphicsChip.TILE_OBJ1);
+                    dmgcpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ1);
                 }
                 break;
             case 0x49:           // FF49 - OBJ2 palette
-                dmgcpu.graphicsChipOld.obj2Palette.decodePalette(data);
+                dmgcpu.graphicsChip.obj2Palette.decodePalette(data);
                 if (registers[num] != (byte) data) {
                     registers[num] = (byte) data;
-                    dmgcpu.graphicsChipOld.invalidateAll(GraphicsChip.TILE_OBJ2);
+                    dmgcpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ2);
                 }
                 break;
 
             case 0x4F:
                 if (dmgcpu.gbcFeatures) {
-                    dmgcpu.graphicsChipOld.tileStart = (data & 0x01) * 384;
-                    dmgcpu.graphicsChipOld.vidRamStart = (data & 0x01) * 0x2000;
+                    dmgcpu.graphicsChip.tileStart = (data & 0x01) * 384;
+                    dmgcpu.graphicsChip.vidRamStart = (data & 0x01) * 0x2000;
                 }
                 registers[0x4F] = (byte) data;
                 break;
@@ -426,10 +426,10 @@ class IoHandler {
 
                 if (dmgcpu.gbcFeatures) {
                     int palNumber = (registers[0x68] & 0x38) >> 3;
-                    dmgcpu.graphicsChipOld.gbcBackground[palNumber].setGbcColours(
+                    dmgcpu.graphicsChip.gbcBackground[palNumber].setGbcColours(
                             (JavaBoy.unsign(registers[0x68]) & 0x06) >> 1,
                             (JavaBoy.unsign(registers[0x68]) & 0x01) == 1, JavaBoy.unsign(data));
-                    dmgcpu.graphicsChipOld.invalidateAll(palNumber * 4);
+                    dmgcpu.graphicsChip.invalidateAll(palNumber * 4);
 
                     if ((JavaBoy.unsign(registers[0x68]) & 0x80) != 0) {
                         registers[0x68]++;
@@ -446,10 +446,10 @@ class IoHandler {
                 if (dmgcpu.gbcFeatures) {
                     int palNumber = (registers[0x6A] & 0x38) >> 3;
                     //     System.out.print("Pal " + palNumber + "  ");
-                    dmgcpu.graphicsChipOld.gbcSprite[palNumber].setGbcColours(
+                    dmgcpu.graphicsChip.gbcSprite[palNumber].setGbcColours(
                             (JavaBoy.unsign(registers[0x6A]) & 0x06) >> 1,
                             (JavaBoy.unsign(registers[0x6A]) & 0x01) == 1, JavaBoy.unsign(data));
-                    dmgcpu.graphicsChipOld.invalidateAll((palNumber * 4) + 32);
+                    dmgcpu.graphicsChip.invalidateAll((palNumber * 4) + 32);
 
                     if ((JavaBoy.unsign(registers[0x6A]) & 0x80) != 0) {
                         if ((registers[0x6A] & 0x3F) == 0x3F) {

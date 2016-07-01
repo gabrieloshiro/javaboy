@@ -47,28 +47,28 @@ public class JavaBoy extends Frame {
         if (dmgcpu == null) return;
 
         // Centre the GB image
-        int x = getSize().width / 2 - dmgcpu.graphicsChipOld.getWidth() / 2;
-        int y = getSize().height / 2 - dmgcpu.graphicsChipOld.getHeight() / 2;
+        int x = getSize().width / 2 - dmgcpu.graphicsChip.getWidth() / 2;
+        int y = getSize().height / 2 - dmgcpu.graphicsChip.getHeight() / 2;
 
         /*
               True if the image size changed last frame, and we need to repaint the background
              */
         if (!fullFrame) {
 
-            dmgcpu.graphicsChipOld.draw(g, x, y);
+            dmgcpu.graphicsChip.draw(g, x, y);
 
         } else {
             Graphics bufferGraphics = doubleBuffer.getGraphics();
 
-            if (dmgcpu.graphicsChipOld.isFrameReady()) {
+            if (dmgcpu.graphicsChip.isFrameReady()) {
                 bufferGraphics.setColor(new Color(255, 255, 255));
                 bufferGraphics.fillRect(0, 0, getSize().width, getSize().height);
 
-                dmgcpu.graphicsChipOld.draw(bufferGraphics, x, y);
+                dmgcpu.graphicsChip.draw(bufferGraphics, x, y);
 
                 g.drawImage(doubleBuffer, 0, 0, this);
             } else {
-                dmgcpu.graphicsChipOld.draw(bufferGraphics, x, y);
+                dmgcpu.graphicsChip.draw(bufferGraphics, x, y);
             }
 
         }
