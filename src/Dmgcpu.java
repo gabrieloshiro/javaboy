@@ -13,7 +13,7 @@ class Dmgcpu {
     /**
      * Registers: 8-bit
      */
-    private int a, b, c, d, e, f;
+    private int a, b, c, d, e;
     /**
      * Registers: 16-bit
      */
@@ -331,7 +331,8 @@ class Dmgcpu {
         ieDelay = -1;
         pc = 0x0100;
         sp = 0xFFFE;
-        f = 0xB0;
+        r.f(0xB0);
+        // todo z1 n0 h1 c1
         gbcRamBank = 1;
         instrCount = 0;
 
@@ -541,14 +542,17 @@ class Dmgcpu {
                     break;
                 case 0x04:               // INC B
                     pc++;
-                    f &= F_CARRY;
+                    r.f().zf().reset();
+                    r.f().nf().reset();
+                    r.f().hf().reset();
                     switch (b) {
                         case 0xFF:
-                            f |= F_HALFCARRY + F_ZERO;
+                            r.f().zf().set();
+                            r.f().cf().set();
                             b = 0x00;
                             break;
                         case 0x0F:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             b = 0x10;
                             break;
                         default:
@@ -558,19 +562,20 @@ class Dmgcpu {
                     break;
                 case 0x05:               // DEC B
                     pc++;
-                    f &= F_CARRY;
-                    f |= F_SUBTRACT;
+                    r.f().zf().reset();
+                    r.f().nf().set();
+                    r.f().hf().reset();
                     switch (b) {
                         case 0x00:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             b = 0xFF;
                             break;
                         case 0x10:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             b = 0x0F;
                             break;
                         case 0x01:
-                            f |= F_ZERO;
+                            r.f().zf().set();
                             b = 0x00;
                             break;
                         default:
@@ -584,17 +589,18 @@ class Dmgcpu {
                     break;
                 case 0x07:               // RLC A
                     pc++;
-                    f = 0;
+                    r.f().reset();
 
                     a <<= 1;
 
                     if ((a & 0x0100) != 0) {
-                        f |= F_CARRY;
+                        r.f().cf().set();
+
                         a |= 1;
                         a &= 0xFF;
                     }
                     if (a == 0) {
-                        f |= F_ZERO;
+                        r.f().zf().set();
                     }
                     break;
                 case 0x08:               // LD (nnnn), SP   /* **** May be wrong! **** */
@@ -606,10 +612,14 @@ class Dmgcpu {
                     pc++;
                     hl = (hl + ((b << 8) + c));
                     if ((hl & 0xFFFF0000) != 0) {
-                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
+                        //f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
+                        r.f().cf().set();
+
                         hl &= 0xFFFF;
                     } else {
-                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)));
+                        //f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)));
+                        r.f().cf().reset();
+
                     }
                     break;
                 case 0x0A:               // LD A, (BC)
@@ -629,14 +639,18 @@ class Dmgcpu {
                     break;
                 case 0x0C:               // INC C
                     pc++;
-                    f &= F_CARRY;
+                    r.f().zf().reset();
+                    r.f().nf().reset();
+                    r.f().hf().reset();
+
                     switch (c) {
                         case 0xFF:
-                            f |= F_HALFCARRY + F_ZERO;
+                            r.f().zf().set();
+                            r.f().hf().set();
                             c = 0x00;
                             break;
                         case 0x0F:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             c = 0x10;
                             break;
                         default:
@@ -646,19 +660,21 @@ class Dmgcpu {
                     break;
                 case 0x0D:               // DEC C
                     pc++;
-                    f &= F_CARRY;
-                    f |= F_SUBTRACT;
+                    r.f().zf().reset();
+                    r.f().nf().set();
+                    r.f().hf().reset();
+
                     switch (c) {
                         case 0x00:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             c = 0xFF;
                             break;
                         case 0x10:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             c = 0x0F;
                             break;
                         case 0x01:
-                            f |= F_ZERO;
+                            r.f().zf().set();
                             c = 0x00;
                             break;
                         default:
@@ -673,16 +689,19 @@ class Dmgcpu {
                 case 0x0F:               // RRC A
                     pc++;
                     if ((a & 0x01) == 0x01) {
-                        f = F_CARRY;
+                        r.f().zf().reset();
+                        r.f().nf().reset();
+                        r.f().hf().reset();
+                        r.f().cf().set();
                     } else {
-                        f = 0;
+                        r.f().reset();
                     }
                     a >>= 1;
-                    if ((f & F_CARRY) == F_CARRY) {
+                    if (r.f().cf().intValue() == 1) {
                         a |= 0x80;
                     }
                     if (a == 0) {
-                        f |= F_ZERO;
+                        r.f().zf().set();
                     }
                     break;
                 case 0x10:               // STOP
@@ -728,14 +747,17 @@ class Dmgcpu {
                     break;
                 case 0x14:               // INC D
                     pc++;
-                    f &= F_CARRY;
+                    r.f().zf().reset();
+                    r.f().nf().reset();
+                    r.f().hf().reset();
                     switch (d) {
                         case 0xFF:
-                            f |= F_HALFCARRY + F_ZERO;
+                            r.f().zf().set();
+                            r.f().hf().set();
                             d = 0x00;
                             break;
                         case 0x0F:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             d = 0x10;
                             break;
                         default:
@@ -745,19 +767,21 @@ class Dmgcpu {
                     break;
                 case 0x15:               // DEC D
                     pc++;
-                    f &= F_CARRY;
-                    f |= F_SUBTRACT;
+                    r.f().zf().reset();
+                    r.f().nf().reset();
+                    r.f().hf().reset();
+                    r.f().nf().set();
                     switch (d) {
                         case 0x00:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             d = 0xFF;
                             break;
                         case 0x10:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             d = 0x0F;
                             break;
                         case 0x01:
-                            f |= F_ZERO;
+                            r.f().zf().set();
                             d = 0x00;
                             break;
                         default:
@@ -778,7 +802,7 @@ class Dmgcpu {
                     }
                     a <<= 1;
 
-                    if ((f & F_CARRY) == F_CARRY) {
+                    if (r.f().cf().intValue() == 1) {
                         a |= 1;
                     }
 
@@ -786,7 +810,7 @@ class Dmgcpu {
                     if (a == 0) {
                         newf |= F_ZERO;
                     }
-                    f = newf;
+                    r.f().setValue(newf);
                     break;
                 case 0x18:               // JR nn
                     pc += 2 + offset;
@@ -795,10 +819,14 @@ class Dmgcpu {
                     pc++;
                     hl = (hl + ((d << 8) + e));
                     if ((hl & 0xFFFF0000) != 0) {
-                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
+//                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
+                        r.f().cf().set();
+
                         hl &= 0xFFFF;
                     } else {
-                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)));
+//                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)));
+                        r.f().cf().set();
+
                     }
                     break;
                 case 0x1A:               // LD A, (DE)
@@ -818,14 +846,17 @@ class Dmgcpu {
                     break;
                 case 0x1C:               // INC E
                     pc++;
-                    f &= F_CARRY;
+                    r.f().zf().reset();
+                    r.f().nf().reset();
+                    r.f().hf().reset();
                     switch (e) {
                         case 0xFF:
-                            f |= F_HALFCARRY + F_ZERO;
+                            r.f().zf().set();
+                            r.f().hf().set();
                             e = 0x00;
                             break;
                         case 0x0F:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             e = 0x10;
                             break;
                         default:
@@ -835,19 +866,21 @@ class Dmgcpu {
                     break;
                 case 0x1D:               // DEC E
                     pc++;
-                    f &= F_CARRY;
-                    f |= F_SUBTRACT;
+                    r.f().zf().reset();
+                    r.f().nf().set();
+                    r.f().hf().reset();
+
                     switch (e) {
                         case 0x00:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             e = 0xFF;
                             break;
                         case 0x10:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             e = 0x0F;
                             break;
                         case 0x01:
-                            f |= F_ZERO;
+                            r.f().zf().set();
                             e = 0x00;
                             break;
                         default:
@@ -868,17 +901,17 @@ class Dmgcpu {
                     }
                     a >>= 1;
 
-                    if ((f & F_CARRY) == F_CARRY) {
+                    if (r.f().cf().intValue() == 1) {
                         a |= 0x80;
                     }
 
                     if (a == 0) {
                         newf |= F_ZERO;
                     }
-                    f = newf;
+                    r.f().setValue(newf);
                     break;
                 case 0x20:               // JR NZ, nn
-                    if ((f & 0x80) == 0x00) {
+                    if (r.f().zf().intValue() == 0) {
                         pc += 2 + offset;
                     } else {
                         pc += 2;
@@ -899,14 +932,17 @@ class Dmgcpu {
                     break;
                 case 0x24:               // INC H         ** May be wrong **
                     pc++;
-                    f &= F_CARRY;
+                    r.f().zf().reset();
+                    r.f().nf().reset();
+                    r.f().hf().reset();
                     switch ((hl & 0xFF00) >> 8) {
                         case 0xFF:
-                            f |= F_HALFCARRY + F_ZERO;
+                            r.f().zf().set();
+                            r.f().hf().set();
                             hl = (hl & 0x00FF);
                             break;
                         case 0x0F:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             hl = (hl & 0x00FF) | 0x10;
                             break;
                         default:
@@ -916,19 +952,21 @@ class Dmgcpu {
                     break;
                 case 0x25:               // DEC H           ** May be wrong **
                     pc++;
-                    f &= F_CARRY;
-                    f |= F_SUBTRACT;
+                    r.f().zf().reset();
+                    r.f().nf().set();
+                    r.f().hf().reset();
+
                     switch ((hl & 0xFF00) >> 8) {
                         case 0x00:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             hl = (hl & 0x00FF) | (0xFF00);
                             break;
                         case 0x10:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             hl = (hl & 0x00FF) | (0x0F00);
                             break;
                         case 0x01:
-                            f |= F_ZERO;
+                            r.f().zf().set();
                             hl = (hl & 0x00FF);
                             break;
                         default:
@@ -948,35 +986,35 @@ class Dmgcpu {
 
                     //        System.out.println("Daa at " + JavaBoy.hexWord(pc));
 
-                    newf = (short) (f & F_SUBTRACT);
+                    newf = (short) (r.f().intValue() & F_SUBTRACT);
 
-                    if ((f & F_SUBTRACT) == 0) {
+                    if (r.f().nf().intValue() == 0) {
 
-                        if ((f & F_CARRY) == 0) {
+                        if (r.f().cf().intValue() == 0) {
                             if ((upperNibble <= 8) && (lowerNibble >= 0xA) &&
-                                    ((f & F_HALFCARRY) == 0)) {
+                                    (r.f().hf().intValue() == 0)) {
                                 a += 0x06;
                             }
 
                             if ((upperNibble <= 9) && (lowerNibble <= 0x3) &&
-                                    ((f & F_HALFCARRY) == F_HALFCARRY)) {
+                                    (r.f().hf().intValue() == 1)) {
                                 a += 0x06;
                             }
 
                             if ((upperNibble >= 0xA) && (lowerNibble <= 0x9) &&
-                                    ((f & F_HALFCARRY) == 0)) {
+                                    (r.f().hf().intValue() == 0)) {
                                 a += 0x60;
                                 newf |= F_CARRY;
                             }
 
                             if ((upperNibble >= 0x9) && (lowerNibble >= 0xA) &&
-                                    ((f & F_HALFCARRY) == 0)) {
+                                    (r.f().hf().intValue() == 0)) {
                                 a += 0x66;
                                 newf |= F_CARRY;
                             }
 
                             if ((upperNibble >= 0xA) && (lowerNibble <= 0x3) &&
-                                    ((f & F_HALFCARRY) == F_HALFCARRY)) {
+                                    (r.f().hf().intValue() == 1)) {
                                 a += 0x66;
                                 newf |= F_CARRY;
                             }
@@ -984,19 +1022,19 @@ class Dmgcpu {
                         } else {  // If carry set
 
                             if ((upperNibble <= 0x2) && (lowerNibble <= 0x9) &&
-                                    ((f & F_HALFCARRY) == 0)) {
+                                    (r.f().hf().intValue() == 0)) {
                                 a += 0x60;
                                 newf |= F_CARRY;
                             }
 
                             if ((upperNibble <= 0x2) && (lowerNibble >= 0xA) &&
-                                    ((f & F_HALFCARRY) == 0)) {
+                                    (r.f().hf().intValue() == 0)) {
                                 a += 0x66;
                                 newf |= F_CARRY;
                             }
 
                             if ((upperNibble <= 0x3) && (lowerNibble <= 0x3) &&
-                                    ((f & F_HALFCARRY) == F_HALFCARRY)) {
+                                    (r.f().hf().intValue() == 1)) {
                                 a += 0x66;
                                 newf |= F_CARRY;
                             }
@@ -1005,23 +1043,23 @@ class Dmgcpu {
 
                     } else { // Subtract is set
 
-                        if ((f & F_CARRY) == 0) {
+                        if (r.f().cf().intValue() == 0) {
 
                             if ((upperNibble <= 0x8) && (lowerNibble >= 0x6) &&
-                                    ((f & F_HALFCARRY) == F_HALFCARRY)) {
+                                    (r.f().hf().intValue() == 1)) {
                                 a += 0xFA;
                             }
 
                         } else { // Carry is set
 
                             if ((upperNibble >= 0x7) && (lowerNibble <= 0x9) &&
-                                    ((f & F_HALFCARRY) == 0)) {
+                                    (r.f().hf().intValue() == 0)) {
                                 a += 0xA0;
                                 newf |= F_CARRY;
                             }
 
                             if ((upperNibble >= 0x6) && (lowerNibble >= 0x6) &&
-                                    ((f & F_HALFCARRY) == F_HALFCARRY)) {
+                                    (r.f().hf().intValue() == 1)) {
                                 a += 0x9A;
                                 newf |= F_CARRY;
                             }
@@ -1033,11 +1071,11 @@ class Dmgcpu {
                     a &= 0x00FF;
                     if (a == 0) newf |= F_ZERO;
 
-                    f = newf;
+                    r.f().setValue(newf);
 
                     break;
                 case 0x28:               // JR Z, nn
-                    if ((f & F_ZERO) == F_ZERO) {
+                    if (r.f().zf().intValue() == 1) {
                         pc += 2 + offset;
                     } else {
                         pc += 2;
@@ -1047,10 +1085,15 @@ class Dmgcpu {
                     pc++;
                     hl = (hl + hl);
                     if ((hl & 0xFFFF0000) != 0) {
-                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
+
+//                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
+                        r.f().cf().set();
+
                         hl &= 0xFFFF;
                     } else {
-                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)));
+//                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)));
+                        r.f().cf().reset();
+
                     }
                     break;
                 case 0x2A:               // LDI A, (HL)
@@ -1068,14 +1111,18 @@ class Dmgcpu {
                     break;
                 case 0x2C:               // INC L
                     pc++;
-                    f &= F_CARRY;
+                    r.f().zf().reset();
+                    r.f().nf().reset();
+                    r.f().hf().reset();
+
                     switch (hl & 0x00FF) {
                         case 0xFF:
-                            f |= F_HALFCARRY + F_ZERO;
+                            r.f().hf().set();
+                            r.f().zf().set();
                             hl = hl & 0xFF00;
                             break;
                         case 0x0F:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             hl++;
                             break;
                         default:
@@ -1085,19 +1132,21 @@ class Dmgcpu {
                     break;
                 case 0x2D:               // DEC L
                     pc++;
-                    f &= F_CARRY;
-                    f |= F_SUBTRACT;
+                    r.f().zf().reset();
+                    r.f().nf().set();
+                    r.f().hf().reset();
+
                     switch (hl & 0x00FF) {
                         case 0x00:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             hl = (hl & 0xFF00) | 0x00FF;
                             break;
                         case 0x10:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             hl = (hl & 0xFF00) | 0x000F;
                             break;
                         case 0x01:
-                            f |= F_ZERO;
+                            r.f().zf().set();
                             hl = (hl & 0xFF00);
                             break;
                         default:
@@ -1113,10 +1162,13 @@ class Dmgcpu {
                     pc++;
                     short mask;
                     a = (short) ((~a) & 0x00FF);
-                    f = (short) ((f & (F_CARRY | F_ZERO)) | F_SUBTRACT | F_HALFCARRY);
+                    //f = (short) ((f & (F_CARRY | F_ZERO)) | F_SUBTRACT | F_HALFCARRY);
+                    r.f().nf().set();
+                    r.f().hf().set();
+
                     break;
                 case 0x30:               // JR NC, nn
-                    if ((f & F_CARRY) == 0) {
+                    if (r.f().cf().intValue() == 0) {
                         pc += 2 + offset;
                     } else {
                         pc += 2;
@@ -1137,15 +1189,19 @@ class Dmgcpu {
                     break;
                 case 0x34:               // INC (HL)
                     pc++;
-                    f &= F_CARRY;
+                    r.f().zf().reset();
+                    r.f().nf().reset();
+                    r.f().hf().reset();
+
                     dat = JavaBoy.unsign(addressRead(hl));
                     switch (dat) {
                         case 0xFF:
-                            f |= F_HALFCARRY + F_ZERO;
+                            r.f().zf().set();
+                            r.f().hf().set();
                             addressWrite(hl, 0x00);
                             break;
                         case 0x0F:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             addressWrite(hl, 0x10);
                             break;
                         default:
@@ -1155,20 +1211,22 @@ class Dmgcpu {
                     break;
                 case 0x35:               // DEC (HL)
                     pc++;
-                    f &= F_CARRY;
-                    f |= F_SUBTRACT;
+                    r.f().zf().reset();
+                    r.f().nf().set();
+                    r.f().hf().reset();
+
                     dat = JavaBoy.unsign(addressRead(hl));
                     switch (dat) {
                         case 0x00:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             addressWrite(hl, 0xFF);
                             break;
                         case 0x10:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             addressWrite(hl, 0x0F);
                             break;
                         case 0x01:
-                            f |= F_ZERO;
+                            r.f().zf().set();
                             addressWrite(hl, 0x00);
                             break;
                         default:
@@ -1182,11 +1240,12 @@ class Dmgcpu {
                     break;
                 case 0x37:               // SCF
                     pc++;
-                    f &= F_ZERO;
-                    f |= F_CARRY;
+                    r.f().nf().reset();
+                    r.f().hf().reset();
+                    r.f().cf().set();
                     break;
                 case 0x38:               // JR C, nn
-                    if ((f & F_CARRY) == F_CARRY) {
+                    if (r.f().cf().booleanValue()) {
                         pc += 2 + offset;
                     } else {
                         pc += 2;
@@ -1196,10 +1255,15 @@ class Dmgcpu {
                     pc++;
                     hl = (hl + sp);
                     if ((hl & 0xFFFF0000) != 0) {
-                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
+//                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
+
+                        r.f().cf().set();
+
+
                         hl &= 0xFFFF;
                     } else {
-                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)));
+                        //f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)));
+                        r.f().cf().reset();
                     }
                     break;
                 case 0x3A:               // LD A, (HL-)
@@ -1213,14 +1277,17 @@ class Dmgcpu {
                     break;
                 case 0x3C:               // INC A
                     pc++;
-                    f &= F_CARRY;
+                    r.f().zf().reset();
+                    r.f().nf().reset();
+                    r.f().hf().reset();
                     switch (a) {
                         case 0xFF:
-                            f |= F_HALFCARRY + F_ZERO;
+                            r.f().hf().set();
+                            r.f().zf().set();
                             a = 0x00;
                             break;
                         case 0x0F:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             a = 0x10;
                             break;
                         default:
@@ -1230,19 +1297,22 @@ class Dmgcpu {
                     break;
                 case 0x3D:               // DEC A
                     pc++;
-                    f &= F_CARRY;
-                    f |= F_SUBTRACT;
+                    r.f().zf().reset();
+                    r.f().nf().reset();
+                    r.f().hf().reset();
+
+                    r.f().nf().set();
                     switch (a) {
                         case 0x00:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             a = 0xFF;
                             break;
                         case 0x10:
-                            f |= F_HALFCARRY;
+                            r.f().hf().set();
                             a = 0x0F;
                             break;
                         case 0x01:
-                            f |= F_ZERO;
+                            r.f().zf().set();
                             a = 0x00;
                             break;
                         default:
@@ -1256,10 +1326,21 @@ class Dmgcpu {
                     break;
                 case 0x3F:               // CCF
                     pc++;
-                    if ((f & F_CARRY) == 0) {
-                        f = (short) ((f & F_ZERO) | F_CARRY);
+
+                    if (r.f().cf().intValue() == 0) {
+                        //f = (short) ((f & F_ZERO) | F_CARRY);
+
+                        r.f().nf().reset();
+                        r.f().hf().reset();
+                        r.f().cf().set();
+
+
                     } else {
-                        f = (short) (f & F_ZERO);
+                        //f = (short) (f & F_ZERO);
+
+                        r.f().nf().reset();
+                        r.f().hf().reset();
+                        r.f().cf().reset();
                     }
                     break;
                 case 0x52:
@@ -1277,10 +1358,13 @@ class Dmgcpu {
                 case 0xAF:               // XOR A, A (== LD A, 0)
                     pc++;
                     a = 0;
-                    f = 0x80;             // Set zero flag
+                    r.f().zf().set();
+                    r.f().nf().reset();
+                    r.f().hf().reset();
+                    r.f().cf().reset();
                     break;
                 case 0xC0:               // RET NZ
-                    if ((f & F_ZERO) == 0) {
+                    if (r.f().zf().intValue() == 0) {
                         pc = (JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp));
                         sp += 2;
                     } else {
@@ -1294,7 +1378,7 @@ class Dmgcpu {
                     sp += 2;
                     break;
                 case 0xC2:               // JP NZ, nnnn
-                    if ((f & F_ZERO) == 0) {
+                    if (r.f().zf().intValue() == 0) {
                         pc = (b3 << 8) + b2;
                     } else {
                         pc += 3;
@@ -1304,7 +1388,7 @@ class Dmgcpu {
                     pc = (b3 << 8) + b2;  // JP nnnn
                     break;
                 case 0xC4:               // CALL NZ, nnnnn
-                    if ((f & F_ZERO) == 0) {
+                    if (r.f().zf().intValue() == 0) {
                         pc += 3;
                         sp -= 2;
                         addressWrite(sp + 1, pc >> 8);
@@ -1323,20 +1407,21 @@ class Dmgcpu {
                     break;
                 case 0xC6:               // ADD A, nn
                     pc += 2;
-                    f = 0;
+                    r.f().reset();
 
                     if ((((a & 0x0F) + (b2 & 0x0F)) & 0xF0) != 0x00) {
-                        f |= F_HALFCARRY;
+                        r.f().hf().set();
                     }
 
                     a += b2;
 
                     if ((a & 0xFF00) != 0) {     // Perform 8-bit overflow and set zero flag
+                        r.f().hf().set();
+                        r.f().cf().set();
                         if (a == 0x0100) {
-                            f |= F_ZERO + F_CARRY + F_HALFCARRY;
+                            r.f().zf().set();
                             a = 0;
                         } else {
-                            f |= F_CARRY + F_HALFCARRY;
                             a &= 0x00FF;
                         }
                     }
@@ -1349,7 +1434,7 @@ class Dmgcpu {
                     pc = 0x08;
                     break;
                 case 0xC8:               // RET Z
-                    if ((f & F_ZERO) == F_ZERO) {
+                    if (r.f().zf().intValue() == 1) {
                         pc = (JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp));
                         sp += 2;
                     } else {
@@ -1361,7 +1446,7 @@ class Dmgcpu {
                     sp += 2;
                     break;
                 case 0xCA:               // JP Z, nnnn
-                    if ((f & F_ZERO) == F_ZERO) {
+                    if (r.f().zf().intValue() == 1) {
                         pc = (b3 << 8) + b2;
                     } else {
                         pc += 3;
@@ -1376,33 +1461,39 @@ class Dmgcpu {
                         switch ((b2 & 0xF8)) {
                             case 0x00:          // RLC A
                                 if ((data & 0x80) == 0x80) {
-                                    f = F_CARRY;
+                                    r.f().zf().reset();
+                                    r.f().nf().reset();
+                                    r.f().hf().reset();
+                                    r.f().cf().set();
                                 } else {
-                                    f = 0;
+                                    r.f().reset();
                                 }
                                 data <<= 1;
-                                if ((f & F_CARRY) == F_CARRY) {
+                                if (r.f().cf().intValue() == 1) {
                                     data |= 1;
                                 }
 
                                 data &= 0xFF;
                                 if (data == 0) {
-                                    f |= F_ZERO;
+                                    r.f().zf().set();
                                 }
                                 registerWrite(regNum, data);
                                 break;
                             case 0x08:          // RRC A
                                 if ((data & 0x01) == 0x01) {
-                                    f = F_CARRY;
+                                    r.f().zf().reset();
+                                    r.f().nf().reset();
+                                    r.f().hf().reset();
+                                    r.f().cf().set();
                                 } else {
-                                    f = 0;
+                                    r.f().reset();
                                 }
                                 data >>= 1;
-                                if ((f & F_CARRY) == F_CARRY) {
+                                if (r.f().cf().intValue() == 1) {
                                     data |= 0x80;
                                 }
                                 if (data == 0) {
-                                    f |= F_ZERO;
+                                    r.f().zf().set();
                                 }
                                 registerWrite(regNum, data);
                                 break;
@@ -1415,7 +1506,7 @@ class Dmgcpu {
                                 }
                                 data <<= 1;
 
-                                if ((f & F_CARRY) == F_CARRY) {
+                                if (r.f().cf().intValue() == 1) {
                                     data |= 1;
                                 }
 
@@ -1423,7 +1514,7 @@ class Dmgcpu {
                                 if (data == 0) {
                                     newf |= F_ZERO;
                                 }
-                                f = newf;
+                                r.f().setValue(newf);
                                 registerWrite(regNum, data);
                                 break;
                             case 0x18:          // RR r
@@ -1434,28 +1525,31 @@ class Dmgcpu {
                                 }
                                 data >>= 1;
 
-                                if ((f & F_CARRY) == F_CARRY) {
+                                if (r.f().cf().intValue() == 1) {
                                     data |= 0x80;
                                 }
 
                                 if (data == 0) {
                                     newf |= F_ZERO;
                                 }
-                                f = newf;
+                                r.f().setValue(newf);
                                 registerWrite(regNum, data);
                                 break;
                             case 0x20:          // SLA r
                                 if ((data & 0x80) == 0x80) {
-                                    f = F_CARRY;
+                                    r.f().zf().reset();
+                                    r.f().nf().reset();
+                                    r.f().hf().reset();
+                                    r.f().cf().set();
                                 } else {
-                                    f = 0;
+                                    r.f().reset();
                                 }
 
                                 data <<= 1;
 
                                 data &= 0xFF;
                                 if (data == 0) {
-                                    f |= F_ZERO;
+                                    r.f().zf().set();
                                 }
                                 registerWrite(regNum, data);
                                 break;
@@ -1464,16 +1558,19 @@ class Dmgcpu {
 
                                 topBit = (short) (data & 0x80);
                                 if ((data & 0x01) == 0x01) {
-                                    f = F_CARRY;
+                                    r.f().zf().reset();
+                                    r.f().nf().reset();
+                                    r.f().hf().reset();
+                                    r.f().cf().set();
                                 } else {
-                                    f = 0;
+                                    r.f().reset();
                                 }
 
                                 data >>= 1;
                                 data |= topBit;
 
                                 if (data == 0) {
-                                    f |= F_ZERO;
+                                    r.f().zf().set();
                                 }
                                 registerWrite(regNum, data);
                                 break;
@@ -1481,24 +1578,30 @@ class Dmgcpu {
 
                                 data = (short) (((data & 0x0F) << 4) | ((data & 0xF0) >> 4));
                                 if (data == 0) {
-                                    f = F_ZERO;
+                                    r.f().zf().set();
+                                    r.f().nf().reset();
+                                    r.f().hf().reset();
+                                    r.f().cf().reset();
                                 } else {
-                                    f = 0;
+                                    r.f().reset();
                                 }
                                 //           System.out.println("SWAP - answer is " + JavaBoy.hexByte(data));
                                 registerWrite(regNum, data);
                                 break;
                             case 0x38:          // SRL r
                                 if ((data & 0x01) == 0x01) {
-                                    f = F_CARRY;
+                                    r.f().zf().reset();
+                                    r.f().nf().reset();
+                                    r.f().hf().reset();
+                                    r.f().cf().set();
                                 } else {
-                                    f = 0;
+                                    r.f().reset();
                                 }
 
                                 data >>= 1;
 
                                 if (data == 0) {
-                                    f |= F_ZERO;
+                                    r.f().zf().set();
                                 }
                                 registerWrite(regNum, data);
                                 break;
@@ -1510,9 +1613,16 @@ class Dmgcpu {
                         if ((b2 & 0xC0) == 0x40) {  // BIT n, r
                             mask = (short) (0x01 << bitNumber);
                             if ((data & mask) != 0) {
-                                f = (short) ((f & F_CARRY) | F_HALFCARRY);
+                                //f = (short) ((f & F_CARRY) | F_HALFCARRY);
+                                r.f().zf().reset();
+                                r.f().nf().reset();
+                                r.f().hf().set();
+
                             } else {
-                                f = (short) ((f & F_CARRY) | (F_HALFCARRY + F_ZERO));
+                                //f = (short) ((f & F_CARRY) | (F_HALFCARRY + F_ZERO));
+                                r.f().zf().set();
+                                r.f().nf().reset();
+                                r.f().hf().set();
                             }
                         }
                         if ((b2 & 0xC0) == 0x80) {  // RES n, r
@@ -1530,7 +1640,7 @@ class Dmgcpu {
 
                     break;
                 case 0xCC:               // CALL Z, nnnnn
-                    if ((f & F_ZERO) == F_ZERO) {
+                    if (r.f().zf().intValue() == 1) {
                         pc += 3;
                         sp -= 2;
                         addressWrite(sp + 1, pc >> 8);
@@ -1550,23 +1660,24 @@ class Dmgcpu {
                 case 0xCE:               // ADC A, nn
                     pc += 2;
 
-                    if ((f & F_CARRY) != 0) {
+                    if (r.f().cf().intValue() == 1) {
                         b2++;
                     }
-                    f = 0;
+                    r.f().reset();
 
                     if ((((a & 0x0F) + (b2 & 0x0F)) & 0xF0) != 0x00) {
-                        f |= F_HALFCARRY;
+                        r.f().hf().set();
                     }
 
                     a += b2;
 
                     if ((a & 0xFF00) != 0) {     // Perform 8-bit overflow and set zero flag
+                        r.f().hf().set();
+                        r.f().cf().set();
                         if (a == 0x0100) {
-                            f |= F_ZERO + F_CARRY + F_HALFCARRY;
+                            r.f().zf().set();
                             a = 0;
                         } else {
-                            f |= F_CARRY + F_HALFCARRY;
                             a &= 0x00FF;
                         }
                     }
@@ -1580,7 +1691,7 @@ class Dmgcpu {
                     pc = 0x00;
                     break;
                 case 0xD0:               // RET NC
-                    if ((f & F_CARRY) == 0) {
+                    if (r.f().cf().intValue() == 0) {
                         pc = (JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp));
                         sp += 2;
                     } else {
@@ -1594,14 +1705,14 @@ class Dmgcpu {
                     sp += 2;
                     break;
                 case 0xD2:               // JP NC, nnnn
-                    if ((f & F_CARRY) == 0) {
+                    if (r.f().cf().intValue() == 0) {
                         pc = (b3 << 8) + b2;
                     } else {
                         pc += 3;
                     }
                     break;
                 case 0xD4:               // CALL NC, nnnn
-                    if ((f & F_CARRY) == 0) {
+                    if (r.f().cf().intValue() == 0) {
                         pc += 3;
                         sp -= 2;
                         addressWrite(sp + 1, pc >> 8);
@@ -1621,20 +1732,20 @@ class Dmgcpu {
                 case 0xD6:               // SUB A, nn
                     pc += 2;
 
-                    f = F_SUBTRACT;
+                                                    r.f().zf().reset();                                 r.f().nf().set();                                 r.f().hf().reset();                                 r.f().cf().reset();
 
                     if ((((a & 0x0F) - (b2 & 0x0F)) & 0xFFF0) != 0x00) {
-                        f |= F_HALFCARRY;
+                        r.f().hf().set();
                     }
 
                     a -= b2;
 
                     if ((a & 0xFF00) != 0) {
                         a &= 0x00FF;
-                        f |= F_CARRY;
+                        r.f().cf().set();
                     }
                     if (a == 0) {
-                        f |= F_ZERO;
+                        r.f().zf().set();
                     }
                     break;
                 case 0xD7:               // RST 10
@@ -1645,7 +1756,7 @@ class Dmgcpu {
                     pc = 0x10;
                     break;
                 case 0xD8:               // RET C
-                    if ((f & F_CARRY) == F_CARRY) {
+                    if (r.f().cf().intValue() == 1) {
                         pc = (JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp));
                         sp += 2;
                     } else {
@@ -1658,14 +1769,14 @@ class Dmgcpu {
                     sp += 2;
                     break;
                 case 0xDA:               // JP C, nnnn
-                    if ((f & F_CARRY) == F_CARRY) {
+                    if (r.f().cf().intValue() == 1) {
                         pc = (b3 << 8) + b2;
                     } else {
                         pc += 3;
                     }
                     break;
                 case 0xDC:               // CALL C, nnnn
-                    if ((f & F_CARRY) == F_CARRY) {
+                    if (r.f().cf().intValue() == 1) {
                         pc += 3;
                         sp -= 2;
                         addressWrite(sp + 1, pc >> 8);
@@ -1677,24 +1788,27 @@ class Dmgcpu {
                     break;
                 case 0xDE:               // SBC A, nn
                     pc += 2;
-                    if ((f & F_CARRY) != 0) {
+                    if (r.f().cf().intValue() == 1) {
                         b2++;
                     }
 
-                    f = F_SUBTRACT;
+                    r.f().zf().reset();
+                    r.f().nf().set();
+                    r.f().hf().reset();
+                    r.f().cf().reset();
                     if ((((a & 0x0F) - (b2 & 0x0F)) & 0xFFF0) != 0x00) {
-                        f |= F_HALFCARRY;
+                        r.f().hf().set();
                     }
 
                     a -= b2;
 
                     if ((a & 0xFF00) != 0) {
                         a &= 0x00FF;
-                        f |= F_CARRY;
+                        r.f().cf().set();
                     }
 
                     if (a == 0) {
-                        f |= F_ZERO;
+                        r.f().zf().set();
                     }
                     break;
                 case 0xDF:               // RST 18
@@ -1728,9 +1842,12 @@ class Dmgcpu {
                     pc += 2;
                     a &= b2;
                     if (a == 0) {
-                        f = F_ZERO;
+                        r.f().zf().set();
+                        r.f().nf().reset();
+                        r.f().hf().reset();
+                        r.f().cf().reset();
                     } else {
-                        f = 0;
+                        r.f().reset();
                     }
                     break;
                 case 0xE7:               // RST 20
@@ -1744,10 +1861,14 @@ class Dmgcpu {
                     pc += 2;
                     sp = (sp + offset);
                     if ((sp & 0xFFFF0000) != 0) {
-                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
+                        //f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
+                        r.f().cf().set();
+
                         sp &= 0xFFFF;
                     } else {
-                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)));
+                        //f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)));
+                        r.f().cf().reset();
+
                     }
                     break;
                 case 0xE9:               // JP (HL)
@@ -1762,9 +1883,12 @@ class Dmgcpu {
                     pc += 2;
                     a ^= b2;
                     if (a == 0) {
-                        f = F_ZERO;
+                        r.f().zf().set();
+                        r.f().nf().reset();
+                        r.f().hf().reset();
+                        r.f().cf().reset();
                     } else {
-                        f = 0;
+                        r.f().reset();
                     }
                     break;
                 case 0xEF:               // RST 28
@@ -1780,7 +1904,7 @@ class Dmgcpu {
                     break;
                 case 0xF1:               // POP AF
                     pc++;
-                    f = JavaBoy.unsign(addressRead(sp));
+                    r.f(JavaBoy.unsign(addressRead(sp)));
                     a = JavaBoy.unsign(addressRead(sp + 1));
                     sp += 2;
                     break;
@@ -1797,16 +1921,20 @@ class Dmgcpu {
                     pc++;
                     sp -= 2;
                     sp &= 0xFFFF;
-                    addressWrite(sp, f);
+                    addressWrite(sp, r.f().intValue());
                     addressWrite(sp + 1, a);
                     break;
                 case 0xF6:               // OR A, nn
                     pc += 2;
                     a |= b2;
                     if (a == 0) {
-                        f = F_ZERO;
+
+                        r.f().zf().set();
+                        r.f().nf().reset();
+                        r.f().hf().reset();
+                        r.f().cf().reset();
                     } else {
-                        f = 0;
+                        r.f().reset();
                     }
                     break;
                 case 0xF7:               // RST 30
@@ -1820,10 +1948,13 @@ class Dmgcpu {
                     pc += 2;
                     hl = (sp + offset);
                     if ((hl & 0x10000) != 0) {
-                        f = F_CARRY;
+                        r.f().zf().reset();
+                        r.f().nf().reset();
+                        r.f().hf().reset();
+                        r.f().cf().set();
                         hl &= 0xFFFF;
                     } else {
-                        f = 0;
+                        r.f().reset();
                     }
                     break;
                 case 0xF9:               // LD SP, HL
@@ -1842,12 +1973,12 @@ class Dmgcpu {
                     break;
                 case 0xFE:               // CP nn     ** FLAGS ARE WRONG! **
                     pc += 2;
-                    f = 0;
+                    r.f().reset();
                     if (b2 == a) {
-                        f |= F_ZERO;
+                        r.f().zf().set();
                     } else {
                         if (a < b2) {
-                            f |= F_CARRY;
+                            r.f().cf().set();
                         }
                     }
                     break;
@@ -1866,92 +1997,108 @@ class Dmgcpu {
                         int operand = registerRead(b1 & 0x07);
                         switch ((b1 & 0x38) >> 3) {
                             case 1: // ADC A, r
-                                if ((f & F_CARRY) != 0) {
+                                if (r.f().cf().intValue() == 1) {
                                     operand++;
                                 }
                                 // Note!  No break!
                             case 0: // ADD A, r
 
-                                f = 0;
+                                r.f().reset();
 
                                 if ((((a & 0x0F) + (operand & 0x0F)) & 0xF0) != 0x00) {
-                                    f |= F_HALFCARRY;
+                                    r.f().hf().set();
                                 }
 
                                 a += operand;
 
                                 if (a == 0) {
-                                    f |= F_ZERO;
+                                    r.f().zf().set();
                                 }
 
                                 if ((a & 0xFF00) != 0) {     // Perform 8-bit overflow and set zero flag
                                     if (a == 0x0100) {
-                                        f |= F_ZERO + F_CARRY + F_HALFCARRY;
+                                        r.f().zf().set();
+                                        r.f().hf().set();
+                                        r.f().cf().set();
+
                                         a = 0;
                                     } else {
-                                        f |= F_CARRY + F_HALFCARRY;
+                                        r.f().hf().set();
+                                        r.f().cf().set();
                                         a &= 0x00FF;
                                     }
                                 }
                                 break;
                             case 3: // SBC A, r
-                                if ((f & F_CARRY) != 0) {
+                                if (r.f().cf().intValue() == 1) {
                                     operand++;
                                 }
                                 // Note! No break!
+                                // todo ARRRRRRGH
                             case 2: // SUB A, r
-
-                                f = F_SUBTRACT;
+                                r.f().zf().reset();
+                                r.f().nf().set();
+                                r.f().hf().reset();
+                                r.f().cf().reset();
 
                                 if ((((a & 0x0F) - (operand & 0x0F)) & 0xFFF0) != 0x00) {
-                                    f |= F_HALFCARRY;
+                                    r.f().hf().set();
                                 }
 
                                 a -= operand;
 
                                 if ((a & 0xFF00) != 0) {
                                     a &= 0x00FF;
-                                    f |= F_CARRY;
+                                    r.f().cf().set();
                                 }
                                 if (a == 0) {
-                                    f |= F_ZERO;
+                                    r.f().zf().set();
                                 }
 
                                 break;
                             case 4: // AND A, r
                                 a &= operand;
                                 if (a == 0) {
-                                    f = F_ZERO;
+                                    r.f().zf().set();
+                                    r.f().nf().reset();
+                                    r.f().hf().reset();
+                                    r.f().cf().reset();
                                 } else {
-                                    f = 0;
+                                    r.f().reset();
                                 }
                                 break;
                             case 5: // XOR A, r
                                 a ^= operand;
                                 if (a == 0) {
-                                    f = F_ZERO;
+                                    r.f().zf().set();
+                                    r.f().nf().reset();
+                                    r.f().hf().reset();
+                                    r.f().cf().reset();
                                 } else {
-                                    f = 0;
+                                    r.f().reset();
                                 }
                                 break;
                             case 6: // OR A, r
                                 a |= operand;
                                 if (a == 0) {
-                                    f = F_ZERO;
+                                    r.f().zf().set();
+                                    r.f().nf().reset();
+                                    r.f().hf().reset();
+                                    r.f().cf().reset();
                                 } else {
-                                    f = 0;
+                                    r.f().reset();
                                 }
                                 break;
                             case 7: // CP A, r (compare)
-                                f = F_SUBTRACT;
+                                                                r.f().zf().reset();                                 r.f().nf().set();                                 r.f().hf().reset();                                 r.f().cf().reset();
                                 if (a == operand) {
-                                    f |= F_ZERO;
+                                    r.f().zf().set();
                                 }
                                 if (a < operand) {
-                                    f |= F_CARRY;
+                                    r.f().cf().set();
                                 }
                                 if ((a & 0x0F) < (operand & 0x0F)) {
-                                    f |= F_HALFCARRY;
+                                    r.f().hf().set();
                                 }
                                 break;
                         }

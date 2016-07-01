@@ -65,6 +65,14 @@ public class Registers {
         this.e.setValue(e);
     }
 
+    public FlagRegister f() {
+        return f;
+    }
+
+    public void f(int f) {
+        this.f.setValue(f);
+    }
+
     public Byte h() {
         return h;
     }
