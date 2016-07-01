@@ -19,11 +19,16 @@ public class Registers {
         l = new Byte();
 
         f = new FlagRegister();
+
+        pc = new Short();
+        sp = new Short();
     }
 
     private Byte a, b, c, d, e, h, l;
 
     private FlagRegister f;
+
+    private Short pc, sp;
 
     public Byte a() {
         return a;
@@ -141,4 +146,19 @@ public class Registers {
         hl(new Short(i));
     }
 
+    public Short pc() {
+        return pc;
+    }
+
+    public void pc(int i) {
+        this.pc.setValue(i);
+    }
+
+    public Short sp() {
+        return sp;
+    }
+
+    public void sp(int i) {
+        this.sp.setValue(i);
+    }
 }

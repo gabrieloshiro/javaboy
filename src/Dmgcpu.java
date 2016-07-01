@@ -18,7 +18,7 @@ class Dmgcpu {
     /**
      * Registers: 16-bit
      */
-    private int sp, pc, hl;
+    private int sp, hl;
 
     /**
      * The number of instructions that have been executed since the
@@ -158,7 +158,7 @@ class Dmgcpu {
                 }
 
             default:
-                System.out.println("Tried to read address " + addr + ".  pc = " + String.format("%04X", pc));
+                System.out.println("Tried to read address " + addr + ".  pc = " + String.format("%04X", r.pc().intValue()));
                 return 0xFF;
         }
 
@@ -209,7 +209,7 @@ class Dmgcpu {
                     try {
                         mainRam[addr - 0xE000] = (byte) data;
                     } catch (ArrayIndexOutOfBoundsException e) {
-                        System.out.println("Address error: " + addr + " pc = " + String.format("%04X", pc));
+                        System.out.println("Address error: " + addr + " pc = " + String.format("%04X", r.pc().intValue()));
                     }
                 } else if (addr < 0xFF00) {
                     oam[addr - 0xFE00] = (byte) data;
@@ -313,7 +313,7 @@ class Dmgcpu {
         cartridge.reset();
         interruptsEnabled = false;
         ieDelay = -1;
-        pc = 0x0100;
+        r.pc(0x0100);
         sp = 0xFFFE;
         r.f(0xB0);
         // todo z1 n0 h1 c1
@@ -360,24 +360,24 @@ class Dmgcpu {
         int ieReg = ioHandler.registers[0xFF];
         if ((intFlags & ieReg) != 0) {
             sp -= 2;
-            addressWrite(sp + 1, pc >> 8);  // Push current program counter onto stack
-            addressWrite(sp, pc & 0x00FF);
+            addressWrite(sp + 1, r.pc().getHigherByte().intValue());  // Push current program counter onto stack
+            addressWrite(sp, r.pc().getLowerByte().intValue());
             interruptsEnabled = false;
 
             if ((intFlags & ieReg & INT_VBLANK) != 0) {
-                pc = 0x40;                      // Jump to Vblank interrupt address
+                r.pc(0x40);                      // Jump to Vblank interrupt address
                 intFlags -= INT_VBLANK;
             } else if ((intFlags & ieReg & INT_LCDC) != 0) {
-                pc = 0x48;
+                r.pc(0x48);
                 intFlags -= INT_LCDC;
             } else if ((intFlags & ieReg & INT_TIMA) != 0) {
-                pc = 0x50;
+                r.pc(0x50);
                 intFlags -= INT_TIMA;
             } else if ((intFlags & ieReg & INT_SER) != 0) {
-                pc = 0x58;
+                r.pc(0x58);
                 intFlags -= INT_SER;
             } else if ((intFlags & ieReg & INT_P10) != 0) {    // Joypad interrupt
-                pc = 0x60;
+                r.pc(0x60);
                 intFlags -= INT_P10;
             }
 
@@ -496,26 +496,26 @@ class Dmgcpu {
         while (true) {
             instrCount++;
 
-            b1 = JavaBoy.unsign(addressRead(pc));
-            offset = addressRead(pc + 1);
-            b3 = JavaBoy.unsign(addressRead(pc + 2));
+            b1 = JavaBoy.unsign(addressRead(r.pc().intValue()));
+            offset = addressRead(r.pc().intValue() + 1);
+            b3 = JavaBoy.unsign(addressRead(r.pc().intValue() + 2));
             b2 = JavaBoy.unsign((short) offset);
 
             switch (b1) {
                 case 0x00:               // NOP
-                    pc++;
+                    r.pc().inc();
                     break;
                 case 0x01:               // LD BC, nn
-                    pc += 3;
+                    r.pc().inc();r.pc().inc();r.pc().inc();
                     b = b3;
                     c = b2;
                     break;
                 case 0x02:               // LD (BC), A
-                    pc++;
+                    r.pc().inc();
                     addressWrite((b << 8) | c, a);
                     break;
                 case 0x03:               // INC BC
-                    pc++;
+                    r.pc().inc();
                     c++;
                     if (c == 0x0100) {
                         b++;
@@ -526,7 +526,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x04:               // INC B
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().reset();
                     r.f().hf().reset();
@@ -546,7 +546,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x05:               // DEC B
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().set();
                     r.f().hf().reset();
@@ -569,11 +569,11 @@ class Dmgcpu {
                     }
                     break;
                 case 0x06:               // LD B, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     b = b2;
                     break;
                 case 0x07:               // RLC A
-                    pc++;
+                    r.pc().inc();
                     r.f().reset();
 
                     a <<= 1;
@@ -589,12 +589,12 @@ class Dmgcpu {
                     }
                     break;
                 case 0x08:               // LD (nnnn), SP   /* **** May be wrong! **** */
-                    pc += 3;
+                    r.pc().inc();r.pc().inc();r.pc().inc();
                     addressWrite((b3 << 8) + b2 + 1, (sp & 0xFF00) >> 8);
                     addressWrite((b3 << 8) + b2, (sp & 0x00FF));
                     break;
                 case 0x09:               // ADD HL, BC
-                    pc++;
+                    r.pc().inc();
                     hl = (hl + ((b << 8) + c));
                     if ((hl & 0xFFFF0000) != 0) {
                         //f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
@@ -608,11 +608,11 @@ class Dmgcpu {
                     }
                     break;
                 case 0x0A:               // LD A, (BC)
-                    pc++;
+                    r.pc().inc();
                     a = JavaBoy.unsign(addressRead((b << 8) + c));
                     break;
                 case 0x0B:               // DEC BC
-                    pc++;
+                    r.pc().inc();
                     c--;
                     if ((c & 0xFF00) != 0) {
                         c = 0xFF;
@@ -623,7 +623,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x0C:               // INC C
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().reset();
                     r.f().hf().reset();
@@ -644,7 +644,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x0D:               // DEC C
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().set();
                     r.f().hf().reset();
@@ -668,11 +668,11 @@ class Dmgcpu {
                     }
                     break;
                 case 0x0E:               // LD C, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     c = b2;
                     break;
                 case 0x0F:               // RRC A
-                    pc++;
+                    r.pc().inc();
                     if ((a & 0x01) == 0x01) {
                         r.f().zf().reset();
                         r.f().nf().reset();
@@ -690,7 +690,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x10:               // STOP
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
 
                     if (gbcFeatures) {
                         if ((ioHandler.registers[0x4D] & 0x01) == 1) {
@@ -711,16 +711,16 @@ class Dmgcpu {
                     //        System.out.println("- Breakpoint reached");
                     break;
                 case 0x11:               // LD DE, nnnn
-                    pc += 3;
+                    r.pc().inc();r.pc().inc();r.pc().inc();
                     d = b3;
                     e = b2;
                     break;
                 case 0x12:               // LD (DE), A
-                    pc++;
+                    r.pc().inc();
                     addressWrite((d << 8) + e, a);
                     break;
                 case 0x13:               // INC DE
-                    pc++;
+                    r.pc().inc();
                     e++;
                     if (e == 0x0100) {
                         d++;
@@ -731,7 +731,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x14:               // INC D
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().reset();
                     r.f().hf().reset();
@@ -751,7 +751,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x15:               // DEC D
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().reset();
                     r.f().hf().reset();
@@ -775,11 +775,11 @@ class Dmgcpu {
                     }
                     break;
                 case 0x16:               // LD D, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     d = b2;
                     break;
                 case 0x17:               // RL A
-                    pc++;
+                    r.pc().inc();
                     newf.reset();
                     if ((a & 0x80) == 0x80) {
                         newf.cf().set();
@@ -801,10 +801,10 @@ class Dmgcpu {
                     r.f().setValue(newf.intValue());
                     break;
                 case 0x18:               // JR nn
-                    pc += 2 + offset;
+                    r.pc(r.pc().intValue() + 2 + offset);
                     break;
                 case 0x19:               // ADD HL, DE
-                    pc++;
+                    r.pc().inc();
                     hl = (hl + ((d << 8) + e));
                     if ((hl & 0xFFFF0000) != 0) {
 //                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
@@ -818,11 +818,11 @@ class Dmgcpu {
                     }
                     break;
                 case 0x1A:               // LD A, (DE)
-                    pc++;
+                    r.pc().inc();
                     a = JavaBoy.unsign(addressRead((d << 8) + e));
                     break;
                 case 0x1B:               // DEC DE
-                    pc++;
+                    r.pc().inc();
                     e--;
                     if ((e & 0xFF00) != 0) {
                         e = 0xFF;
@@ -833,7 +833,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x1C:               // INC E
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().reset();
                     r.f().hf().reset();
@@ -853,7 +853,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x1D:               // DEC E
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().set();
                     r.f().hf().reset();
@@ -877,11 +877,11 @@ class Dmgcpu {
                     }
                     break;
                 case 0x1E:               // LD E, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     e = b2;
                     break;
                 case 0x1F:               // RR A
-                    pc++;
+                    r.pc().inc();
                     newf.reset();
                     if ((a & 0x01) == 0x01) {
 //                        newf = F_CARRY;
@@ -904,26 +904,26 @@ class Dmgcpu {
                     break;
                 case 0x20:               // JR NZ, nn
                     if (r.f().zf().intValue() == 0) {
-                        pc += 2 + offset;
+                        r.pc(r.pc().intValue() + 2 + offset);
                     } else {
-                        pc += 2;
+                        r.pc().inc();r.pc().inc();
                     }
                     break;
                 case 0x21:               // LD HL, nnnn
-                    pc += 3;
+                    r.pc().inc();r.pc().inc();r.pc().inc();
                     hl = (b3 << 8) + b2;
                     break;
                 case 0x22:               // LD (HL+), A
-                    pc++;
+                    r.pc().inc();
                     addressWrite(hl, a);
                     hl = (hl + 1) & 0xFFFF;
                     break;
                 case 0x23:               // INC HL
-                    pc++;
+                    r.pc().inc();
                     hl = (hl + 1) & 0xFFFF;
                     break;
                 case 0x24:               // INC H         ** May be wrong **
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().reset();
                     r.f().hf().reset();
@@ -943,7 +943,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x25:               // DEC H           ** May be wrong **
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().set();
                     r.f().hf().reset();
@@ -967,11 +967,11 @@ class Dmgcpu {
                     }
                     break;
                 case 0x26:               // LD H, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     hl = (hl & 0x00FF) | (b2 << 8);
                     break;
                 case 0x27:               // DAA         ** This could be wrong! **
-                    pc++;
+                    r.pc().inc();
 
                     int upperNibble = (a & 0xF0) >> 4;
                     int lowerNibble = a & 0x0F;
@@ -1081,13 +1081,13 @@ class Dmgcpu {
                     break;
                 case 0x28:               // JR Z, nn
                     if (r.f().zf().intValue() == 1) {
-                        pc += 2 + offset;
+                        r.pc(r.pc().intValue() + 2 + offset);
                     } else {
-                        pc += 2;
+                        r.pc().inc();r.pc().inc();
                     }
                     break;
                 case 0x29:               // ADD HL, HL
-                    pc++;
+                    r.pc().inc();
                     hl = (hl + hl);
                     if ((hl & 0xFFFF0000) != 0) {
 
@@ -1102,12 +1102,12 @@ class Dmgcpu {
                     }
                     break;
                 case 0x2A:               // LDI A, (HL)
-                    pc++;
+                    r.pc().inc();
                     a = JavaBoy.unsign(addressRead(hl));
                     hl++;
                     break;
                 case 0x2B:               // DEC HL
-                    pc++;
+                    r.pc().inc();
                     if (hl == 0) {
                         hl = 0xFFFF;
                     } else {
@@ -1115,7 +1115,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x2C:               // INC L
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().reset();
                     r.f().hf().reset();
@@ -1136,7 +1136,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x2D:               // DEC L
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().set();
                     r.f().hf().reset();
@@ -1160,11 +1160,11 @@ class Dmgcpu {
                     }
                     break;
                 case 0x2E:               // LD L, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     hl = (hl & 0xFF00) | b2;
                     break;
                 case 0x2F:               // CPL A
-                    pc++;
+                    r.pc().inc();
                     short mask;
                     a = (short) ((~a) & 0x00FF);
                     r.f().nf().set();
@@ -1173,26 +1173,26 @@ class Dmgcpu {
                     break;
                 case 0x30:               // JR NC, nn
                     if (r.f().cf().intValue() == 0) {
-                        pc += 2 + offset;
+                        r.pc(r.pc().intValue() + 2 + offset);
                     } else {
-                        pc += 2;
+                        r.pc().inc();r.pc().inc();
                     }
                     break;
                 case 0x31:               // LD SP, nnnn
-                    pc += 3;
+                    r.pc().inc();r.pc().inc();r.pc().inc();
                     sp = (b3 << 8) + b2;
                     break;
                 case 0x32:
-                    pc++;
+                    r.pc().inc();
                     addressWrite(hl, a);  // LD (HL-), A
                     hl--;
                     break;
                 case 0x33:               // INC SP
-                    pc++;
+                    r.pc().inc();
                     sp = (sp + 1) & 0xFFFF;
                     break;
                 case 0x34:               // INC (HL)
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().reset();
                     r.f().hf().reset();
@@ -1214,7 +1214,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x35:               // DEC (HL)
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().set();
                     r.f().hf().reset();
@@ -1239,24 +1239,24 @@ class Dmgcpu {
                     }
                     break;
                 case 0x36:               // LD (HL), nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     addressWrite(hl, b2);
                     break;
                 case 0x37:               // SCF
-                    pc++;
+                    r.pc().inc();
                     r.f().nf().reset();
                     r.f().hf().reset();
                     r.f().cf().set();
                     break;
                 case 0x38:               // JR C, nn
                     if (r.f().cf().booleanValue()) {
-                        pc += 2 + offset;
+                        r.pc(r.pc().intValue() + 2 + offset);
                     } else {
-                        pc += 2;
+                        r.pc().inc();r.pc().inc();
                     }
                     break;
                 case 0x39:               // ADD HL, SP      ** Could be wrong **
-                    pc++;
+                    r.pc().inc();
                     hl = (hl + sp);
                     if ((hl & 0xFFFF0000) != 0) {
 //                        f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
@@ -1271,16 +1271,16 @@ class Dmgcpu {
                     }
                     break;
                 case 0x3A:               // LD A, (HL-)
-                    pc++;
+                    r.pc().inc();
                     a = JavaBoy.unsign(addressRead(hl));
                     hl = (hl - 1) & 0xFFFF;
                     break;
                 case 0x3B:               // DEC SP
-                    pc++;
+                    r.pc().inc();
                     sp = (sp - 1) & 0xFFFF;
                     break;
                 case 0x3C:               // INC A
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().reset();
                     r.f().hf().reset();
@@ -1300,7 +1300,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x3D:               // DEC A
-                    pc++;
+                    r.pc().inc();
                     r.f().zf().reset();
                     r.f().nf().reset();
                     r.f().hf().reset();
@@ -1325,11 +1325,11 @@ class Dmgcpu {
                     }
                     break;
                 case 0x3E:               // LD A, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     a = b2;
                     break;
                 case 0x3F:               // CCF
-                    pc++;
+                    r.pc().inc();
 
                     if (r.f().cf().intValue() == 0) {
                         //f = (short) ((f & F_ZERO) | F_CARRY);
@@ -1348,7 +1348,7 @@ class Dmgcpu {
                     }
                     break;
                 case 0x52:
-                    pc++;
+                    r.pc().inc();
                     break;
 
                 case 0x76:               // HALT
@@ -1357,10 +1357,10 @@ class Dmgcpu {
                         initiateInterrupts();
                         instrCount++;
                     }
-                    pc++;
+                    r.pc().inc();
                     break;
                 case 0xAF:               // XOR A, A (== LD A, 0)
-                    pc++;
+                    r.pc().inc();
                     a = 0;
                     r.f().zf().set();
                     r.f().nf().reset();
@@ -1369,48 +1369,48 @@ class Dmgcpu {
                     break;
                 case 0xC0:               // RET NZ
                     if (r.f().zf().intValue() == 0) {
-                        pc = (JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp));
+                        r.pc((JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp)));
                         sp += 2;
                     } else {
-                        pc++;
+                        r.pc().inc();
                     }
                     break;
                 case 0xC1:               // POP BC
-                    pc++;
+                    r.pc().inc();
                     c = JavaBoy.unsign(addressRead(sp));
                     b = JavaBoy.unsign(addressRead(sp + 1));
                     sp += 2;
                     break;
                 case 0xC2:               // JP NZ, nnnn
                     if (r.f().zf().intValue() == 0) {
-                        pc = (b3 << 8) + b2;
+                        r.pc((b3 << 8) + b2);
                     } else {
-                        pc += 3;
+                        r.pc().inc();r.pc().inc();r.pc().inc();
                     }
                     break;
                 case 0xC3:
-                    pc = (b3 << 8) + b2;  // JP nnnn
+                    r.pc((b3 << 8) + b2);  // JP nnnn
                     break;
                 case 0xC4:               // CALL NZ, nnnnn
                     if (r.f().zf().intValue() == 0) {
-                        pc += 3;
+                        r.pc().inc();r.pc().inc();r.pc().inc();
                         sp -= 2;
-                        addressWrite(sp + 1, pc >> 8);
-                        addressWrite(sp, pc & 0x00FF);
-                        pc = (b3 << 8) + b2;
+                        addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                        addressWrite(sp, r.pc().getLowerByte().intValue());
+                        r.pc((b3 << 8) + b2);
                     } else {
-                        pc += 3;
+                        r.pc().inc();r.pc().inc();r.pc().inc();
                     }
                     break;
                 case 0xC5:               // PUSH BC
-                    pc++;
+                    r.pc().inc();
                     sp -= 2;
                     sp &= 0xFFFF;
                     addressWrite(sp, c);
                     addressWrite(sp + 1, b);
                     break;
                 case 0xC6:               // ADD A, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     r.f().reset();
 
                     if ((((a & 0x0F) + (b2 & 0x0F)) & 0xF0) != 0x00) {
@@ -1431,33 +1431,33 @@ class Dmgcpu {
                     }
                     break;
                 case 0xCF:               // RST 08
-                    pc++;
+                    r.pc().inc();
                     sp -= 2;
-                    addressWrite(sp + 1, pc >> 8);
-                    addressWrite(sp, pc & 0x00FF);
-                    pc = 0x08;
+                    addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                    addressWrite(sp, r.pc().getLowerByte().intValue());
+                    r.pc(0x08);
                     break;
                 case 0xC8:               // RET Z
                     if (r.f().zf().intValue() == 1) {
-                        pc = (JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp));
+                        r.pc((JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp)));
                         sp += 2;
                     } else {
-                        pc++;
+                        r.pc().inc();
                     }
                     break;
                 case 0xC9:               // RET
-                    pc = (JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp));
+                    r.pc((JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp)));
                     sp += 2;
                     break;
                 case 0xCA:               // JP Z, nnnn
                     if (r.f().zf().intValue() == 1) {
-                        pc = (b3 << 8) + b2;
+                        r.pc((b3 << 8) + b2);
                     } else {
-                        pc += 3;
+                        r.pc().inc();r.pc().inc();r.pc().inc();
                     }
                     break;
                 case 0xCB:               // Shift/bit test
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     int regNum = b2 & 0x07;
                     int data = registerRead(regNum);
                     //        System.out.println("0xCB instr! - reg " + JavaBoy.hexByte((short) (b2 & 0xF4)));
@@ -1653,24 +1653,24 @@ class Dmgcpu {
                     break;
                 case 0xCC:               // CALL Z, nnnnn
                     if (r.f().zf().intValue() == 1) {
-                        pc += 3;
+                        r.pc().inc();r.pc().inc();r.pc().inc();
                         sp -= 2;
-                        addressWrite(sp + 1, pc >> 8);
-                        addressWrite(sp, pc & 0x00FF);
-                        pc = (b3 << 8) + b2;
+                        addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                        addressWrite(sp, r.pc().getLowerByte().intValue());
+                        r.pc((b3 << 8) + b2);
                     } else {
-                        pc += 3;
+                        r.pc().inc();r.pc().inc();r.pc().inc();
                     }
                     break;
                 case 0xCD:               // CALL nnnn
-                    pc += 3;
+                    r.pc().inc();r.pc().inc();r.pc().inc();
                     sp -= 2;
-                    addressWrite(sp + 1, pc >> 8);
-                    addressWrite(sp, pc & 0x00FF);
-                    pc = (b3 << 8) + b2;
+                    addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                    addressWrite(sp, r.pc().getLowerByte().intValue());
+                    r.pc((b3 << 8) + b2);
                     break;
                 case 0xCE:               // ADC A, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
 
                     if (r.f().cf().intValue() == 1) {
                         b2++;
@@ -1695,54 +1695,54 @@ class Dmgcpu {
                     }
                     break;
                 case 0xC7:               // RST 00
-                    pc++;
+                    r.pc().inc();
                     sp -= 2;
-                    addressWrite(sp + 1, pc >> 8);
-                    addressWrite(sp, pc & 0x00FF);
+                    addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                    addressWrite(sp, r.pc().getLowerByte().intValue());
                     //        terminate = true;
-                    pc = 0x00;
+                    r.pc(0x00);
                     break;
                 case 0xD0:               // RET NC
                     if (r.f().cf().intValue() == 0) {
-                        pc = (JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp));
+                        r.pc((JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp)));
                         sp += 2;
                     } else {
-                        pc++;
+                        r.pc().inc();
                     }
                     break;
                 case 0xD1:               // POP DE
-                    pc++;
+                    r.pc().inc();
                     e = JavaBoy.unsign(addressRead(sp));
                     d = JavaBoy.unsign(addressRead(sp + 1));
                     sp += 2;
                     break;
                 case 0xD2:               // JP NC, nnnn
                     if (r.f().cf().intValue() == 0) {
-                        pc = (b3 << 8) + b2;
+                        r.pc((b3 << 8) + b2);
                     } else {
-                        pc += 3;
+                        r.pc().inc();r.pc().inc();r.pc().inc();
                     }
                     break;
                 case 0xD4:               // CALL NC, nnnn
                     if (r.f().cf().intValue() == 0) {
-                        pc += 3;
+                        r.pc().inc();r.pc().inc();r.pc().inc();
                         sp -= 2;
-                        addressWrite(sp + 1, pc >> 8);
-                        addressWrite(sp, pc & 0x00FF);
-                        pc = (b3 << 8) + b2;
+                        addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                        addressWrite(sp, r.pc().getLowerByte().intValue());
+                        r.pc((b3 << 8) + b2);
                     } else {
-                        pc += 3;
+                        r.pc().inc();r.pc().inc();r.pc().inc();
                     }
                     break;
                 case 0xD5:               // PUSH DE
-                    pc++;
+                    r.pc().inc();
                     sp -= 2;
                     sp &= 0xFFFF;
                     addressWrite(sp, e);
                     addressWrite(sp + 1, d);
                     break;
                 case 0xD6:               // SUB A, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
 
                                                     r.f().zf().reset();                                 r.f().nf().set();                                 r.f().hf().reset();                                 r.f().cf().reset();
 
@@ -1761,45 +1761,45 @@ class Dmgcpu {
                     }
                     break;
                 case 0xD7:               // RST 10
-                    pc++;
+                    r.pc().inc();
                     sp -= 2;
-                    addressWrite(sp + 1, pc >> 8);
-                    addressWrite(sp, pc & 0x00FF);
-                    pc = 0x10;
+                    addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                    addressWrite(sp, r.pc().getLowerByte().intValue());
+                    r.pc(0x10);
                     break;
                 case 0xD8:               // RET C
                     if (r.f().cf().intValue() == 1) {
-                        pc = (JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp));
+                        r.pc((JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp)));
                         sp += 2;
                     } else {
-                        pc++;
+                        r.pc().inc();
                     }
                     break;
                 case 0xD9:               // RETI
                     interruptsEnabled = true;
-                    pc = (JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp));
+                    r.pc((JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp)));
                     sp += 2;
                     break;
                 case 0xDA:               // JP C, nnnn
                     if (r.f().cf().intValue() == 1) {
-                        pc = (b3 << 8) + b2;
+                        r.pc((b3 << 8) + b2);
                     } else {
-                        pc += 3;
+                        r.pc().inc();r.pc().inc();r.pc().inc();
                     }
                     break;
                 case 0xDC:               // CALL C, nnnn
                     if (r.f().cf().intValue() == 1) {
-                        pc += 3;
+                        r.pc().inc();r.pc().inc();r.pc().inc();
                         sp -= 2;
-                        addressWrite(sp + 1, pc >> 8);
-                        addressWrite(sp, pc & 0x00FF);
-                        pc = (b3 << 8) + b2;
+                        addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                        addressWrite(sp, r.pc().getLowerByte().intValue());
+                        r.pc((b3 << 8) + b2);
                     } else {
-                        pc += 3;
+                        r.pc().inc();r.pc().inc();r.pc().inc();
                     }
                     break;
                 case 0xDE:               // SBC A, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     if (r.f().cf().intValue() == 1) {
                         b2++;
                     }
@@ -1824,34 +1824,34 @@ class Dmgcpu {
                     }
                     break;
                 case 0xDF:               // RST 18
-                    pc++;
+                    r.pc().inc();
                     sp -= 2;
-                    addressWrite(sp + 1, pc >> 8);
-                    addressWrite(sp, pc & 0x00FF);
-                    pc = 0x18;
+                    addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                    addressWrite(sp, r.pc().getLowerByte().intValue());
+                    r.pc(0x18);
                     break;
                 case 0xE0:               // LDH (FFnn), A
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     addressWrite(0xFF00 + b2, a);
                     break;
                 case 0xE1:               // POP HL
-                    pc++;
+                    r.pc().inc();
                     hl = (JavaBoy.unsign(addressRead(sp + 1)) << 8) + JavaBoy.unsign(addressRead(sp));
                     sp += 2;
                     break;
                 case 0xE2:               // LDH (FF00 + C), A
-                    pc++;
+                    r.pc().inc();
                     addressWrite(0xFF00 + c, a);
                     break;
                 case 0xE5:               // PUSH HL
-                    pc++;
+                    r.pc().inc();
                     sp -= 2;
                     sp &= 0xFFFF;
                     addressWrite(sp + 1, hl >> 8);
                     addressWrite(sp, hl & 0x00FF);
                     break;
                 case 0xE6:               // AND nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     a &= b2;
                     if (a == 0) {
                         r.f().zf().set();
@@ -1863,14 +1863,14 @@ class Dmgcpu {
                     }
                     break;
                 case 0xE7:               // RST 20
-                    pc++;
+                    r.pc().inc();
                     sp -= 2;
-                    addressWrite(sp + 1, pc >> 8);
-                    addressWrite(sp, pc & 0x00FF);
-                    pc = 0x20;
+                    addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                    addressWrite(sp, r.pc().getLowerByte().intValue());
+                    r.pc(0x20);
                     break;
                 case 0xE8:               // ADD SP, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     sp = (sp + offset);
                     if ((sp & 0xFFFF0000) != 0) {
                         //f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)) | (F_CARRY));
@@ -1884,15 +1884,15 @@ class Dmgcpu {
                     }
                     break;
                 case 0xE9:               // JP (HL)
-                    pc++;
-                    pc = hl;
+                    r.pc().inc();
+                    r.pc(hl);
                     break;
                 case 0xEA:               // LD (nnnn), A
-                    pc += 3;
+                    r.pc().inc();r.pc().inc();r.pc().inc();
                     addressWrite((b3 << 8) + b2, a);
                     break;
                 case 0xEE:               // XOR A, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     a ^= b2;
                     if (a == 0) {
                         r.f().zf().set();
@@ -1904,40 +1904,40 @@ class Dmgcpu {
                     }
                     break;
                 case 0xEF:               // RST 28
-                    pc++;
+                    r.pc().inc();
                     sp -= 2;
-                    addressWrite(sp + 1, pc >> 8);
-                    addressWrite(sp, pc & 0x00FF);
-                    pc = 0x28;
+                    addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                    addressWrite(sp, r.pc().getLowerByte().intValue());
+                    r.pc(0x28);
                     break;
                 case 0xF0:               // LDH A, (FFnn)
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     a = JavaBoy.unsign(addressRead(0xFF00 + b2));
                     break;
                 case 0xF1:               // POP AF
-                    pc++;
+                    r.pc().inc();
                     r.f(JavaBoy.unsign(addressRead(sp)));
                     a = JavaBoy.unsign(addressRead(sp + 1));
                     sp += 2;
                     break;
                 case 0xF2:               // LD A, (FF00 + C)
-                    pc++;
+                    r.pc().inc();
                     a = JavaBoy.unsign(addressRead(0xFF00 + c));
                     break;
                 case 0xF3:               // DI
-                    pc++;
+                    r.pc().inc();
                     interruptsEnabled = false;
                     //    addressWrite(0xFFFF, 0);
                     break;
                 case 0xF5:               // PUSH AF
-                    pc++;
+                    r.pc().inc();
                     sp -= 2;
                     sp &= 0xFFFF;
                     addressWrite(sp, r.f().intValue());
                     addressWrite(sp + 1, a);
                     break;
                 case 0xF6:               // OR A, nn
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     a |= b2;
                     if (a == 0) {
 
@@ -1950,14 +1950,14 @@ class Dmgcpu {
                     }
                     break;
                 case 0xF7:               // RST 30
-                    pc++;
+                    r.pc().inc();
                     sp -= 2;
-                    addressWrite(sp + 1, pc >> 8);
-                    addressWrite(sp, pc & 0x00FF);
-                    pc = 0x30;
+                    addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                    addressWrite(sp, r.pc().getLowerByte().intValue());
+                    r.pc(0x30);
                     break;
                 case 0xF8:               // LD HL, SP + nn  ** HALFCARRY FLAG NOT SET ***
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     hl = (sp + offset);
                     if ((hl & 0x10000) != 0) {
                         r.f().zf().reset();
@@ -1970,21 +1970,21 @@ class Dmgcpu {
                     }
                     break;
                 case 0xF9:               // LD SP, HL
-                    pc++;
+                    r.pc().inc();
                     sp = hl;
                     break;
                 case 0xFA:               // LD A, (nnnn)
-                    pc += 3;
+                    r.pc().inc();r.pc().inc();r.pc().inc();
                     a = JavaBoy.unsign(addressRead((b3 << 8) + b2));
                     break;
                 case 0xFB:               // EI
-                    pc++;
+                    r.pc().inc();
                     ieDelay = 1;
                     //  interruptsEnabled = true;
                     //  addressWrite(0xFFFF, 0xFF);
                     break;
                 case 0xFE:               // CP nn     ** FLAGS ARE WRONG! **
-                    pc += 2;
+                    r.pc().inc();r.pc().inc();
                     r.f().reset();
                     if (b2 == a) {
                         r.f().zf().set();
@@ -1995,17 +1995,17 @@ class Dmgcpu {
                     }
                     break;
                 case 0xFF:               // RST 38
-                    pc++;
+                    r.pc().inc();
                     sp -= 2;
-                    addressWrite(sp + 1, pc >> 8);
-                    addressWrite(sp, pc & 0x00FF);
-                    pc = 0x38;
+                    addressWrite(sp + 1, r.pc().getHigherByte().intValue());
+                    addressWrite(sp, r.pc().getLowerByte().intValue());
+                    r.pc(0x38);
                     break;
 
                 default:
 
                     if ((b1 & 0xC0) == 0x80) {       // Byte 0x10?????? indicates ALU op
-                        pc++;
+                        r.pc().inc();
                         int operand = registerRead(b1 & 0x07);
                         switch ((b1 & 0x38) >> 3) {
                             case 1: // ADC A, r
@@ -2116,12 +2116,12 @@ class Dmgcpu {
                         }
                     } else if ((b1 & 0xC0) == 0x40) {   // Byte 0x01xxxxxxx indicates 8-bit ld
 
-                        pc++;
+                        r.pc().inc();
                         registerWrite((b1 & 0x38) >> 3, registerRead(b1 & 0x07));
 
                     } else {
                         System.out.println("Unrecognized opcode (" + String.format("%02X", b1) + ")");
-                        pc++;
+                        r.pc().inc();
                         break;
                     }
             }

@@ -8,11 +8,15 @@ public class Short {
     private int value;
 
     public Short(int i) {
-        intValue(i);
+        setValue(i);
     }
 
     public Short(Byte high, Byte low) {
         setValue(high, low);
+    }
+
+    public Short() {
+        setValue(0);
     }
 
     public void setValue(Byte high, Byte low) {
@@ -29,8 +33,8 @@ public class Short {
         return value;
     }
 
-    public void intValue(int value) {
-        this.value = value;
+    public void setValue(int value) {
+        this.value = value & 0xFFFF;
     }
 
     public Byte getLowerByte() {
@@ -50,11 +54,11 @@ public class Short {
     }
 
     public void inc() {
-        intValue(value + 1);
+        setValue(value + 1);
     }
 
     public void dec() {
-        intValue(value - 1);
+        setValue(value - 1);
     }
 }
 
