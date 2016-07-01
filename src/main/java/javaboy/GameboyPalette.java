@@ -1,3 +1,5 @@
+package javaboy;
+
 import java.awt.*;
 
 /**

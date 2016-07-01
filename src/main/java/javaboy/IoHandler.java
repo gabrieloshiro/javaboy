@@ -1,3 +1,5 @@
+package javaboy;
+
 /**
  * This class handles all the memory mapped IO in the range
  * FF00 - FF4F.  It also handles high memory accessed by the

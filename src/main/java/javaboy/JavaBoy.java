@@ -1,4 +1,4 @@
-import javaboy.Registers;
+package javaboy;
 
 import java.awt.*;
 

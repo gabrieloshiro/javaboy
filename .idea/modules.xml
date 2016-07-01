@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/javaboy.iml" filepath="$PROJECT_DIR$/javaboy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/javaboy.iml" filepath="$PROJECT_DIR$/.idea/modules/javaboy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/javaboy_main.iml" filepath="$PROJECT_DIR$/.idea/modules/javaboy_main.iml" group="javaboy" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/javaboy_test.iml" filepath="$PROJECT_DIR$/.idea/modules/javaboy_test.iml" group="javaboy" />
     </modules>
   </component>
 </project>

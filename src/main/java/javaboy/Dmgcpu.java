@@ -1,4 +1,5 @@
-import javaboy.Registers;
+package javaboy;
+
 import javaboy.lang.FlagRegister;
 
 import java.awt.*;
@@ -315,8 +316,12 @@ class Dmgcpu {
         ieDelay = -1;
         r.pc(0x0100);
         r.sp(0xFFFE);
-        r.f(0xB0);
-        // todo z1 n0 h1 c1
+
+        r.f().zf().set();
+        r.f().nf().reset();
+        r.f().hf().set();
+        r.f().cf().set();
+
         gbcRamBank = 1;
         instrCount = 0;
 
@@ -336,7 +341,6 @@ class Dmgcpu {
         System.out.println("CPU reset");
 
         ioHandler.reset();
-        //  pc = 0x0100;
     }
 
     private void setDoubleSpeedCpu(boolean enabled) {
@@ -483,9 +487,6 @@ class Dmgcpu {
         }
     }
 
-    /**
-     * Execute the specified number of Gameboy instructions.  Use '-1' to execute forever
-     */
     final void execute() {
 
         FlagRegister newf = new FlagRegister();
@@ -503,10 +504,18 @@ class Dmgcpu {
             b2 = JavaBoy.unsign((short) offset);
 
             switch (b1) {
-                case 0x00:               // NOP
+
+                /**
+                 * NOP
+                 */
+                case 0x00:
                     r.pc().inc();
                     break;
-                case 0x01:               // LD BC, nn
+
+                /**
+                 * LD BC, nn
+                 */
+                case 0x01:
                     r.pc().inc();
                     r.pc().inc();
                     r.pc().inc();

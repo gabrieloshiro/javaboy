@@ -54,14 +54,17 @@ public class Byte {
     }
 
     public Bit getBit(int index) {
-        // TODO verify param
+        if (index > 7 || index < 0) {
+            throw new IllegalArgumentException("Bit index on a byte should be in the range 0..7. Index passed: " + index);
+        }
         return new Bit((value >> index) & 1);
     }
 
     public void setBit(int index) {
-        // TODO verify param
+        if (index > 7 || index < 0) {
+            throw new IllegalArgumentException("Bit index on a byte should be in the range 0..7. Index passed: " + index);
+        }
         value = (1 << index) | value;
     }
-
 
 }

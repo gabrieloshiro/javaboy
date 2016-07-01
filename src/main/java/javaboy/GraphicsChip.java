@@ -1,3 +1,5 @@
+package javaboy;
+
 import java.awt.*;
 import java.awt.image.DirectColorModel;
 import java.awt.image.MemoryImageSource;
