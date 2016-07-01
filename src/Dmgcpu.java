@@ -1,4 +1,5 @@
 import javaboy.Registers;
+import javaboy.lang.FlagRegister;
 
 import java.awt.*;
 
@@ -34,23 +35,6 @@ class Dmgcpu {
 
     boolean timaEnabled = false;
     int instrsPerTima = 6000;
-
-    /**
-     * Zero flag
-     */
-    private final short F_ZERO = 0x80;
-    /**
-     * Subtract/negative flag
-     */
-    private final short F_SUBTRACT = 0x40;
-    /**
-     * Half carry flag
-     */
-    private final short F_HALFCARRY = 0x20;
-    /**
-     * Carry flag
-     */
-    private final short F_CARRY = 0x10;
 
     final short INSTRS_PER_VBLANK = 9000; /* 10000  */
 
@@ -503,7 +487,8 @@ class Dmgcpu {
      */
     final void execute() {
 
-        short newf;
+        FlagRegister newf = new FlagRegister();
+
         int dat;
         graphicsChipOld.startTime = System.currentTimeMillis();
         int b1, b2, b3, offset;
@@ -795,11 +780,13 @@ class Dmgcpu {
                     break;
                 case 0x17:               // RL A
                     pc++;
+                    newf.reset();
                     if ((a & 0x80) == 0x80) {
-                        newf = F_CARRY;
-                    } else {
-                        newf = 0;
+                        newf.cf().set();
                     }
+//                    else {
+//                        newf.reset();
+//                    }
                     a <<= 1;
 
                     if (r.f().cf().intValue() == 1) {
@@ -808,9 +795,10 @@ class Dmgcpu {
 
                     a &= 0xFF;
                     if (a == 0) {
-                        newf |= F_ZERO;
+//                        newf |= F_ZERO;
+                        newf.zf().set();
                     }
-                    r.f().setValue(newf);
+                    r.f().setValue(newf.intValue());
                     break;
                 case 0x18:               // JR nn
                     pc += 2 + offset;
@@ -894,11 +882,14 @@ class Dmgcpu {
                     break;
                 case 0x1F:               // RR A
                     pc++;
+                    newf.reset();
                     if ((a & 0x01) == 0x01) {
-                        newf = F_CARRY;
-                    } else {
-                        newf = 0;
+//                        newf = F_CARRY;
+                        newf.cf().set();
                     }
+//                    else {
+//                        newf = 0;
+//                    }
                     a >>= 1;
 
                     if (r.f().cf().intValue() == 1) {
@@ -906,9 +897,10 @@ class Dmgcpu {
                     }
 
                     if (a == 0) {
-                        newf |= F_ZERO;
+//                        newf |= F_ZERO;
+                        newf.zf().set();
                     }
-                    r.f().setValue(newf);
+                    r.f().setValue(newf.intValue());
                     break;
                 case 0x20:               // JR NZ, nn
                     if (r.f().zf().intValue() == 0) {
@@ -986,7 +978,9 @@ class Dmgcpu {
 
                     //        System.out.println("Daa at " + JavaBoy.hexWord(pc));
 
-                    newf = (short) (r.f().intValue() & F_SUBTRACT);
+                    newf.reset();
+                    newf.nf(r.f().nf().intValue());
+                    //newf = (short) (r.f().intValue() & F_SUBTRACT);
 
                     if (r.f().nf().intValue() == 0) {
 
@@ -1004,19 +998,22 @@ class Dmgcpu {
                             if ((upperNibble >= 0xA) && (lowerNibble <= 0x9) &&
                                     (r.f().hf().intValue() == 0)) {
                                 a += 0x60;
-                                newf |= F_CARRY;
+//                                newf |= F_CARRY;
+                                newf.cf().set();
                             }
 
                             if ((upperNibble >= 0x9) && (lowerNibble >= 0xA) &&
                                     (r.f().hf().intValue() == 0)) {
                                 a += 0x66;
-                                newf |= F_CARRY;
+//                                newf |= F_CARRY;
+                                newf.cf().set();
                             }
 
                             if ((upperNibble >= 0xA) && (lowerNibble <= 0x3) &&
                                     (r.f().hf().intValue() == 1)) {
                                 a += 0x66;
-                                newf |= F_CARRY;
+//                                newf |= F_CARRY;
+                                newf.cf().set();
                             }
 
                         } else {  // If carry set
@@ -1024,19 +1021,22 @@ class Dmgcpu {
                             if ((upperNibble <= 0x2) && (lowerNibble <= 0x9) &&
                                     (r.f().hf().intValue() == 0)) {
                                 a += 0x60;
-                                newf |= F_CARRY;
+//                                newf |= F_CARRY;
+                                newf.cf().set();
                             }
 
                             if ((upperNibble <= 0x2) && (lowerNibble >= 0xA) &&
                                     (r.f().hf().intValue() == 0)) {
                                 a += 0x66;
-                                newf |= F_CARRY;
+//                                newf |= F_CARRY;
+                                newf.cf().set();
                             }
 
                             if ((upperNibble <= 0x3) && (lowerNibble <= 0x3) &&
                                     (r.f().hf().intValue() == 1)) {
                                 a += 0x66;
-                                newf |= F_CARRY;
+//                                newf |= F_CARRY;
+                                newf.cf().set();
                             }
 
                         }
@@ -1055,13 +1055,15 @@ class Dmgcpu {
                             if ((upperNibble >= 0x7) && (lowerNibble <= 0x9) &&
                                     (r.f().hf().intValue() == 0)) {
                                 a += 0xA0;
-                                newf |= F_CARRY;
+//                                newf |= F_CARRY;
+                                newf.cf().set();
                             }
 
                             if ((upperNibble >= 0x6) && (lowerNibble >= 0x6) &&
                                     (r.f().hf().intValue() == 1)) {
                                 a += 0x9A;
-                                newf |= F_CARRY;
+//                                newf |= F_CARRY;
+                                newf.cf().set();
                             }
 
                         }
@@ -1069,9 +1071,12 @@ class Dmgcpu {
                     }
 
                     a &= 0x00FF;
-                    if (a == 0) newf |= F_ZERO;
+                    if (a == 0) {
+//                        newf |= F_ZERO;
+                        newf.zf().set();
+                    }
 
-                    r.f().setValue(newf);
+                    r.f().setValue(newf.intValue());
 
                     break;
                 case 0x28:               // JR Z, nn
@@ -1162,7 +1167,6 @@ class Dmgcpu {
                     pc++;
                     short mask;
                     a = (short) ((~a) & 0x00FF);
-                    //f = (short) ((f & (F_CARRY | F_ZERO)) | F_SUBTRACT | F_HALFCARRY);
                     r.f().nf().set();
                     r.f().hf().set();
 
@@ -1498,12 +1502,14 @@ class Dmgcpu {
                                 registerWrite(regNum, data);
                                 break;
                             case 0x10:          // RL r
-
+                                newf.reset();
                                 if ((data & 0x80) == 0x80) {
-                                    newf = F_CARRY;
-                                } else {
-                                    newf = 0;
+                                    //newf = F_CARRY;
+                                    newf.cf().set();
                                 }
+//                                else {
+//                                    newf = 0;
+//                                }
                                 data <<= 1;
 
                                 if (r.f().cf().intValue() == 1) {
@@ -1512,17 +1518,22 @@ class Dmgcpu {
 
                                 data &= 0xFF;
                                 if (data == 0) {
-                                    newf |= F_ZERO;
+                                    //newf |= F_ZERO;
+                                    newf.zf().set();
                                 }
-                                r.f().setValue(newf);
+                                r.f().setValue(newf.intValue());
                                 registerWrite(regNum, data);
                                 break;
                             case 0x18:          // RR r
+                                newf.reset();
                                 if ((data & 0x01) == 0x01) {
-                                    newf = F_CARRY;
-                                } else {
-                                    newf = 0;
+                                    //newf = F_CARRY;
+                                    newf.cf().set();
+
                                 }
+//                                else {
+//                                    newf = 0;
+//                                }
                                 data >>= 1;
 
                                 if (r.f().cf().intValue() == 1) {
@@ -1530,9 +1541,10 @@ class Dmgcpu {
                                 }
 
                                 if (data == 0) {
-                                    newf |= F_ZERO;
+                                    //newf |= F_ZERO;
+                                    newf.zf().set();
                                 }
-                                r.f().setValue(newf);
+                                r.f().setValue(newf.intValue());
                                 registerWrite(regNum, data);
                                 break;
                             case 0x20:          // SLA r
