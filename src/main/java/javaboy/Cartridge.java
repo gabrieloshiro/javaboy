@@ -232,48 +232,6 @@ class Cartridge {
         //  }
     }
 
-
-    /**
-     * Returns a string summary of the current mapper status
-     */
-    String getMapInfo() {
-        String out;
-        switch (cartType) {
-            case 0 /* No mapper */ :
-            case 8:
-            case 9:
-                return "This ROM has no mapper.";
-            case 1 /* MBC1      */ :
-                return "MBC1: ROM bank " + String.format("%02X", currentBank) + " mapped to " +
-                        " 4000 - 7FFFF";
-            case 2 /* MBC1+RAM  */ :
-            case 3 /* MBC1+RAM+BATTERY */ :
-                out = "MBC1: ROM bank " + String.format("%02X", currentBank) + " mapped to " +
-                        " 4000 - 7FFFF.  ";
-                if (mbc1LargeRamMode) {
-                    out = out + "Cartridge is in 16MBit ROM/8KByte RAM Mode.";
-                } else {
-                    out = out + "Cartridge is in 4MBit ROM/32KByte RAM Mode.";
-                }
-                return out;
-            case 5:
-            case 6:
-                return "MBC2: ROM bank " + String.format("%02X", currentBank) + " mapped to 4000 - 7FFF";
-
-            case 0x19:
-            case 0x1C:
-                return "MBC5: ROM bank " + String.format("%02X", currentBank) + " mapped to 4000 - 7FFF";
-
-            case 0x1A:
-            case 0x1B:
-            case 0x1D:
-            case 0x1E:
-                return "MBC5: ROM bank " + String.format("%02X", currentBank) + " mapped to 4000 - 7FFF";
-
-        }
-        return "Unknown mapper.";
-    }
-
     /**
      * Maps a ROM bank into the CPU address space at 0x4000
      */
@@ -284,13 +242,6 @@ class Cartridge {
 
     void reset() {
         mapRom(1);
-    }
-
-    /**
-     * Save the current mapper state
-     */
-    void saveMapping() {
-        if ((cartType != 0) && (savedBank == -1)) savedBank = currentBank;
     }
 
     /**
@@ -309,7 +260,6 @@ class Cartridge {
      */
     final void addressWrite(int addr, int data) {
         int ramAddress;
-
 
         switch (cartType) {
 
