@@ -106,7 +106,7 @@ class IoHandler {
 
                 if (dmgcpu.gbcFeatures) {
                     int palNumber = (registers[0x68] & 0x38) >> 3;
-                    return dmgcpu.graphicsChip.gbcBackground[palNumber].getGbcColours(
+                    return (short) dmgcpu.graphicsChip.gbcBackground[palNumber].getGbcColours(
                             (JavaBoy.unsign(registers[0x68]) & 0x06) >> 1,
                             (JavaBoy.unsign(registers[0x68]) & 0x01) == 1);
                 } else {
@@ -118,7 +118,7 @@ class IoHandler {
 
                 if (dmgcpu.gbcFeatures) {
                     int palNumber = (registers[0x6A] & 0x38) >> 3;
-                    return dmgcpu.graphicsChip.gbcSprite[palNumber].getGbcColours(
+                    return (short) dmgcpu.graphicsChip.gbcSprite[palNumber].getGbcColours(
                             (JavaBoy.unsign(registers[0x6A]) & 0x06) >> 1,
                             (JavaBoy.unsign(registers[0x6A]) & 0x01) == 1);
                 } else {

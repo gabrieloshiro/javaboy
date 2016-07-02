@@ -13,7 +13,7 @@ class GameboyPalette {
     /**
      * Data for which colour maps to which RGB value
      */
-    private short[] data = new short[4];
+    private int[] data = new int[4];
 
     private int[] gbcData = new int[4];
 
@@ -35,12 +35,12 @@ class GameboyPalette {
     /**
      * Get the palette from the internal Gameboy Color format
      */
-    byte getGbcColours(int entryNo, boolean high) {
+    int getGbcColours(int entryNo, boolean high) {
         if (high) {
-            return (byte) (gbcData[entryNo] >> 8);
+            return gbcData[entryNo] >> 8;
 
         } else {
-            return (byte) (gbcData[entryNo] & 0x00FF);
+            return gbcData[entryNo] & 0x00FF;
 
         }
     }
@@ -76,11 +76,11 @@ class GameboyPalette {
     /**
      * Set the palette from the internal Gameboy format
      */
-    void decodePalette(int pal) {
-        data[0] = (short) ((pal & 0x03) >> 0);
-        data[1] = (short) ((pal & 0x0C) >> 2);
-        data[2] = (short) ((pal & 0x30) >> 4);
-        data[3] = (short) ((pal & 0xC0) >> 6);
+    void decodePalette(int palette) {
+        data[0] = (palette & 0x03) >> 0;
+        data[1] = (palette & 0x0C) >> 2;
+        data[2] = (palette & 0x30) >> 4;
+        data[3] = (palette & 0xC0) >> 6;
     }
 
     /**
@@ -93,7 +93,7 @@ class GameboyPalette {
     /**
      * Get the colour number for a specific colour entry
      */
-    short getEntry(int e) {
+    int getEntry(int e) {
         return data[e];
     }
 }
