@@ -20,7 +20,7 @@ public class Byte {
     }
 
     public void setValue(int value) {
-        this.value = value;
+        this.value = value & 0xFF;
     }
 
     public void inc() {

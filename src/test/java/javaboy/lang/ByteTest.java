@@ -1,8 +1,11 @@
 package javaboy.lang;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
+import org.pmw.tinylog.Logger;
+
+import java.util.Random;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Byte Tester.
@@ -13,28 +16,36 @@ import org.junit.Test;
  */
 public class ByteTest {
 
+    private static Byte b;
+    private static int model;
+
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        b = new Byte();
+        model = 0;
+
+        Logger.debug("Reset with 0");
+        assertEquals(model, b.intValue());
+
+        model = new Random().nextInt();
+        b.setValue(model);
+        model = model & 0xFF;
+        Logger.debug("Init with random value " + model);
+        assertEquals(model, b.intValue());
+    }
+
+    @AfterClass
+    public static void afterClass() throws Exception {
+        b = null;
+    }
+
     @Before
     public void before() throws Exception {
+
     }
 
     @After
     public void after() throws Exception {
-    }
-
-    /**
-     * Method: intValue()
-     */
-    @Test
-    public void testIntValue() throws Exception {
-        //TODO: Test goes here...
-    }
-
-    /**
-     * Method: setValue(int value)
-     */
-    @Test
-    public void testSetValue() throws Exception {
-        //TODO: Test goes here...
     }
 
     /**
