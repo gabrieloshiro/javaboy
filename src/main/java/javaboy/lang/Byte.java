@@ -60,11 +60,19 @@ public class Byte {
         return new Bit((value >> index) & 1);
     }
 
-    public void setBit(int index) {
+    public void setBit(int index, int value) {
         if (index > 7 || index < 0) {
             throw new IllegalArgumentException("Bit index on a byte should be in the range 0..7. Index passed: " + index);
         }
-        value = (1 << index) | value;
+
+        int b = value & 1;
+
+        if (b == 1) {
+            this.value = this.value | (1 << index);
+        } else {
+            this.value = this.value & ~(1 << index);
+        }
+
     }
 
 }

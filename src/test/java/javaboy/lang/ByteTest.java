@@ -41,84 +41,110 @@ public class ByteTest {
 
     @Before
     public void before() throws Exception {
-
     }
 
     @After
     public void after() throws Exception {
+        printValues();
     }
 
-    /**
-     * Method: inc()
-     */
     @Test
     public void testInc() throws Exception {
-        //TODO: Test goes here...
+        Logger.debug("Increment");
+        b.inc();
+        model = (model + 1) & 0xFF;
+        assertEquals(model, b.intValue());
     }
 
-    /**
-     * Method: dec()
-     */
     @Test
     public void testDec() throws Exception {
-        //TODO: Test goes here...
+        Logger.debug("Decrement");
+        b.dec();
+        model = (model - 1) & 0xFF;
+        assertEquals(model, b.intValue());
     }
 
-    /**
-     * Method: getLowerNibble()
-     */
-    @Test
-    public void testGetLowerNibble() throws Exception {
-        //TODO: Test goes here...
-    }
-
-    /**
-     * Method: setLowerNibble(int i)
-     */
     @Test
     public void testSetLowerNibble() throws Exception {
-        //TODO: Test goes here...
+        Logger.debug("Set Lower Nibble");
+        int nibble = new Random().nextInt();
+        b.setLowerNibble(nibble);
+
+        model = (model & 0xF0) | (nibble & 0x0F);
+        assertEquals(model & 0xF, b.getLowerNibble());
     }
 
-    /**
-     * Method: getHigherNibble()
-     */
-    @Test
-    public void testGetHigherNibble() throws Exception {
-        //TODO: Test goes here...
-    }
-
-    /**
-     * Method: setHigherNibble(int i)
-     */
     @Test
     public void testSetHigherNibble() throws Exception {
-        //TODO: Test goes here...
+        Logger.debug("Set Higher Nibble");
+        int nibble = new Random().nextInt();
+        b.setHigherNibble(nibble);
+
+        model = (model & 0x0F) | ((nibble & 0x0F) << 4);
+        assertEquals(model >> 4, b.getHigherNibble());
     }
 
-    /**
-     * Method: swap()
-     */
     @Test
     public void testSwap() throws Exception {
-        //TODO: Test goes here...
+        Logger.debug("Swap");
+        b.swap();
+
+        model = ((model << 4) & 0xF0) | (model >> 4);
+        assertEquals(model, b.intValue());
     }
 
-    /**
-     * Method: getBit(int index)
-     */
-    @Test
-    public void testGetBit() throws Exception {
-        //TODO: Test goes here...
-    }
-
-    /**
-     * Method: setBit(int index)
-     */
     @Test
     public void testSetBit() throws Exception {
-        //TODO: Test goes here...
+        int bit0 = new Random().nextInt() & 1;
+        int bit1 = new Random().nextInt() & 1;
+        int bit2 = new Random().nextInt() & 1;
+        int bit3 = new Random().nextInt() & 1;
+        int bit4 = new Random().nextInt() & 1;
+        int bit5 = new Random().nextInt() & 1;
+        int bit6 = new Random().nextInt() & 1;
+        int bit7 = new Random().nextInt() & 1;
+
+        b.setBit(0, bit0);
+        b.setBit(1, bit1);
+        b.setBit(2, bit2);
+        b.setBit(3, bit3);
+        b.setBit(4, bit4);
+        b.setBit(5, bit5);
+        b.setBit(6, bit6);
+        b.setBit(7, bit7);
+
+        model = bit7 << 7 |
+                bit6 << 6 |
+                bit5 << 5 |
+                bit4 << 4 |
+                bit3 << 3 |
+                bit2 << 2 |
+                bit1 << 1 |
+                bit0;
+
+        assertEquals((model >> 7) & 1, b.getBit(7).intValue());
+        assertEquals((model >> 6) & 1, b.getBit(6).intValue());
+        assertEquals((model >> 5) & 1, b.getBit(5).intValue());
+        assertEquals((model >> 4) & 1, b.getBit(4).intValue());
+        assertEquals((model >> 3) & 1, b.getBit(3).intValue());
+        assertEquals((model >> 2) & 1, b.getBit(2).intValue());
+        assertEquals((model >> 1) & 1, b.getBit(1).intValue());
+        assertEquals((model >> 0) & 1, b.getBit(0).intValue());
     }
 
+    private void printValues() {
+        Logger.debug("\n     HEX                 DEC\n" +
+                "ACTUAL EXPECTED     ACTUAL EXPECTED\n" +
+                "  " + toHexString(b.intValue()) + "       " + toHexString(model) + "        " + toDecString(b.intValue()) + "      " + toDecString(model) + "\n"
+        );
+    }
+
+    private String toHexString(int i) {
+        return String.format("%02X", i);
+    }
+
+    private String toDecString(int i) {
+        return String.format("%03d", (byte)i);
+    }
 
 } 
