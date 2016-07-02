@@ -1,5 +1,8 @@
 package javaboy;
 
+import javaboy.lang.Bit;
+import javaboy.lang.Byte;
+import javaboy.lang.Short;
 import javaboy.lang.FlagRegister;
 
 import java.awt.*;
@@ -1300,7 +1303,6 @@ class Dmgcpu {
                 case 0x3D:               // DEC A
                     r.pc().inc();
                     r.f().zf().reset();
-                    r.f().nf().reset();
                     r.f().hf().reset();
 
                     r.f().nf().set();
@@ -1520,12 +1522,8 @@ class Dmgcpu {
                             case 0x10:          // RL r
                                 newf.reset();
                                 if ((data & 0x80) == 0x80) {
-                                    //newf = F_CARRY;
                                     newf.cf().set();
                                 }
-                                //                                else {
-                                //                                    newf = 0;
-                                //                                }
                                 data <<= 1;
 
                                 if (r.f().cf().intValue() == 1) {
@@ -1534,7 +1532,6 @@ class Dmgcpu {
 
                                 data &= 0xFF;
                                 if (data == 0) {
-                                    //newf |= F_ZERO;
                                     newf.zf().set();
                                 }
                                 r.f().setValue(newf.intValue());
@@ -1543,13 +1540,9 @@ class Dmgcpu {
                             case 0x18:          // RR r
                                 newf.reset();
                                 if ((data & 0x01) == 0x01) {
-                                    //newf = F_CARRY;
                                     newf.cf().set();
 
                                 }
-                                //                                else {
-                                //                                    newf = 0;
-                                //                                }
                                 data >>= 1;
 
                                 if (r.f().cf().intValue() == 1) {
@@ -1640,17 +1633,12 @@ class Dmgcpu {
 
                         if ((b2 & 0xC0) == 0x40) {  // BIT n, r
                             mask = (short) (0x01 << bitNumber);
+                            r.f().nf().reset();
+                            r.f().hf().set();
                             if ((data & mask) != 0) {
-                                //f = (short) ((f & F_CARRY) | F_HALFCARRY);
                                 r.f().zf().reset();
-                                r.f().nf().reset();
-                                r.f().hf().set();
-
                             } else {
-                                //f = (short) ((f & F_CARRY) | (F_HALFCARRY + F_ZERO));
                                 r.f().zf().set();
-                                r.f().nf().reset();
-                                r.f().hf().set();
                             }
                         }
                         if ((b2 & 0xC0) == 0x80) {  // RES n, r
@@ -1901,7 +1889,6 @@ class Dmgcpu {
                     r.pc().inc();
                     r.sp().dec();
                     r.sp().dec();
-                    //sp &= 0xFFFF;
                     addressWrite(r.sp().intValue() + 1, hl >> 8);
                     addressWrite(r.sp().intValue(), hl & 0x00FF);
                     break;
@@ -1988,13 +1975,11 @@ class Dmgcpu {
                 case 0xF3:               // DI
                     r.pc().inc();
                     interruptsEnabled = false;
-                    //    addressWrite(0xFFFF, 0);
                     break;
                 case 0xF5:               // PUSH AF
                     r.pc().inc();
                     r.sp().dec();
                     r.sp().dec();
-                    //sp &= 0xFFFF;
                     addressWrite(r.sp().intValue(), r.f().intValue());
                     addressWrite(r.sp().intValue() + 1, a);
                     break;
@@ -2047,8 +2032,6 @@ class Dmgcpu {
                 case 0xFB:               // EI
                     r.pc().inc();
                     ieDelay = 1;
-                    //  interruptsEnabled = true;
-                    //  addressWrite(0xFFFF, 0xFF);
                     break;
                 case 0xFE:               // CP nn     ** FLAGS ARE WRONG! **
                     r.pc().inc();
@@ -2220,5 +2203,138 @@ class Dmgcpu {
 
             initiateInterrupts();
         }
+    }
+
+
+    private void inc(Byte left) {
+        r.f().nf().reset();
+
+        int lowerResult = left.getLowerNibble() + 1;
+
+        if ((lowerResult & 0x10) == 0x10) {
+            r.f().hf().set();
+        } else {
+            r.f().hf().reset();
+        }
+
+        int result = left.intValue() + 1;
+
+        if ((result & 0xFF) == 0) {
+            r.f().zf().set();
+        } else {
+            r.f().zf().reset();
+        }
+
+        left.setValue(result);
+    }
+
+    private void adc(Byte left, Byte right, Bit carry) {
+        r.f().nf().reset();
+
+        int lowerResult = left.getLowerNibble() + right.getLowerNibble() + carry.intValue();
+
+        if ((lowerResult & 0x10) == 0x10) {
+            r.f().hf().set();
+        } else {
+            r.f().hf().reset();
+        }
+
+        int result = left.intValue() + right.intValue() + carry.intValue();
+
+        if ((result & 0x100) == 0x100) {
+            r.f().cf().set();
+        } else {
+            r.f().cf().reset();
+        }
+
+        if ((result & 0xFF) == 0) {
+            r.f().zf().set();
+        } else {
+            r.f().zf().reset();
+        }
+
+        left.setValue(result);
+    }
+
+    private void add(Byte left, Byte right) {
+        adc(left, right, new Bit(0));
+    }
+
+    private void add(Short left, Short right) {
+
+        //        r.f().nf().reset();
+
+        int lowerResult = (left.intValue() & 0x0FFF) + (right.intValue() & 0x0FFF);
+
+        //        if ((lowerResult & 0x1000) == 0x1000) {
+        //            r.f().hf().set();
+        //        } else {
+        //            r.f().hf().reset();
+        //        }
+
+        int result = left.intValue() + right.intValue();
+
+        if ((result & 0x10000) == 0x10000) {
+            r.f().cf().set();
+        } else {
+            r.f().cf().reset();
+        }
+
+        left.setValue(result);
+
+    }
+
+    private void dec(Byte left) {
+        r.f().nf().set();
+
+        int lowerResult = left.getLowerNibble() - 1;
+
+        if ((lowerResult & 0x10) == 0x10) {
+            r.f().hf().set();
+        } else {
+            r.f().hf().reset();
+        }
+
+        int result = left.intValue() - 1;
+
+        if ((result & 0xFF) == 0) {
+            r.f().zf().set();
+        } else {
+            r.f().zf().reset();
+        }
+
+        left.setValue(result);
+    }
+
+    private void sbc(Byte left, Byte right, Bit carry) {
+        r.f().nf().set();
+
+        int lowerResult = left.getLowerNibble() - right.getLowerNibble() - carry.intValue();
+
+        if ((lowerResult & 0x10) == 0x10) {
+            r.f().hf().set();
+        } else {
+            r.f().hf().reset();
+        }
+
+        int result = left.intValue() - right.intValue() - carry.intValue();
+
+        if ((result & 0x100) == 0x100) {
+            r.f().cf().set();
+        } else {
+            r.f().cf().reset();
+        }
+
+        if ((result & 0xFF) == 0) {
+            r.f().zf().set();
+        } else {
+            r.f().zf().reset();
+        }
+
+        left.setValue(result);
+    }
+
+    private void sub(Byte left, Byte right) {
+        adc(left, right, new Bit(0));
     }
 }
