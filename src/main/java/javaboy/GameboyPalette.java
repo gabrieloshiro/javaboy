@@ -1,7 +1,5 @@
 package javaboy;
 
-import java.awt.*;
-
 /**
  * This class represents a palette.  There can be three
  * palettes, one for the background and window, and two
@@ -14,8 +12,6 @@ class GameboyPalette {
      * Data for which colour maps to which RGB value
      */
     private int[] data = new int[4];
-
-    private int[] gbcData = new int[4];
 
     /**
      * Default RGB colour values
@@ -30,47 +26,6 @@ class GameboyPalette {
         data[1] = (short) c2;
         data[2] = (short) c3;
         data[3] = (short) c4;
-    }
-
-    /**
-     * Get the palette from the internal Gameboy Color format
-     */
-    int getGbcColours(int entryNo, boolean high) {
-        if (high) {
-            return gbcData[entryNo] >> 8;
-
-        } else {
-            return gbcData[entryNo] & 0x00FF;
-
-        }
-    }
-
-    /**
-     * Set the palette from the internal Gameboy Color format
-     */
-    void setGbcColours(int entryNo, boolean high, int dat) {
-        if (high) {
-            gbcData[entryNo] = (gbcData[entryNo] & 0x00FF) | (dat << 8);
-
-        } else {
-            gbcData[entryNo] = (gbcData[entryNo] & 0xFF00) | dat;
-
-        }
-
-        int red = (gbcData[entryNo] & 0x001F) << 3;
-
-        int green = (gbcData[entryNo] & 0x03E0) >> 2;
-
-        int blue = (gbcData[entryNo] & 0x7C00) >> 7;
-
-        data[0] = 0;
-        data[1] = 1;
-        data[2] = 2;
-        data[3] = 3;
-
-        Color c = new Color(red, green, blue);
-
-        colours[entryNo] = c.getRGB();
     }
 
     /**
