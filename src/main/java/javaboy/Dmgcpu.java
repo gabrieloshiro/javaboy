@@ -1,6 +1,7 @@
 package javaboy;
 
 import javaboy.lang.FlagRegister;
+import org.pmw.tinylog.Logger;
 
 import java.awt.*;
 import java.io.File;
@@ -115,10 +116,10 @@ class Dmgcpu {
             is.read(rom);
             is.close();
 
-            System.out.println("Loaded ROM 'bgblogo.gb'.  2 ROM banks, 32Kb.  0 RAM banks. Type: ROM Only");
+            Logger.debug("Loaded ROM 'bgblogo.gb'.  2 ROM banks, 32Kb.  0 RAM banks. Type: ROM Only");
 
         } catch (IOException e) {
-            System.out.println("Error opening ROM image");
+            Logger.debug("Error opening ROM image");
         }
 
 
@@ -175,7 +176,7 @@ class Dmgcpu {
                 }
 
             default:
-                System.out.println("Tried to read address " + addr + ".  pc = " + String.format("%04X", r.pc().intValue()));
+                Logger.debug("Tried to read address " + addr + ".  pc = " + String.format("%04X", r.pc().intValue()));
                 return 0xFF;
         }
 
@@ -224,7 +225,7 @@ class Dmgcpu {
                     try {
                         mainRam[addr - 0xE000] = (byte) data;
                     } catch (ArrayIndexOutOfBoundsException e) {
-                        System.out.println("Address error: " + addr + " pc = " + String.format("%04X", r.pc().intValue()));
+                        Logger.debug("Address error: " + addr + " pc = " + String.format("%04X", r.pc().intValue()));
                     }
                 } else if (addr < 0xFF00) {
                     oam[addr - 0xFE00] = (byte) data;
@@ -337,7 +338,7 @@ class Dmgcpu {
         setBC(0x0013);
         setDE(0x00D8);
         setHL(0x014D);
-        System.out.println("CPU reset");
+        Logger.debug("CPU reset");
         ioHandler.reset();
     }
 
@@ -433,7 +434,7 @@ class Dmgcpu {
                 }
 
                 if (graphicsChip.frameWaitTime >= 0) {
-                    //      System.out.println("Waiting for " + graphicsChip.frameWaitTime + "ms.");
+                    //      Logger.debug("Waiting for " + graphicsChip.frameWaitTime + "ms.");
                     try {
                         java.lang.Thread.sleep(graphicsChip.frameWaitTime);
                     } catch (InterruptedException e) {
@@ -447,10 +448,10 @@ class Dmgcpu {
 
             graphicsChip.notifyScanline(JavaBoy.unsign(ioHandler.registers[0x44]));
             ioHandler.registers[0x44] = (byte) (JavaBoy.unsign(ioHandler.registers[0x44]) + 1);
-            //	System.out.println("Reg 44 = " + JavaBoy.unsign(ioHandler.registers[0x44]));
+            //	Logger.debug("Reg 44 = " + JavaBoy.unsign(ioHandler.registers[0x44]));
 
             if (JavaBoy.unsign(ioHandler.registers[0x44]) >= 153) {
-                //     System.out.println("VBlank");
+                //     Logger.debug("VBlank");
 
                 ioHandler.registers[0x44] = 0;
                 graphicsChip.frameDone = false;
@@ -1435,7 +1436,7 @@ class Dmgcpu {
                     r.pc().inc();
                     int regNum = b2 & 0x07;
                     int data = registerRead(regNum);
-                    //        System.out.println("0xCB instr! - reg " + JavaBoy.hexByte((short) (b2 & 0xF4)));
+                    //        Logger.debug("0xCB instr! - reg " + JavaBoy.hexByte((short) (b2 & 0xF4)));
                     if ((b2 & 0xC0) == 0) {
                         switch ((b2 & 0xF8)) {
                             case 0x00:          // RLC A
@@ -1563,7 +1564,7 @@ class Dmgcpu {
                                 } else {
                                     r.f().reset();
                                 }
-                                //           System.out.println("SWAP - answer is " + JavaBoy.hexByte(data));
+                                //           Logger.debug("SWAP - answer is " + JavaBoy.hexByte(data));
                                 registerWrite(regNum, data);
                                 break;
                             case 0x38:          // SRL r
@@ -2132,7 +2133,7 @@ class Dmgcpu {
                         registerWrite((b1 & 0x38) >> 3, registerRead(b1 & 0x07));
 
                     } else {
-                        System.out.println("Unrecognized opcode (" + String.format("%02X", b1) + ")");
+                        Logger.debug("Unrecognized opcode (" + String.format("%02X", b1) + ")");
                         r.pc().inc();
                         break;
                     }
