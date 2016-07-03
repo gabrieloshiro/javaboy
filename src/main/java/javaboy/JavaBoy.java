@@ -1,5 +1,7 @@
 package javaboy;
 
+import org.pmw.tinylog.Logger;
+
 import java.awt.*;
 
 public class JavaBoy extends Frame {
@@ -46,15 +48,15 @@ public class JavaBoy extends Frame {
      * Initialize JavaBoy when run as an application
      */
     private JavaBoy() {
-        System.out.println("JavaBoy (tm) Version 0.92 (c) 2005 Neil Millstone (application)");
+        Logger.debug("JavaBoy (tm) Version 0.92 (c) 2005 Neil Millstone (application)");
 
         setUndecorated(true);
         setSize(160, 144);
         setVisible(true);
         requestFocus();
-        
+
         dmgcpu = new Dmgcpu(this, new Registers());
-        System.out.println("- CPU Reset");
+        Logger.debug("- CPU Reset");
         dmgcpu.reset();
         dmgcpu.execute();
     }

@@ -1,8 +1,5 @@
 package javaboy;
 
-import javaboy.lang.Bit;
-import javaboy.lang.Byte;
-import javaboy.lang.Short;
 import javaboy.lang.FlagRegister;
 
 import java.awt.*;
@@ -62,7 +59,6 @@ class Dmgcpu {
      * Used to set the speed of DIV increments
      */
     private final short BASE_INSTRS_PER_DIV = 33;    /* 33    */
-    private short INSTRS_PER_DIV = BASE_INSTRS_PER_DIV;
 
     // Constants for interrupts
 
@@ -392,16 +388,17 @@ class Dmgcpu {
      */
     private void initiateInterrupts() {
         if (timaEnabled && ((instrCount % instrsPerTima) == 0)) {
-            if (JavaBoy.unsign(ioHandler.registers[05]) == 0) {
-                ioHandler.registers[05] = ioHandler.registers[06]; // Set TIMA modulo
+            if (JavaBoy.unsign(ioHandler.registers[0x05]) == 0) {
+                ioHandler.registers[0x05] = ioHandler.registers[0x06]; // Set TIMA modulo
                 if ((ioHandler.registers[0xFF] & INT_TIMA) != 0)
                     triggerInterrupt(INT_TIMA);
             }
-            ioHandler.registers[05]++;
+            ioHandler.registers[0x05]++;
         }
 
+        short INSTRS_PER_DIV = BASE_INSTRS_PER_DIV;
         if ((instrCount % INSTRS_PER_DIV) == 0) {
-            ioHandler.registers[04]++;
+            ioHandler.registers[0x04]++;
         }
 
         if ((instrCount % INSTRS_PER_HBLANK) == 0) {
@@ -2160,138 +2157,5 @@ class Dmgcpu {
 
             initiateInterrupts();
         }
-    }
-
-
-    private void inc(Byte left) {
-        r.f().nf().reset();
-
-        int lowerResult = left.getLowerNibble() + 1;
-
-        if ((lowerResult & 0x10) == 0x10) {
-            r.f().hf().set();
-        } else {
-            r.f().hf().reset();
-        }
-
-        int result = left.intValue() + 1;
-
-        if ((result & 0xFF) == 0) {
-            r.f().zf().set();
-        } else {
-            r.f().zf().reset();
-        }
-
-        left.setValue(result);
-    }
-
-    private void adc(Byte left, Byte right, Bit carry) {
-        r.f().nf().reset();
-
-        int lowerResult = left.getLowerNibble() + right.getLowerNibble() + carry.intValue();
-
-        if ((lowerResult & 0x10) == 0x10) {
-            r.f().hf().set();
-        } else {
-            r.f().hf().reset();
-        }
-
-        int result = left.intValue() + right.intValue() + carry.intValue();
-
-        if ((result & 0x100) == 0x100) {
-            r.f().cf().set();
-        } else {
-            r.f().cf().reset();
-        }
-
-        if ((result & 0xFF) == 0) {
-            r.f().zf().set();
-        } else {
-            r.f().zf().reset();
-        }
-
-        left.setValue(result);
-    }
-
-    private void add(Byte left, Byte right) {
-        adc(left, right, new Bit(0));
-    }
-
-    private void add(Short left, Short right) {
-
-        //        r.f().nf().reset();
-
-        int lowerResult = (left.intValue() & 0x0FFF) + (right.intValue() & 0x0FFF);
-
-        //        if ((lowerResult & 0x1000) == 0x1000) {
-        //            r.f().hf().set();
-        //        } else {
-        //            r.f().hf().reset();
-        //        }
-
-        int result = left.intValue() + right.intValue();
-
-        if ((result & 0x10000) == 0x10000) {
-            r.f().cf().set();
-        } else {
-            r.f().cf().reset();
-        }
-
-        left.setValue(result);
-
-    }
-
-    private void dec(Byte left) {
-        r.f().nf().set();
-
-        int lowerResult = left.getLowerNibble() - 1;
-
-        if ((lowerResult & 0x10) == 0x10) {
-            r.f().hf().set();
-        } else {
-            r.f().hf().reset();
-        }
-
-        int result = left.intValue() - 1;
-
-        if ((result & 0xFF) == 0) {
-            r.f().zf().set();
-        } else {
-            r.f().zf().reset();
-        }
-
-        left.setValue(result);
-    }
-
-    private void sbc(Byte left, Byte right, Bit carry) {
-        r.f().nf().set();
-
-        int lowerResult = left.getLowerNibble() - right.getLowerNibble() - carry.intValue();
-
-        if ((lowerResult & 0x10) == 0x10) {
-            r.f().hf().set();
-        } else {
-            r.f().hf().reset();
-        }
-
-        int result = left.intValue() - right.intValue() - carry.intValue();
-
-        if ((result & 0x100) == 0x100) {
-            r.f().cf().set();
-        } else {
-            r.f().cf().reset();
-        }
-
-        if ((result & 0xFF) == 0) {
-            r.f().zf().set();
-        } else {
-            r.f().zf().reset();
-        }
-
-        left.setValue(result);
-    }
-
-    private void sub(Byte left, Byte right) {
-        adc(left, right, new Bit(0));
     }
 }

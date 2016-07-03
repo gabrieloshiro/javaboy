@@ -87,7 +87,6 @@ class GraphicsChip {
     private Dmgcpu dmgcpu;
     private int vidRamStart = 0;
 
-
     /**
      * Tile cache
      */

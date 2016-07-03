@@ -1,5 +1,7 @@
 package javaboy;
 
+import org.pmw.tinylog.Logger;
+
 /**
  * This class handles all the memory mapped IO in the range
  * FF00 - FF4F.  It also handles high memory accessed by the
@@ -18,8 +20,6 @@ class IoHandler {
      */
     private Dmgcpu dmgcpu;
 
-    private boolean hdmaRunning;
-
     /**
      * Create an IoHandler for the specified CPU
      */
@@ -32,13 +32,12 @@ class IoHandler {
      * Initialize IO to initial power on state
      */
     void reset() {
-        System.out.println("Hardware reset");
+        Logger.debug("Hardware reset");
         for (int r = 0; r < 0xFF; r++) {
             ioWrite(r, (short) 0x00);
         }
         ioWrite(0x40, (short) 0x91);
         ioWrite(0x0F, (short) 0x01);
-        hdmaRunning = false;
     }
 
     /**
@@ -92,9 +91,9 @@ class IoHandler {
      */
     void ioWrite(int num, short data) {
 
-        if (num <= 0x4B) {
-            //  System.out.println("Write of register " + JavaBoy.hexByte(num) + " to " + JavaBoy.hexWord(data) + " at " + JavaBoy.hexWord(dmgcpu.pc));
-        }
+        //        if (num <= 0x4B) {
+        //            Logger.debug("Write of register " + JavaBoy.hexByte(num) + " to " + JavaBoy.hexWord(data) + " at " + JavaBoy.hexWord(dmgcpu.pc));
+        //        }
 
         switch (num) {
 
@@ -108,7 +107,7 @@ class IoHandler {
 
             // DIV
             case 0x04:
-                registers[04] = 0;
+                registers[0x04] = 0;
                 break;
 
             // TAC
@@ -228,7 +227,7 @@ class IoHandler {
                 break;
 
             case 0x47:           // FF47 - BKG and WIN palette
-                //    System.out.println("Palette created!");
+                //    Logger.debug("Palette created!");
                 dmgcpu.graphicsChip.backgroundPalette.decodePalette(data);
                 if (registers[num] != (byte) data) {
                     registers[num] = (byte) data;
@@ -256,7 +255,7 @@ class IoHandler {
 
 
             case 0x55:
-                if ((!hdmaRunning) && ((registers[0x55] & 0x80) == 0) && ((data & 0x80) == 0)) {
+                if (((registers[0x55] & 0x80) == 0) && ((data & 0x80) == 0)) {
                     int dmaSrc = (JavaBoy.unsign(registers[0x51]) << 8) +
                             (JavaBoy.unsign(registers[0x52]) & 0xF0);
                     int dmaDst = ((JavaBoy.unsign(registers[0x53]) & 0x1F) << 8) +
@@ -268,21 +267,10 @@ class IoHandler {
                     for (int r = 0; r < dmaLen; r++) {
                         dmgcpu.addressWrite(dmaDst + r, dmgcpu.addressRead(dmaSrc + r));
                     }
-                } else {
-                    if ((JavaBoy.unsign(data) & 0x80) == 0x80) {
-                        hdmaRunning = true;
-                        //      System.out.println("HDMA started");
-                        registers[0x55] = (byte) (data & 0x7F);
-                        break;
-                    } else if ((hdmaRunning) && ((JavaBoy.unsign(data) & 0x80) == 0)) {
-                        hdmaRunning = false;
-                        //      System.out.println("HDMA stopped");
-                    }
                 }
 
                 registers[0x55] = (byte) data;
                 break;
-
 
             case 0x69:           // FF69 - BCPD: GBC BG Palette data write
                 registers[0x69] = (byte) data;
@@ -292,14 +280,12 @@ class IoHandler {
                 registers[0x6B] = (byte) data;
                 break;
 
-
             case 0x70:           // FF70 - GBC Work RAM bank
                 registers[0x70] = (byte) data;
                 break;
 
 
             default:
-
                 registers[num] = (byte) data;
                 break;
         }
