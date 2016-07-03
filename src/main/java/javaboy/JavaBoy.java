@@ -92,7 +92,7 @@ public class JavaBoy extends Frame {
         requestFocus();
 
         doubleBuffer = createImage(getSize().width, getSize().height);
-        Cartridge cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/Bomberman.gb");
+        Cartridge cartridge = new Cartridge("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/bgblogo.gb");
         dmgcpu = new Dmgcpu(cartridge, this, new Registers());
         System.out.println("- CPU Reset");
         dmgcpu.reset();
