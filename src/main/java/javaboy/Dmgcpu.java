@@ -96,9 +96,6 @@ class Dmgcpu {
     IoHandler ioHandler;
     private Component applet;
 
-    boolean gbcFeatures = true;
-    int gbcRamBank = 1;
-
     Registers r;
 
     /**
@@ -108,8 +105,6 @@ class Dmgcpu {
     Dmgcpu(Cartridge c, Component a, Registers r) {
         cartridge = c;
         graphicsChip = new GraphicsChip(a, this);
-        checkEnableGbc();
-
         ioHandler = new IoHandler(this);
         applet = a;
 
@@ -147,7 +142,7 @@ class Dmgcpu {
                 return (mainRam[addr - 0xC000]);
 
             case 0xD000:
-                return (mainRam[addr - 0xD000 + (gbcRamBank * 0x1000)]);
+                return (mainRam[addr - 0xD000]);
 
             case 0xE000:
                 return mainRam[addr - 0xE000];
@@ -199,7 +194,7 @@ class Dmgcpu {
                 break;
 
             case 0xD000:
-                mainRam[addr - 0xD000 + (gbcRamBank * 0x1000)] = (byte) data;
+                mainRam[addr - 0xD000] = (byte) data;
                 break;
 
             case 0xE000:
@@ -298,19 +293,10 @@ class Dmgcpu {
         }
     }
 
-    private void checkEnableGbc() {
-        // GBC Cartridge ID
-        gbcFeatures = ((cartridge.rom[0x143] & 0x80) == 0x80);
-    }
-
-
     /**
      * Resets the CPU to it's power on state.  Memory contents are not cleared.
      */
     void reset() {
-
-        checkEnableGbc();
-        setDoubleSpeedCpu(false);
         graphicsChip.dispose();
         interruptsEnabled = false;
         ieDelay = -1;
@@ -322,14 +308,9 @@ class Dmgcpu {
         r.f().hf().set();
         r.f().cf().set();
 
-        gbcRamBank = 1;
         instrCount = 0;
 
-        if (gbcFeatures) {
-            a = 0x11;
-        } else {
-            a = 0x01;
-        }
+        a = 0x01;
 
         for (int r = 0; r < 0x8000; r++) {
             mainRam[r] = 0;
@@ -339,20 +320,7 @@ class Dmgcpu {
         setDE(0x00D8);
         setHL(0x014D);
         System.out.println("CPU reset");
-
         ioHandler.reset();
-    }
-
-    private void setDoubleSpeedCpu(boolean enabled) {
-
-        if (enabled) {
-            INSTRS_PER_HBLANK = BASE_INSTRS_PER_HBLANK * 2;
-            INSTRS_PER_DIV = BASE_INSTRS_PER_DIV * 2;
-        } else {
-            INSTRS_PER_HBLANK = BASE_INSTRS_PER_HBLANK;
-            INSTRS_PER_DIV = BASE_INSTRS_PER_DIV;
-        }
-
     }
 
     /**
@@ -397,10 +365,6 @@ class Dmgcpu {
         ioHandler.registers[0x0F] |= intr;
     }
 
-    final void triggerInterruptIfEnabled(int intr) {
-        if ((ioHandler.registers[0xFF] & (short) (intr)) != 0) ioHandler.registers[0x0F] |= intr;
-    }
-
     /**
      * Check for interrupts that need to be initiated
      */
@@ -436,11 +400,6 @@ class Dmgcpu {
             if (((ioHandler.registers[0xFF] & INT_LCDC) != 0) &&
                     ((ioHandler.registers[0x41] & 0x8) != 0) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90)) {
                 triggerInterrupt(INT_LCDC);
-            }
-
-
-            if ((gbcFeatures) && (ioHandler.hdmaRunning)) {
-                ioHandler.performHdma();
             }
 
             if (JavaBoy.unsign(ioHandler.registers[0x44]) == 143) {
@@ -704,24 +663,6 @@ class Dmgcpu {
                 case 0x10:               // STOP
                     r.pc().inc();
                     r.pc().inc();
-
-                    if (gbcFeatures) {
-                        if ((ioHandler.registers[0x4D] & 0x01) == 1) {
-                            int newKey1Reg = ioHandler.registers[0x4D] & 0xFE;
-                            if ((newKey1Reg & 0x80) == 0x80) {
-                                setDoubleSpeedCpu(false);
-                                newKey1Reg &= 0x7F;
-                            } else {
-                                setDoubleSpeedCpu(true);
-                                newKey1Reg |= 0x80;
-                                //           System.out.println("CAUTION: Game uses double speed CPU, humoungus PC required!");
-                            }
-                            ioHandler.registers[0x4D] = (byte) newKey1Reg;
-                        }
-                    }
-
-                    //        terminate = true;
-                    //        System.out.println("- Breakpoint reached");
                     break;
                 case 0x11:               // LD DE, nnnn
                     r.pc().inc();

@@ -18,7 +18,7 @@ class IoHandler {
      */
     private Dmgcpu dmgcpu;
 
-    boolean hdmaRunning;
+    private boolean hdmaRunning;
 
     /**
      * Create an IoHandler for the specified CPU
@@ -39,34 +39,6 @@ class IoHandler {
         ioWrite(0x40, (short) 0x91);
         ioWrite(0x0F, (short) 0x01);
         hdmaRunning = false;
-    }
-
-    void performHdma() {
-        int dmaSrc = (JavaBoy.unsign(registers[0x51]) << 8) +
-                (JavaBoy.unsign(registers[0x52]) & 0xF0);
-        int dmaDst = ((JavaBoy.unsign(registers[0x53]) & 0x1F) << 8) +
-                (JavaBoy.unsign(registers[0x54]) & 0xF0) + 0x8000;
-
-        for (int r = 0; r < 16; r++) {
-            dmgcpu.addressWrite(dmaDst + r, dmgcpu.addressRead(dmaSrc + r));
-        }
-
-        dmaSrc += 16;
-        dmaDst += 16;
-        registers[0x51] = (byte) ((dmaSrc & 0xFF00) >> 8);
-        registers[0x52] = (byte) (dmaSrc & 0x00F0);
-        registers[0x53] = (byte) ((dmaDst & 0x1F00) >> 8);
-        registers[0x54] = (byte) (dmaDst & 0x00F0);
-
-        int len = JavaBoy.unsign(registers[0x55]);
-        if (len == 0x00) {
-            registers[0x55] = (byte) 0xFF;
-            hdmaRunning = false;
-        } else {
-            len--;
-            registers[0x55] = (byte) len;
-        }
-
     }
 
     /**
@@ -104,27 +76,11 @@ class IoHandler {
 
             case 0x69:       // GBC BG Sprite palette
 
-                if (dmgcpu.gbcFeatures) {
-                    int palNumber = (registers[0x68] & 0x38) >> 3;
-                    return (short) dmgcpu.graphicsChip.gbcBackground[palNumber].getGbcColours(
-                            (JavaBoy.unsign(registers[0x68]) & 0x06) >> 1,
-                            (JavaBoy.unsign(registers[0x68]) & 0x01) == 1);
-                } else {
-                    return registers[num];
-                }
+                return registers[num];
 
 
             case 0x6B:       // GBC OBJ Sprite palette
-
-                if (dmgcpu.gbcFeatures) {
-                    int palNumber = (registers[0x6A] & 0x38) >> 3;
-                    return (short) dmgcpu.graphicsChip.gbcSprite[palNumber].getGbcColours(
-                            (JavaBoy.unsign(registers[0x6A]) & 0x06) >> 1,
-                            (JavaBoy.unsign(registers[0x6A]) & 0x01) == 1);
-                } else {
-                    return registers[num];
-                }
-
+                return registers[num];
 
             default:
                 return registers[num];
@@ -141,58 +97,22 @@ class IoHandler {
         }
 
         switch (num) {
-            case 0x00:           // FF00 - Joypad
-                short output = 0x0F;
-                if ((data & 0x10) == 0x00) {   // P14
-//                    if (padRight) {
-//                        output &= ~1;
-//                    }
-//                    if (padLeft) {
-//                        output &= ~2;
-//                    }
-//                    if (padUp) {
-//                        output &= ~4;
-//                    }
-//                    if (padDown) {
-//                        output &= ~8;
-//                    }
-                }
-                if ((data & 0x20) == 0x00) {   // P15
-//                    if (padA) {
-//                        output &= ~0x01;
-//                    }
-//                    if (padB) {
-//                        output &= ~0x02;
-//                    }
-//                    if (padSelect) {
-//                        output &= ~0x04;
-//                    }
-//                    if (padStart) {
-//                        output &= ~0x08;
-//                    }
-                }
-                output |= (data & 0xF0);
-                registers[0x00] = (byte) (output);
-                //    System.out.println("Joypad port = " + JavaBoy.hexByte(data) + " output = " + JavaBoy.hexByte(output) + "(PC=" + JavaBoy.hexWord(dmgcpu.pc) + ")");
+
+            // FF00 - Joypad
+            case 0x00:
                 break;
 
-            case 0x02:           // Serial
-
-                registers[0x02] = (byte) data;
-
-
-                if ((registers[0x02] & 0x01) == 1) {
-                    registers[0x01] = (byte) 0xFF; // when no LAN connection, always receive 0xFF from port.  Simulates empty socket.
-                    dmgcpu.triggerInterruptIfEnabled(dmgcpu.INT_SER);
-                    registers[0x02] &= 0x7F;
-                }
+            // Serial
+            case 0x02:
                 break;
 
-            case 0x04:           // DIV
+            // DIV
+            case 0x04:
                 registers[04] = 0;
                 break;
 
-            case 0x07:           // TAC
+            // TAC
+            case 0x07:
                 dmgcpu.timaEnabled = (data & 0x04) != 0;
 
                 int instrsPerSecond = dmgcpu.INSTRS_PER_VBLANK * 60;
@@ -214,83 +134,27 @@ class IoHandler {
                 }
                 break;
 
-            case 0x10:           // Sound channel 1, sweep
-                registers[0x10] = (byte) data;
-                break;
-
+            // Sound channel 1, sweep
+            case 0x10:
             case 0x11:           // Sound channel 1, length and wave duty
-                registers[0x11] = (byte) data;
-                break;
-
             case 0x12:           // Sound channel 1, volume envelope
-                registers[0x12] = (byte) data;
-                break;
-
             case 0x13:           // Sound channel 1, frequency low
-                registers[0x13] = (byte) data;
-                break;
-
             case 0x14:           // Sound channel 1, frequency high
-                registers[0x14] = (byte) data;
-
-                break;
-
             case 0x17:           // Sound channel 2, volume envelope
-                registers[0x17] = (byte) data;
-                break;
-
             case 0x18:           // Sound channel 2, frequency low
-                registers[0x18] = (byte) data;
-                break;
-
             case 0x19:           // Sound channel 2, frequency high
-                registers[0x19] = (byte) data;
-                break;
-
             case 0x16:           // Sound channel 2, length and wave duty
-                registers[0x16] = (byte) data;
-                break;
-
             case 0x1A:           // Sound channel 3, on/off
-                registers[0x1A] = (byte) data;
-                break;
-
             case 0x1B:           // Sound channel 3, length
-                registers[0x1B] = (byte) data;
-                break;
-
             case 0x1C:           // Sound channel 3, volume
-                registers[0x1C] = (byte) data;
-                break;
-
             case 0x1D:           // Sound channel 3, frequency lower 8-bit
-                registers[0x1D] = (byte) data;
-                break;
-
             case 0x1E:           // Sound channel 3, frequency higher 3-bit
-                registers[0x1E] = (byte) data;
-                break;
-
             case 0x20:           // Sound channel 4, length
-                registers[0x20] = (byte) data;
-                break;
             case 0x21:           // Sound channel 4, volume envelope
-                registers[0x21] = (byte) data;
-                break;
-
             case 0x22:           // Sound channel 4, polynomial parameters
-                registers[0x22] = (byte) data;
-                break;
-
             case 0x23:          // Sound channel 4, initial/consecutive
-                registers[0x23] = (byte) data;
-                break;
-
             case 0x25:           // Stereo select
-                registers[0x25] = (byte) data;
-
                 break;
-
             case 0x30:
             case 0x31:
             case 0x32:
@@ -310,9 +174,8 @@ class IoHandler {
                 registers[num] = (byte) data;
                 break;
 
-
-            case 0x40:           // LCDC
-                //    System.out.println("LCDC write at " + JavaBoy.hexWord(dmgcpu.pc) + " = " + JavaBoy.hexWord(data));
+            case 0x40:
+                // LCDC
                 dmgcpu.graphicsChip.bgEnabled = true;
 
                 // BIT 5
@@ -337,24 +200,24 @@ class IoHandler {
                 registers[0x40] = (byte) data;
                 break;
 
+            // STAT
             case 0x41:
-                //    System.out.println("STAT set to " + data + " lcdc is " + JavaBoy.unsign(registers[0x44]) + " pc is " + JavaBoy.hexWord(dmgcpu.pc));
                 registers[0x41] = (byte) data;
                 break;
 
-            case 0x42:           // SCY
-                //    System.out.println("SCY set to " + data + " lcdc is " + JavaBoy.unsign(registers[0x44]) + " pc is " + JavaBoy.hexWord(dmgcpu.pc));
+            // SCY
+            case 0x42:
                 registers[0x42] = (byte) data;
                 break;
 
-            case 0x43:           // SCX
-                //    System.out.println("SCX set to " + data + " lcdc is " + JavaBoy.unsign(registers[0x44]) + " pc is " + JavaBoy.hexWord(dmgcpu.pc));
+            // SCX
+            case 0x43:
                 registers[0x43] = (byte) data;
                 break;
 
-            case 0x46:           // DMA
+            // DMA
+            case 0x46:
                 int sourceAddress = (data << 8);
-                //    System.out.println("DMA Transfer initiated from " + JavaBoy.hexWord(sourceAddress) + "!");
 
                 // This could be sped up using System.arrayCopy, but hey.
                 for (int i = 0x00; i < 0xA0; i++) {
@@ -363,6 +226,7 @@ class IoHandler {
                 // This is meant to be run at the same time as the CPU is executing
                 // instructions, but I don't think it's crucial.
                 break;
+
             case 0x47:           // FF47 - BKG and WIN palette
                 //    System.out.println("Palette created!");
                 dmgcpu.graphicsChip.backgroundPalette.decodePalette(data);
@@ -387,10 +251,6 @@ class IoHandler {
                 break;
 
             case 0x4F:
-                if (dmgcpu.gbcFeatures) {
-                    dmgcpu.graphicsChip.tileStart = (data & 0x01) * 384;
-                    dmgcpu.graphicsChip.vidRamStart = (data & 0x01) * 0x2000;
-                }
                 registers[0x4F] = (byte) data;
                 break;
 
@@ -425,55 +285,15 @@ class IoHandler {
 
 
             case 0x69:           // FF69 - BCPD: GBC BG Palette data write
-
-                if (dmgcpu.gbcFeatures) {
-                    int palNumber = (registers[0x68] & 0x38) >> 3;
-                    dmgcpu.graphicsChip.gbcBackground[palNumber].setGbcColours(
-                            (JavaBoy.unsign(registers[0x68]) & 0x06) >> 1,
-                            (JavaBoy.unsign(registers[0x68]) & 0x01) == 1, JavaBoy.unsign(data));
-                    dmgcpu.graphicsChip.invalidateAll(palNumber * 4);
-
-                    if ((JavaBoy.unsign(registers[0x68]) & 0x80) != 0) {
-                        registers[0x68]++;
-                    }
-
-                }
-
-
                 registers[0x69] = (byte) data;
                 break;
 
             case 0x6B:           // FF6B - OCPD: GBC Sprite Palette data write
-
-                if (dmgcpu.gbcFeatures) {
-                    int palNumber = (registers[0x6A] & 0x38) >> 3;
-                    //     System.out.print("Pal " + palNumber + "  ");
-                    dmgcpu.graphicsChip.gbcSprite[palNumber].setGbcColours(
-                            (JavaBoy.unsign(registers[0x6A]) & 0x06) >> 1,
-                            (JavaBoy.unsign(registers[0x6A]) & 0x01) == 1, JavaBoy.unsign(data));
-                    dmgcpu.graphicsChip.invalidateAll((palNumber * 4) + 32);
-
-                    if ((JavaBoy.unsign(registers[0x6A]) & 0x80) != 0) {
-                        if ((registers[0x6A] & 0x3F) == 0x3F) {
-                            registers[0x6A] = (byte) 0x80;
-                        } else {
-                            registers[0x6A]++;
-                        }
-                    }
-                }
-
                 registers[0x6B] = (byte) data;
                 break;
 
 
             case 0x70:           // FF70 - GBC Work RAM bank
-                if (dmgcpu.gbcFeatures) {
-                    if (((data & 0x07) == 0) || ((data & 0x07) == 1)) {
-                        dmgcpu.gbcRamBank = 1;
-                    } else {
-                        dmgcpu.gbcRamBank = data & 0x07;
-                    }
-                }
                 registers[0x70] = (byte) data;
                 break;
 
