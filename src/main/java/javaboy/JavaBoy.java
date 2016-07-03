@@ -96,8 +96,6 @@ public class JavaBoy extends Frame {
         dmgcpu = new Dmgcpu(cartridge, this, new Registers());
         System.out.println("- CPU Reset");
         dmgcpu.reset();
-
-        cartridge.restoreMapping();
         dmgcpu.execute();
     }
 

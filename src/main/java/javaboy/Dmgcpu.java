@@ -183,7 +183,6 @@ class Dmgcpu {
             case 0x5000:
             case 0x6000:
             case 0x7000:
-                cartridge.addressWrite(addr, data);
                 break;
 
             case 0x8000:
@@ -193,7 +192,6 @@ class Dmgcpu {
 
             case 0xA000:
             case 0xB000:
-                cartridge.addressWrite(addr, data);
                 break;
 
             case 0xC000:
@@ -314,7 +312,6 @@ class Dmgcpu {
         checkEnableGbc();
         setDoubleSpeedCpu(false);
         graphicsChip.dispose();
-        cartridge.reset();
         interruptsEnabled = false;
         ieDelay = -1;
         r.pc(0x0100);
@@ -2197,9 +2194,6 @@ class Dmgcpu {
             if (interruptsEnabled) {
                 checkInterrupts();
             }
-
-            cartridge.update();
-
 
             initiateInterrupts();
         }
