@@ -6,6 +6,10 @@ import javaboy.lang.Short;
 import javaboy.lang.FlagRegister;
 
 import java.awt.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * This is the main controlling class for the emulation
@@ -15,6 +19,9 @@ import java.awt.*;
  * ROM/RAM/IO.
  */
 class Dmgcpu {
+
+    byte[] rom;
+
     /**
      * Registers: 8-bit
      */
@@ -91,7 +98,6 @@ class Dmgcpu {
     // 256 bytes at top of RAM are used mainly for registers
     private byte[] oam = new byte[0x100];
 
-    private Cartridge cartridge;
     GraphicsChip graphicsChip;
     IoHandler ioHandler;
     private Component applet;
@@ -102,8 +108,24 @@ class Dmgcpu {
      * Create a CPU emulator with the supplied cartridge and game link objects.  Both can be set up
      * or changed later if needed
      */
-    Dmgcpu(Cartridge c, Component a, Registers r) {
-        cartridge = c;
+    Dmgcpu(Component a, Registers r) {
+
+        InputStream is;
+        try {
+            is = new FileInputStream(new File("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/bgblogo.gb"));
+
+            rom = new byte[0x08000];   // Recreate the ROM array with the correct size
+
+            is.read(rom);
+            is.close();
+
+            System.out.println("Loaded ROM 'bgblogo.gb'.  2 ROM banks, 32Kb.  0 RAM banks. Type: ROM Only");
+
+        } catch (IOException e) {
+            System.out.println("Error opening ROM image");
+        }
+
+
         graphicsChip = new GraphicsChip(a, this);
         ioHandler = new IoHandler(this);
         applet = a;
@@ -128,7 +150,7 @@ class Dmgcpu {
             case 0x5000:
             case 0x6000:
             case 0x7000:
-                return cartridge.addressRead(addr);
+                return rom[addr];
 
             case 0x8000:
             case 0x9000:
@@ -136,7 +158,7 @@ class Dmgcpu {
 
             case 0xA000:
             case 0xB000:
-                return cartridge.addressRead(addr);
+                return rom[addr];
 
             case 0xC000:
                 return (mainRam[addr - 0xC000]);

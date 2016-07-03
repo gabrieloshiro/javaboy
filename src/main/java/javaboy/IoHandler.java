@@ -239,14 +239,14 @@ class IoHandler {
                 dmgcpu.graphicsChip.obj1Palette.decodePalette(data);
                 if (registers[num] != (byte) data) {
                     registers[num] = (byte) data;
-                    dmgcpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ1);
+                    dmgcpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ_1);
                 }
                 break;
             case 0x49:           // FF49 - OBJ2 palette
                 dmgcpu.graphicsChip.obj2Palette.decodePalette(data);
                 if (registers[num] != (byte) data) {
                     registers[num] = (byte) data;
-                    dmgcpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ2);
+                    dmgcpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ_2);
                 }
                 break;
 

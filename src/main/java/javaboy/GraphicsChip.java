@@ -4,11 +4,6 @@ import java.awt.*;
 import java.awt.image.DirectColorModel;
 import java.awt.image.MemoryImageSource;
 
-/**
- * This class is one implementation of the GraphicsChipOld.
- * It performs the output of the graphics screen, including the background, window, and sprite layers.
- * It supports some raster effects, but only ones that happen on a tile row boundary.
- */
 class GraphicsChip {
 
     /**
@@ -19,47 +14,33 @@ class GraphicsChip {
     /**
      * Tile uses the first sprite palette
      */
-    static final int TILE_OBJ1 = 4;
+    static final int TILE_OBJ_1 = 4;
 
     /**
      * Tile uses the second sprite palette
      */
-    static final int TILE_OBJ2 = 8;
+    static final int TILE_OBJ_2 = 8;
 
     /**
      * Tile is flipped horizontally
      */
-    private static final int TILE_FLIPX = 1;
+    private static final int TILE_FLIP_X = 1;
 
     /**
      * Tile is flipped vertically
      */
-    private static final int TILE_FLIPY = 2;
+    private static final int TILE_FLIP_Y = 2;
 
     /**
      * The current contents of the video memory, mapped in at 0x8000 - 0x9FFF
      */
     private byte[] videoRam = new byte[0x8000];
 
-    /**
-     * The background palette
-     */
     GameboyPalette backgroundPalette;
-
-    /**
-     * The first sprite palette
-     */
     GameboyPalette obj1Palette;
-
-    /**
-     * The second sprite palette
-     */
     GameboyPalette obj2Palette;
-    GameboyPalette[] gbcBackground = new GameboyPalette[8];
-    GameboyPalette[] gbcSprite = new GameboyPalette[8];
 
     boolean spritesEnabled = true;
-
     boolean bgEnabled = true;
     boolean winEnabled = true;
 
@@ -77,13 +58,6 @@ class GraphicsChip {
      * The number of frames that have been drawn so far in the current frame sampling period
      */
     private int framesDrawn = 0;
-
-    /**
-     * Image magnification
-     */
-    private int mag = 2;
-    private int width = 160 * 2;
-    private int height = 144 * 2;
 
     /**
      * Amount of time to wait between frames (ms)
@@ -111,8 +85,7 @@ class GraphicsChip {
      */
     boolean hiBgTileMapAddress = false;
     private Dmgcpu dmgcpu;
-    int tileStart = 0;
-    int vidRamStart = 0;
+    private int vidRamStart = 0;
 
 
     /**
@@ -133,12 +106,7 @@ class GraphicsChip {
         obj1Palette = new GameboyPalette(0, 1, 2, 3);
         obj2Palette = new GameboyPalette(0, 1, 2, 3);
 
-        for (int r = 0; r < 8; r++) {
-            gbcBackground[r] = new GameboyPalette(0, 1, 2, 3);
-            gbcSprite[r] = new GameboyPalette(0, 1, 2, 3);
-        }
-
-        backBuffer = a.createImage(160 * mag, 144 * mag);
+        backBuffer = a.createImage(160, 144);
 
         for (int r = 0; r < 384 * 2; r++) {
             tiles[r] = new GameboyTile(a);
@@ -168,14 +136,6 @@ class GraphicsChip {
         }
     }
 
-    int getWidth() {
-        return width;
-    }
-
-    int getHeight() {
-        return height;
-    }
-
     /**
      * Flush the tile cache
      */
@@ -197,6 +157,7 @@ class GraphicsChip {
      */
     void addressWrite(int addr, byte data) {
         if (addr < 0x1800) {   // Bkg Tile data area
+            int tileStart = 0;
             tiles[(addr >> 4) + tileStart].invalidate();
             videoRam[addr + vidRamStart] = data;
         } else {
@@ -238,23 +199,23 @@ class GraphicsChip {
 
                 vidRamAddress = tileNum << 4;
                 if ((attributes & 0x10) != 0) {
-                    spriteAttrib |= TILE_OBJ2;
+                    spriteAttrib |= TILE_OBJ_2;
                 } else {
-                    spriteAttrib |= TILE_OBJ1;
+                    spriteAttrib |= TILE_OBJ_1;
                 }
 
                 if ((attributes & 0x20) != 0) {
-                    spriteAttrib |= TILE_FLIPX;
+                    spriteAttrib |= TILE_FLIP_X;
                 }
                 if ((attributes & 0x40) != 0) {
-                    spriteAttrib |= TILE_FLIPY;
+                    spriteAttrib |= TILE_FLIP_Y;
                 }
 
                 if (tiles[tileNum].invalid(spriteAttrib)) {
                     tiles[tileNum].validate(videoRam, vidRamAddress, spriteAttrib);
                 }
 
-                if ((spriteAttrib & TILE_FLIPY) != 0) {
+                if ((spriteAttrib & TILE_FLIP_Y) != 0) {
                     if (doubledSprites) {
                         tiles[tileNum].draw(back, spriteX, spriteY + 8, spriteAttrib);
                     } else {
@@ -270,7 +231,7 @@ class GraphicsChip {
                     }
 
 
-                    if ((spriteAttrib & TILE_FLIPY) != 0) {
+                    if ((spriteAttrib & TILE_FLIP_Y) != 0) {
                         tiles[tileNum + 1].draw(back, spriteX, spriteY, spriteAttrib);
                     } else {
                         tiles[tileNum + 1].draw(back, spriteX, spriteY + 8, spriteAttrib);
@@ -306,7 +267,6 @@ class GraphicsChip {
             if (!winEnabled) {
                 windowStopLine = line;
                 windowEnableThisLine = false;
-                //	System.out.println("Stop line: " + windowStopLine);
             }
         }
 
@@ -320,8 +280,6 @@ class GraphicsChip {
 
         int xPixelOfs = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x43]) % 8;
         int yPixelOfs = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x42]) % 8;
-
-        //  if ((yPixelOfs + 4) % 8 == line % 8) {
 
         if (((yPixelOfs + line) % 8 == 4) || (line == 0)) {
 
@@ -376,7 +334,7 @@ class GraphicsChip {
     private void clearFrameBuffer() {
         Graphics back = backBuffer.getGraphics();
         back.setColor(new Color(backgroundPalette.getRgbEntry(0)));
-        back.fillRect(0, 0, 160 * mag, 144 * mag);
+        back.fillRect(0, 0, 160, 144);
     }
 
     boolean isFrameReady() {
@@ -413,10 +371,10 @@ class GraphicsChip {
             wy = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x4A]);
 
             back.setColor(new Color(backgroundPalette.getRgbEntry(0)));
-            back.fillRect(wx * mag, wy * mag, 160 * mag, 144 * mag);
+            back.fillRect(wx, wy, 160, 144);
 
             int tileAddress;
-            int attribData, attribs, tileDataAddress;
+            int attribs, tileDataAddress;
 
             for (int y = 0; y < 19 - (wy / 8); y++) {
                 for (int x = 0; x < 21 - (wx / 8); x++) {
@@ -474,7 +432,7 @@ class GraphicsChip {
         /**
          * Current magnification value of Gameboy screen
          */
-        int magnify = 2;
+        int magnify = 1;
         int[] imageData = new int[64 * magnify * magnify];
         Component a;
 
@@ -531,9 +489,9 @@ class GraphicsChip {
 
             GameboyPalette pal;
 
-            if ((attribs & TILE_OBJ1) != 0) {
+            if ((attribs & TILE_OBJ_1) != 0) {
                 pal = obj1Palette;
-            } else if ((attribs & TILE_OBJ2) != 0) {
+            } else if ((attribs & TILE_OBJ_2) != 0) {
                 pal = obj2Palette;
             } else {
                 pal = backgroundPalette;
@@ -542,12 +500,12 @@ class GraphicsChip {
             for (int y = 0; y < 8; y++) {
                 for (int x = 0; x < 8; x++) {
 
-                    if ((attribs & TILE_FLIPX) != 0) {
+                    if ((attribs & TILE_FLIP_X) != 0) {
                         px = 7 - x;
                     } else {
                         px = x;
                     }
-                    if ((attribs & TILE_FLIPY) != 0) {
+                    if ((attribs & TILE_FLIP_Y) != 0) {
                         py = 7 - y;
                     } else {
                         py = y;
