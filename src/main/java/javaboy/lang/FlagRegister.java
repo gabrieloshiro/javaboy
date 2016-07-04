@@ -5,15 +5,12 @@ package javaboy.lang;
  */
 public class FlagRegister {
 
-    ZeroFlag zf;
-    Bit nf, hf, cf;
+    private final ZeroFlag zf = new ZeroFlag();
+    private final Bit nf = new Bit();
+    private final Bit hf = new Bit();
+    private final Bit cf = new Bit();
 
     public FlagRegister() {
-        zf = new ZeroFlag();
-        nf = new Bit();
-        hf = new Bit();
-        cf = new Bit();
-
         reset();
     }
 
@@ -56,7 +53,6 @@ public class FlagRegister {
     public void zf(int i) {
         zf.setValue(i);
     }
-
 
     public Bit nf() {
         return nf;
