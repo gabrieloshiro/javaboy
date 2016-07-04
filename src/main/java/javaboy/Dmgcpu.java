@@ -188,6 +188,8 @@ class Dmgcpu {
      */
     final void addressWrite(int addr, int data) {
 
+        addr = addr & 0xFFFF;
+
         switch (addr & 0xF000) {
             case 0x0000:
             case 0x1000:

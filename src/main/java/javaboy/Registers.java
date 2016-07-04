@@ -94,56 +94,24 @@ public class Registers {
         this.l.setValue(l);
     }
 
-    public Short af() {
-        return new Short(a, f.byteValue());
-    }
-
-    public void af(Short value) {
-        a.setValue(value.getHigherByte().intValue());
-        f.setValue(value.getLowerByte().intValue());
-    }
-
     public void af(int i) {
-        af(new Short(i));
-    }
-
-    public Short bc() {
-        return new Short(b, c);
-    }
-
-    public void bc(Short value) {
-        b = value.getHigherByte();
-        c = value.getLowerByte();
+        a.setValue(i >> 8);
+        f.setValue(i & 0xFF);
     }
 
     public void bc(int i) {
-        bc(new Short(i));
-    }
-
-    public Short de() {
-        return new Short(d, e);
-    }
-
-    public void de(Short value) {
-        d = value.getHigherByte();
-        e = value.getLowerByte();
+        b.setValue(i >> 8);
+        c.setValue(i & 0xFF);
     }
 
     public void de(int i) {
-        de(new Short(i));
-    }
-
-    public Short hl() {
-        return new Short(h, l);
-    }
-
-    public void hl(Short value) {
-        h = value.getHigherByte();
-        l = value.getLowerByte();
+        d.setValue(i >> 8);
+        e.setValue(i & 0xFF);
     }
 
     public void hl(int i) {
-        hl(new Short(i));
+        h.setValue(i >> 8);
+        l.setValue(i & 0xFF);
     }
 
     public Short pc() {
