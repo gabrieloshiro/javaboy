@@ -70,17 +70,6 @@ class IoHandler {
                 }
                 return (byte) (output | (registers[0x41] & 0xF8));
 
-            case 0x55:
-                return registers[0x55];
-
-            case 0x69:       // GBC BG Sprite palette
-
-                return registers[num];
-
-
-            case 0x6B:       // GBC OBJ Sprite palette
-                return registers[num];
-
             default:
                 return registers[num];
         }
@@ -91,19 +80,7 @@ class IoHandler {
      */
     void ioWrite(int num, short data) {
 
-        //        if (num <= 0x4B) {
-        //            Logger.debug("Write of register " + JavaBoy.hexByte(num) + " to " + JavaBoy.hexWord(data) + " at " + JavaBoy.hexWord(dmgcpu.pc));
-        //        }
-
         switch (num) {
-
-            // FF00 - Joypad
-            case 0x00:
-                break;
-
-            // Serial
-            case 0x02:
-                break;
 
             // DIV
             case 0x04:
@@ -133,45 +110,6 @@ class IoHandler {
                 }
                 break;
 
-            // Sound channel 1, sweep
-            case 0x10:
-            case 0x11:           // Sound channel 1, length and wave duty
-            case 0x12:           // Sound channel 1, volume envelope
-            case 0x13:           // Sound channel 1, frequency low
-            case 0x14:           // Sound channel 1, frequency high
-            case 0x17:           // Sound channel 2, volume envelope
-            case 0x18:           // Sound channel 2, frequency low
-            case 0x19:           // Sound channel 2, frequency high
-            case 0x16:           // Sound channel 2, length and wave duty
-            case 0x1A:           // Sound channel 3, on/off
-            case 0x1B:           // Sound channel 3, length
-            case 0x1C:           // Sound channel 3, volume
-            case 0x1D:           // Sound channel 3, frequency lower 8-bit
-            case 0x1E:           // Sound channel 3, frequency higher 3-bit
-            case 0x20:           // Sound channel 4, length
-            case 0x21:           // Sound channel 4, volume envelope
-            case 0x22:           // Sound channel 4, polynomial parameters
-            case 0x23:          // Sound channel 4, initial/consecutive
-            case 0x25:           // Stereo select
-                break;
-            case 0x30:
-            case 0x31:
-            case 0x32:
-            case 0x33:
-            case 0x34:
-            case 0x35:
-            case 0x36:
-            case 0x37:
-            case 0x38:
-            case 0x39:
-            case 0x3A:
-            case 0x3B:
-            case 0x3C:
-            case 0x3D:
-            case 0x3E:
-            case 0x3F:
-                registers[num] = (byte) data;
-                break;
 
             case 0x40:
                 // LCDC
@@ -197,21 +135,6 @@ class IoHandler {
                 }
 
                 registers[0x40] = (byte) data;
-                break;
-
-            // STAT
-            case 0x41:
-                registers[0x41] = (byte) data;
-                break;
-
-            // SCY
-            case 0x42:
-                registers[0x42] = (byte) data;
-                break;
-
-            // SCX
-            case 0x43:
-                registers[0x43] = (byte) data;
                 break;
 
             // DMA
@@ -249,11 +172,6 @@ class IoHandler {
                 }
                 break;
 
-            case 0x4F:
-                registers[0x4F] = (byte) data;
-                break;
-
-
             case 0x55:
                 if (((registers[0x55] & 0x80) == 0) && ((data & 0x80) == 0)) {
                     int dmaSrc = (JavaBoy.unsign(registers[0x51]) << 8) +
@@ -272,23 +190,9 @@ class IoHandler {
                 registers[0x55] = (byte) data;
                 break;
 
-            case 0x69:           // FF69 - BCPD: GBC BG Palette data write
-                registers[0x69] = (byte) data;
-                break;
-
-            case 0x6B:           // FF6B - OCPD: GBC Sprite Palette data write
-                registers[0x6B] = (byte) data;
-                break;
-
-            case 0x70:           // FF70 - GBC Work RAM bank
-                registers[0x70] = (byte) data;
-                break;
-
-
             default:
                 registers[num] = (byte) data;
                 break;
         }
     }
 }
-
