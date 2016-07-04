@@ -23,10 +23,10 @@ public class Short {
         setLowerByte(low);
     }
 
-    public void setValue(Byte high, FlagRegister low) {
-        setHigherByte(high);
-        setLowerByte(low.byteValue());
-    }
+//    public void setValue(Byte high, FlagRegister low) {
+//        setHigherByte(high);
+//        setLowerByte(low.byteValue());
+//    }
 
     public int intValue() {
         return value;
@@ -40,16 +40,16 @@ public class Short {
         this.value = (short) value;
     }
 
-    public Byte getLowerByte() {
-        return new Byte(value & 0xFF);
+    public int getLowerByte() {
+        return value & 0xFF;
     }
 
     public void setLowerByte(Byte b) {
         this.value = (short) ((this.value & 0xFF00) | b.intValue());
     }
 
-    public Byte getHigherByte() {
-        return new Byte((value >> 8) & 0xFF);
+    public int getHigherByte() {
+        return (value >> 8) & 0xFF;
     }
 
     public void setHigherByte(Byte b) {

@@ -5,44 +5,73 @@ package javaboy.lang;
  */
 public class Bit {
 
-    private boolean value = false;
+    public enum BitValue {
+        ZERO,
+        ONE;
+
+        public boolean booleanValue() {
+            if (this == ONE) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        public int intValue() {
+            if (this == ONE) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    private BitValue value = BitValue.ZERO;
 
     public Bit() {
     }
 
-    public Bit(int i) {
-        setValue(i);
+    public Bit(BitValue value) {
+        this.value = value;
     }
+//
+//    public Bit(boolean b) {
+//        if (b) {
+//            this.value = BitValue.ONE;
+//        } else {
+//            this.value = BitValue.ZERO;
+//        }
+//    }
 
-    public Bit(boolean b) {
-        setValue(b);
+//    public BitValue bitValue() {
+//        return value;
+//    }
+
+    public void setValue(BitValue value) {
+        this.value = value;
     }
 
     public int intValue() {
-        return value ? 1 : 0;
+        return value.intValue();
     }
 
     public boolean booleanValue() {
-        return value;
+        return value.booleanValue();
     }
 
     public void set() {
-        value = true;
+        value = BitValue.ONE;
     }
 
     public void reset() {
-        value = false;
-    }
-
-    public void setValue(int i) {
-        value = (i != 0);
-    }
-
-    public void setValue(boolean b) {
-        value = b;
+        value = BitValue.ZERO;
     }
 
     public void toggle() {
-        value = !value;
+        if (value == BitValue.ONE) {
+            value = BitValue.ZERO;
+        } else {
+            value = BitValue.ONE;
+        }
     }
 }

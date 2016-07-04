@@ -3,80 +3,48 @@ package javaboy.lang;
 /**
  * Created by gabrieloshiro on 2016-06-28.
  */
-public class FlagRegister {
-
-    private final ZeroFlag zf = new ZeroFlag();
-    private final Bit nf = new Bit();
-    private final Bit hf = new Bit();
-    private final Bit cf = new Bit();
+public class FlagRegister extends Byte {
 
     public FlagRegister() {
-        reset();
-    }
-
-    public Byte byteValue() {
-        return new Byte(intValue());
     }
 
     public int intValue() {
-        return (zf.intValue() << 7) |
-                (nf.intValue() << 6) |
-                (hf.intValue() << 5) |
-                (cf.intValue() << 4);
-    }
-
-    public void setValue(Byte b) {
-        zf.setValue(b.getBit(7).intValue());
-        nf.setValue(b.getBit(6).intValue());
-        hf.setValue(b.getBit(5).intValue());
-        cf.setValue(b.getBit(4).intValue());
+        return this.value;
     }
 
     public void setValue(int i) {
-        zf.setValue(i >> 7);
-        nf.setValue(i >> 6);
-        hf.setValue(i >> 5);
-        cf.setValue(i >> 4);
+        this.value = i & 0xF0;
     }
 
-    public void reset() {
-        zf.setValue(0);
-        nf.setValue(0);
-        hf.setValue(0);
-        cf.setValue(0);
+    public Bit.BitValue zf() {
+        return getBit(7);
     }
 
-    public Bit zf() {
-        return zf;
+    public Bit.BitValue nf() {
+        return getBit(6);
     }
 
-    public void zf(int i) {
-        zf.setValue(i);
+    public Bit.BitValue hf() {
+        return getBit(5);
     }
 
-    public Bit nf() {
-        return nf;
+    public Bit.BitValue cf() {
+        return getBit(4);
     }
 
-    public void nf(int i) {
-        nf.setValue(i);
+    public void zf(Bit.BitValue value) {
+        setBit(7, value);
     }
 
-    public Bit hf() {
-        return hf;
+    public void nf(Bit.BitValue value) {
+        setBit(6, value);
     }
 
-    public void hf(int i) {
-        hf.setValue(i);
+    public void hf(Bit.BitValue value) {
+        setBit(5, value);
     }
 
-    public Bit cf() {
-        return cf;
+    public void cf(Bit.BitValue value) {
+        setBit(4, value);
     }
-
-    public void cf(int i) {
-        cf.setValue(i);
-    }
-
 }
-

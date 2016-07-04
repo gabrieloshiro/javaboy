@@ -6,11 +6,20 @@ package javaboy.lang;
 public class ZeroFlag extends Bit {
 
     public void setIfZero(int i) {
-        setValue(i == 0);
+        if (i == 0) {
+            setValue(BitValue.ONE);
+        } else {
+            setValue(BitValue.ZERO);
+        }
+
     }
 
     public void setIfZero(Bit b) {
-        setValue(b.intValue() == 0);
-    }
+        if (b.intValue() == 0) {
+            setValue(BitValue.ONE);
+        } else {
+            setValue(BitValue.ZERO);
+        }
 
+    }
 }
