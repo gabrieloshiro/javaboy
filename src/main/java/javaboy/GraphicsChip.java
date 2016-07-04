@@ -336,10 +336,6 @@ class GraphicsChip {
         back.fillRect(0, 0, 160, 144);
     }
 
-    boolean isFrameReady() {
-        return (framesDrawn % frameSkip) == 0;
-    }
-
     /**
      * Draw the current graphics frame into the given graphics context
      */
@@ -431,8 +427,7 @@ class GraphicsChip {
         /**
          * Current magnification value of Gameboy screen
          */
-        int magnify = 1;
-        int[] imageData = new int[64 * magnify * magnify];
+        int[] imageData = new int[64];
         Component a;
 
         /**
@@ -447,9 +442,9 @@ class GraphicsChip {
          * Allocate memory for the tile image with the specified attributes
          */
         void allocateImage(int attribs, Component a) {
-            source[attribs] = new MemoryImageSource(8 * magnify, 8 * magnify,
+            source[attribs] = new MemoryImageSource(8, 8,
                     new DirectColorModel(32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000),
-                    imageData, 0, 8 * magnify);
+                    imageData, 0, 8);
             source[attribs].setAnimated(true);
             image[attribs] = a.createImage(source[attribs]);
         }
@@ -524,12 +519,7 @@ class GraphicsChip {
                         rgbValue &= 0x00FFFFFF;
                     }
 
-                    for (int cy = 0; cy < magnify; cy++) {
-                        for (int cx = 0; cx < magnify; cx++) {
-                            imageData[(y * 8 * magnify * magnify) + (cy * 8 * magnify) +
-                                    (x * magnify) + cx] = rgbValue;
-                        }
-                    }
+                    imageData[(y * 8) + x] = rgbValue;
 
                 }
             }
@@ -542,7 +532,7 @@ class GraphicsChip {
          * Draw the tile with the specified attributes into the graphics context given
          */
         void draw(Graphics g, int x, int y, int attribs) {
-            g.drawImage(image[attribs], x * magnify, y * magnify, null);
+            g.drawImage(image[attribs], x, y, null);
         }
 
         /**

@@ -18,7 +18,7 @@ import java.io.InputStream;
  */
 class Dmgcpu {
 
-    byte[] rom;
+    private byte[] rom;
 
     /**
      * Registers: 8-bit
@@ -81,12 +81,12 @@ class Dmgcpu {
     /**
      * Serial interrupt
      */
-    final short INT_SER = 0x08;
+    private final short INT_SER = 0x08;
 
     /**
      * P10 - P13 (Joypad) interrupt
      */
-    final short INT_P10 = 0x10;
+    private final short INT_P10 = 0x10;
 
     // 8Kb main system RAM appears at 0xC000 in address space
     // 32Kb for GBC
@@ -479,10 +479,10 @@ class Dmgcpu {
         while (true) {
             instrCount++;
 
-            b1 = JavaBoy.unsign(addressRead(r.pc().intValue()));
-            offset = addressRead(r.pc().intValue() + 1);
-            b3 = JavaBoy.unsign(addressRead(r.pc().intValue() + 2));
-            b2 = JavaBoy.unsign((short) offset);
+            b1 = JavaBoy.unsign(addressRead(r.pc().intValue())); // opcode
+            offset = addressRead(r.pc().intValue() + 1); // n
+            b3 = JavaBoy.unsign(addressRead(r.pc().intValue() + 2)); // nn
+            b2 = JavaBoy.unsign((short) offset); // unsigned
 
             switch (b1) {
 
@@ -497,6 +497,9 @@ class Dmgcpu {
                  * LD BC, nn
                  */
                 case 0x01:
+
+                    
+
                     r.pc().inc();
                     r.pc().inc();
                     r.pc().inc();
