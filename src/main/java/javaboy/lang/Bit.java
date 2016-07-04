@@ -5,14 +5,13 @@ package javaboy.lang;
  */
 public class Bit {
 
-    private int value;
+    private boolean value = false;
+
+    public Bit() {
+    }
 
     public Bit(int i) {
         setValue(i);
-    }
-
-    public Bit() {
-        this(0);
     }
 
     public Bit(boolean b) {
@@ -20,30 +19,30 @@ public class Bit {
     }
 
     public int intValue() {
-        return value;
+        return value ? 1 : 0;
     }
 
     public boolean booleanValue() {
-        return value == 1;
+        return value;
     }
 
     public void set() {
-        value = 1;
+        value = true;
     }
 
     public void reset() {
-        value = 0;
+        value = false;
     }
 
     public void setValue(int i) {
-        value = i & 1;
+        value = (i != 0);
     }
 
     public void setValue(boolean b) {
-        value = b ? 1 : 0;
+        value = b;
     }
 
     public void toggle() {
-        value = value ^ 1;
+        value = !value;
     }
 }
