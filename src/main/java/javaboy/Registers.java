@@ -10,31 +10,26 @@ import javaboy.lang.Short;
 public class Registers {
 
     public Registers() {
-        a = new Byte();
-        b = new Byte();
-        c = new Byte();
-        d = new Byte();
-        e = new Byte();
-        h = new Byte();
-        l = new Byte();
-
-        f = new FlagRegister();
-
-        pc = new Short();
-        sp = new Short();
     }
 
-    private Byte a, b, c, d, e, h, l;
+    private final Byte a = new Byte();
+    private final Byte b = new Byte();
+    private final Byte c = new Byte();
+    private final Byte d = new Byte();
+    private final Byte e = new Byte();
+    private final Byte h = new Byte();
+    private final Byte l = new Byte();
 
-    private FlagRegister f;
+    private final FlagRegister f = new FlagRegister();
 
-    private Short pc, sp;
+    private final Short pc = new Short();
+    private final Short sp = new Short();
 
     public Byte a() {
         return a;
     }
 
-    public void a(int a) {
+    public void a(byte a) {
         this.a.setValue(a);
     }
 
@@ -42,7 +37,7 @@ public class Registers {
         return b;
     }
 
-    public void b(int b) {
+    public void b(byte b) {
         this.b.setValue(b);
     }
 
@@ -50,7 +45,7 @@ public class Registers {
         return c;
     }
 
-    public void c(int c) {
+    public void c(byte c) {
         this.c.setValue(c);
     }
 
@@ -58,7 +53,7 @@ public class Registers {
         return d;
     }
 
-    public void d(int d) {
+    public void d(byte d) {
         this.d.setValue(d);
     }
 
@@ -66,7 +61,7 @@ public class Registers {
         return e;
     }
 
-    public void e(int e) {
+    public void e(byte e) {
         this.e.setValue(e);
     }
 
@@ -74,7 +69,7 @@ public class Registers {
         return f;
     }
 
-    public void f(int f) {
+    public void f(byte f) {
         this.f.setValue(f);
     }
 
@@ -82,7 +77,7 @@ public class Registers {
         return h;
     }
 
-    public void h(int h) {
+    public void h(byte h) {
         this.h.setValue(h);
     }
 
@@ -90,26 +85,26 @@ public class Registers {
         return l;
     }
 
-    public void l(int l) {
+    public void l(byte l) {
         this.l.setValue(l);
     }
 
-    public void af(int i) {
+    public void af(short i) {
         a.setValue(i >> 8);
         f.setValue(i & 0xFF);
     }
 
-    public void bc(int i) {
+    public void bc(short i) {
         b.setValue(i >> 8);
         c.setValue(i & 0xFF);
     }
 
-    public void de(int i) {
+    public void de(short i) {
         d.setValue(i >> 8);
         e.setValue(i & 0xFF);
     }
 
-    public void hl(int i) {
+    public void hl(short i) {
         h.setValue(i >> 8);
         l.setValue(i & 0xFF);
     }
@@ -118,12 +113,20 @@ public class Registers {
         return pc;
     }
 
+    public void pc(short s) {
+        this.pc.setValue(s);
+    }
+
     public void pc(int i) {
         this.pc.setValue(i);
     }
 
     public Short sp() {
         return sp;
+    }
+
+    public void sp(short s) {
+        this.sp.setValue(s);
     }
 
     public void sp(int i) {

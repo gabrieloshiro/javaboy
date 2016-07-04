@@ -498,7 +498,7 @@ class Dmgcpu {
                  */
                 case 0x01:
 
-                    
+
 
                     r.pc().inc();
                     r.pc().inc();
@@ -1926,7 +1926,7 @@ class Dmgcpu {
                     break;
                 case 0xF1:               // POP AF
                     r.pc().inc();
-                    r.f(JavaBoy.unsign(addressRead(r.sp().intValue())));
+                    r.f((byte) addressRead(r.sp().intValue()));
                     a = JavaBoy.unsign(addressRead(r.sp().intValue() + 1));
                     r.sp().inc();
                     r.sp().inc();
