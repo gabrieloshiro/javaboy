@@ -108,7 +108,7 @@ class Dmgcpu {
     IoHandler ioHandler;
     private Component applet;
 
-    Dmgcpu(Component a, Registers r) {
+    Dmgcpu(Component a) {
 
         InputStream is;
         try {

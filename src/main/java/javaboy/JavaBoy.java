@@ -55,7 +55,7 @@ public class JavaBoy extends Frame {
         setVisible(true);
         requestFocus();
 
-        dmgcpu = new Dmgcpu(this, new Registers());
+        dmgcpu = new Dmgcpu(this);
         Logger.debug("- CPU Reset");
         dmgcpu.reset();
         dmgcpu.execute();
