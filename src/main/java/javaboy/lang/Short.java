@@ -5,7 +5,7 @@ package javaboy.lang;
  */
 public class Short {
 
-    private short value = 0;
+    private int value = 0;
 
     public Short() {
     }
@@ -23,21 +23,12 @@ public class Short {
         setLowerByte(low);
     }
 
-//    public void setValue(Byte high, FlagRegister low) {
-//        setHigherByte(high);
-//        setLowerByte(low.byteValue());
-//    }
-
     public int intValue() {
         return value;
     }
 
-    public void setValue(short value) {
-        this.value = value;
-    }
-
     public void setValue(int value) {
-        this.value = (short) value;
+        this.value = value & 0xFFFF;
     }
 
     public int getLowerByte() {
@@ -57,11 +48,11 @@ public class Short {
     }
 
     public void inc() {
-        setValue((short) (value + 1));
+        setValue(value + 1);
     }
 
     public void dec() {
-        setValue((short) (value - 1));
+        setValue(value - 1);
     }
 }
 

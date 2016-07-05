@@ -29,7 +29,7 @@ public class Registers {
         return a;
     }
 
-    public void a(byte a) {
+    public void a(int a) {
         this.a.setValue(a);
     }
 
@@ -37,7 +37,7 @@ public class Registers {
         return b;
     }
 
-    public void b(byte b) {
+    public void b(int b) {
         this.b.setValue(b);
     }
 
@@ -45,7 +45,7 @@ public class Registers {
         return c;
     }
 
-    public void c(byte c) {
+    public void c(int c) {
         this.c.setValue(c);
     }
 
@@ -53,7 +53,7 @@ public class Registers {
         return d;
     }
 
-    public void d(byte d) {
+    public void d(int d) {
         this.d.setValue(d);
     }
 
@@ -61,7 +61,7 @@ public class Registers {
         return e;
     }
 
-    public void e(byte e) {
+    public void e(int e) {
         this.e.setValue(e);
     }
 
@@ -69,7 +69,7 @@ public class Registers {
         return f;
     }
 
-    public void f(byte f) {
+    public void f(int f) {
         this.f.setValue(f);
     }
 
@@ -77,7 +77,7 @@ public class Registers {
         return h;
     }
 
-    public void h(byte h) {
+    public void h(int h) {
         this.h.setValue(h);
     }
 
@@ -85,26 +85,43 @@ public class Registers {
         return l;
     }
 
-    public void l(byte l) {
+    public void l(int l) {
         this.l.setValue(l);
     }
 
-    public void af(short i) {
+    public void af(int i) {
         a.setValue(i >> 8);
         f.setValue(i & 0xFF);
     }
 
-    public void bc(short i) {
+    public void bc(int i) {
         b.setValue(i >> 8);
         c.setValue(i & 0xFF);
     }
 
-    public void de(short i) {
+    public void de(int i) {
         d.setValue(i >> 8);
         e.setValue(i & 0xFF);
     }
 
-    public void hl(short i) {
+
+    public int af() {
+        return a.intValue() << 8 | f.intValue();
+    }
+
+    public int bc() {
+        return b.intValue() << 8 | c.intValue();
+    }
+
+    public int de() {
+        return d.intValue() << 8 | e.intValue();
+    }
+
+    public int hl() {
+        return h.intValue() << 8 | l.intValue();
+    }
+
+    public void hl(int i) {
         h.setValue(i >> 8);
         l.setValue(i & 0xFF);
     }
@@ -113,20 +130,12 @@ public class Registers {
         return pc;
     }
 
-    public void pc(short s) {
-        this.pc.setValue(s);
-    }
-
     public void pc(int i) {
         this.pc.setValue(i);
     }
 
     public Short sp() {
         return sp;
-    }
-
-    public void sp(short s) {
-        this.sp.setValue(s);
     }
 
     public void sp(int i) {

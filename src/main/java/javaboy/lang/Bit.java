@@ -34,18 +34,6 @@ public class Bit {
     public Bit(BitValue value) {
         this.value = value;
     }
-//
-//    public Bit(boolean b) {
-//        if (b) {
-//            this.value = BitValue.ONE;
-//        } else {
-//            this.value = BitValue.ZERO;
-//        }
-//    }
-
-//    public BitValue bitValue() {
-//        return value;
-//    }
 
     public void setValue(BitValue value) {
         this.value = value;
