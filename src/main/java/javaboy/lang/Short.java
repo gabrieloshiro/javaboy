@@ -5,54 +5,35 @@ package javaboy.lang;
  */
 public class Short {
 
-    private int value = 0;
+    private final Byte lowerByte = new Byte();
+    private final Byte higherByte = new Byte();
 
     public Short() {
     }
 
-    public Short(short s) {
-        setValue(s);
-    }
-
-    public Short(Byte high, Byte low) {
-        setValue(high, low);
-    }
-
-    public void setValue(Byte high, Byte low) {
-        setHigherByte(high);
-        setLowerByte(low);
-    }
-
     public int intValue() {
-        return value;
+        return higherByte.intValue() << 8 | lowerByte.intValue();
     }
 
     public void setValue(int value) {
-        this.value = value & 0xFFFF;
+        lowerByte.setValue(value & 0xFF);
+        higherByte.setValue(value >> 8);
     }
 
-    public int getLowerByte() {
-        return value & 0xFF;
+    public Byte getLowerByte() {
+        return lowerByte;
     }
 
-    public void setLowerByte(Byte b) {
-        this.value = (short) ((this.value & 0xFF00) | b.intValue());
-    }
-
-    public int getHigherByte() {
-        return (value >> 8) & 0xFF;
-    }
-
-    public void setHigherByte(Byte b) {
-        this.value = (short) ((this.value & 0x00FF) | (b.intValue() << 8));
+    public Byte getHigherByte() {
+        return higherByte;
     }
 
     public void inc() {
-        setValue(value + 1);
+        setValue(intValue() + 1);
     }
 
     public void dec() {
-        setValue(value - 1);
+        setValue(intValue() - 1);
     }
 }
 
