@@ -431,7 +431,7 @@ class GraphicsChip {
         Component a;
 
         /**
-         * Intialize a new Gameboy tile
+         * Initialize a new Gameboy tile
          */
         GameboyTile(Component a) {
             allocateImage(TILE_BKG, a);
@@ -441,12 +441,12 @@ class GraphicsChip {
         /**
          * Allocate memory for the tile image with the specified attributes
          */
-        void allocateImage(int attribs, Component a) {
-            source[attribs] = new MemoryImageSource(8, 8,
+        void allocateImage(int attributes, Component a) {
+            source[attributes] = new MemoryImageSource(8, 8,
                     new DirectColorModel(32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000),
                     imageData, 0, 8);
-            source[attribs].setAnimated(true);
-            image[attribs] = a.createImage(source[attribs]);
+            source[attributes].setAnimated(true);
+            image[attributes] = a.createImage(source[attributes]);
         }
 
         /**
@@ -465,8 +465,8 @@ class GraphicsChip {
          * Returns true if this tile does not contain a valid image for the tile with the specified
          * attributes
          */
-        boolean invalid(int attribs) {
-            return (!valid[attribs]);
+        boolean invalid(int attributes) {
+            return (!valid[attributes]);
         }
 
         /**

@@ -18,6 +18,14 @@ public class Byte {
         return value;
     }
 
+    public int signedIntValue() {
+        if (value > 127) {
+            return value - 256;
+        }
+
+        return value;
+    }
+
     public void setValue(int value) {
         this.value = value & 0xFF;
     }
