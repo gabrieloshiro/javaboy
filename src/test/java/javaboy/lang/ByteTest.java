@@ -78,10 +78,10 @@ public class ByteTest {
     public void testSetHigherNibble() throws Exception {
         Logger.debug("Set Higher Nibble");
         int nibble = new Random().nextInt();
-        b.setHigherNibble(nibble);
+        b.setUpperNibble(nibble);
 
         model = (model & 0x0F) | ((nibble & 0x0F) << 4);
-        assertEquals(model >> 4, b.getHigherNibble());
+        assertEquals(model >> 4, b.getUpperNibble());
     }
 
     @Test

@@ -38,16 +38,16 @@ public class Byte {
         this.value = (this.value & 0xF0) | (i & 0xF);
     }
 
-    public int getHigherNibble() {
+    public int getUpperNibble() {
         return value >> 4;
     }
 
-    public void setHigherNibble(int i) {
+    public void setUpperNibble(int i) {
         this.value = (this.value & 0x0F) | ((i & 0xF) << 4);
     }
 
     public void swap() {
-        value = (getHigherNibble() << 4) | getLowerNibble();
+        value = (getUpperNibble() << 4) | getLowerNibble();
     }
 
     public Bit.BitValue getBit(int index) {
