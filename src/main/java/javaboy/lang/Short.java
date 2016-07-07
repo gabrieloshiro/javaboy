@@ -24,7 +24,7 @@ public class Short {
         return lowerByte;
     }
 
-    public Byte getHigherByte() {
+    public Byte getUpperByte() {
         return higherByte;
     }
 

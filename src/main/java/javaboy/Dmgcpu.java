@@ -1,6 +1,5 @@
 package javaboy;
 
-import javaboy.lang.Bit;
 import javaboy.lang.Byte;
 import javaboy.lang.FlagRegister;
 import javaboy.lang.Short;
@@ -13,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import static javaboy.lang.Bit.BitValue.ONE;
+import static javaboy.lang.Bit.BitValue.ZERO;
 
 /**
  * This is the main controlling class for the emulation
@@ -27,15 +27,15 @@ class Dmgcpu {
     private final FlagRegister f = new FlagRegister();
 
     private final Short bc = new Short();
-    private final Byte b = bc.getHigherByte();
+    private final Byte b = bc.getUpperByte();
     private final Byte c = bc.getLowerByte();
 
     private final Short de = new Short();
-    private final Byte d = de.getHigherByte();
+    private final Byte d = de.getUpperByte();
     private final Byte e = de.getLowerByte();
 
     private final Short hl = new Short();
-    private final Byte h = hl.getHigherByte();
+    private final Byte h = hl.getUpperByte();
     private final Byte l = hl.getLowerByte();
 
     private final Short pc = new Short();
@@ -310,7 +310,7 @@ class Dmgcpu {
 
         f.zf(ONE);
 
-        f.nf(Bit.BitValue.ZERO);
+        f.nf(ZERO);
         f.hf(ONE);
         f.cf(ONE);
 
@@ -339,7 +339,7 @@ class Dmgcpu {
         if ((intFlags & ieReg) != 0) {
             sp.dec();
             sp.dec();
-            addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());  // Push current program counter onto stack
+            addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());  // Push current program counter onto stack
             addressWrite(sp.intValue(), pc.getLowerByte().intValue());
             interruptsEnabled = false;
 
@@ -500,9 +500,9 @@ class Dmgcpu {
                     break;
                 case 0x04:               // INC B
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
-                    f.nf(Bit.BitValue.ZERO);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
+                    f.nf(ZERO);
+                    f.hf(ZERO);
                     switch (b.intValue()) {
                         case 0xFF:
                             f.zf(ONE);
@@ -520,9 +520,9 @@ class Dmgcpu {
                     break;
                 case 0x05:               // DEC B
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
                     f.nf(ONE);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.hf(ZERO);
                     switch (b.intValue()) {
                         case 0x00:
                             f.hf(ONE);
@@ -564,7 +564,7 @@ class Dmgcpu {
                     pc.inc();
                     pc.inc();
                     pc.inc();
-                    addressWrite((b3 << 8) + b2 + 1, sp.getHigherByte().intValue());
+                    addressWrite((b3 << 8) + b2 + 1, sp.getUpperByte().intValue());
                     addressWrite((b3 << 8) + b2, sp.getLowerByte().intValue());
                     break;
                 case 0x09: {       // ADD HL, BC
@@ -574,7 +574,7 @@ class Dmgcpu {
                         f.cf(ONE);
                         result = result & 0xFFFF;
                     } else {
-                        f.cf(Bit.BitValue.ZERO);
+                        f.cf(ZERO);
                     }
                     hl.setValue(result);
                     break;
@@ -589,9 +589,9 @@ class Dmgcpu {
                     break;
                 case 0x0C:               // INC C
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
-                    f.nf(Bit.BitValue.ZERO);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
+                    f.nf(ZERO);
+                    f.hf(ZERO);
 
                     switch (c.intValue()) {
                         case 0xFF:
@@ -610,9 +610,9 @@ class Dmgcpu {
                     break;
                 case 0x0D:               // DEC C
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
                     f.nf(ONE);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.hf(ZERO);
 
                     switch (c.intValue()) {
                         case 0x00:
@@ -640,9 +640,9 @@ class Dmgcpu {
                 case 0x0F:               // RRC A
                     pc.inc();
                     if (a.getBit(0) == ONE) {
-                        f.zf(Bit.BitValue.ZERO);
-                        f.nf(Bit.BitValue.ZERO);
-                        f.hf(Bit.BitValue.ZERO);
+                        f.zf(ZERO);
+                        f.nf(ZERO);
+                        f.hf(ZERO);
                         f.cf(ONE);
                     } else {
                         f.setValue(0);
@@ -676,9 +676,9 @@ class Dmgcpu {
                     break;
                 case 0x14:               // INC D
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
-                    f.nf(Bit.BitValue.ZERO);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
+                    f.nf(ZERO);
+                    f.hf(ZERO);
                     switch (d.intValue()) {
                         case 0xFF:
                             f.zf(ONE);
@@ -696,9 +696,9 @@ class Dmgcpu {
                     break;
                 case 0x15:               // DEC D
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
-                    f.nf(Bit.BitValue.ZERO);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
+                    f.nf(ZERO);
+                    f.hf(ZERO);
                     f.nf(ONE);
                     switch (d.intValue()) {
                         case 0x00:
@@ -766,9 +766,9 @@ class Dmgcpu {
                     break;
                 case 0x1C:               // INC E
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
-                    f.nf(Bit.BitValue.ZERO);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
+                    f.nf(ZERO);
+                    f.hf(ZERO);
                     switch (e.intValue()) {
                         case 0xFF:
                             f.zf(ONE);
@@ -786,9 +786,9 @@ class Dmgcpu {
                     break;
                 case 0x1D:               // DEC E
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
                     f.nf(ONE);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.hf(ZERO);
 
                     switch (e.intValue()) {
                         case 0x00:
@@ -855,9 +855,9 @@ class Dmgcpu {
                     break;
                 case 0x24:               // INC H         ** May be wrong **
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
-                    f.nf(Bit.BitValue.ZERO);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
+                    f.nf(ZERO);
+                    f.hf(ZERO);
                     switch (h.intValue()) {
                         case 0xFF:
                             f.zf(ONE);
@@ -875,9 +875,9 @@ class Dmgcpu {
                     break;
                 case 0x25:               // DEC H           ** May be wrong **
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
                     f.nf(ONE);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.hf(ZERO);
 
                     switch (h.intValue()) {
                         case 0x00:
@@ -1014,7 +1014,7 @@ class Dmgcpu {
                         f.cf(ONE);
                         result = result & 0xFFFF;
                     } else {
-                        f.cf(Bit.BitValue.ZERO);
+                        f.cf(ZERO);
                     }
                     hl.setValue(result);
                     break;
@@ -1030,9 +1030,9 @@ class Dmgcpu {
                     break;
                 case 0x2C:               // INC L
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
-                    f.nf(Bit.BitValue.ZERO);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
+                    f.nf(ZERO);
+                    f.hf(ZERO);
 
                     switch (l.intValue()) {
                         case 0xFF:
@@ -1051,9 +1051,9 @@ class Dmgcpu {
                     break;
                 case 0x2D:               // DEC L
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
                     f.nf(ONE);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.hf(ZERO);
 
                     switch (l.intValue()) {
                         case 0x00:
@@ -1112,9 +1112,9 @@ class Dmgcpu {
                     break;
                 case 0x34:               // INC (HL)
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
-                    f.nf(Bit.BitValue.ZERO);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
+                    f.nf(ZERO);
+                    f.hf(ZERO);
 
                     dat = JavaBoy.unsign(addressRead(hl.intValue()));
                     switch (dat) {
@@ -1134,9 +1134,9 @@ class Dmgcpu {
                     break;
                 case 0x35:               // DEC (HL)
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
                     f.nf(ONE);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.hf(ZERO);
 
                     dat = JavaBoy.unsign(addressRead(hl.intValue()));
                     switch (dat) {
@@ -1164,8 +1164,8 @@ class Dmgcpu {
                     break;
                 case 0x37:               // SCF
                     pc.inc();
-                    f.nf(Bit.BitValue.ZERO);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.nf(ZERO);
+                    f.hf(ZERO);
                     f.cf(ONE);
                     break;
                 case 0x38:               // JR C, nn
@@ -1188,7 +1188,7 @@ class Dmgcpu {
                         result = result & 0xFFFF;
                     } else {
                         //f = (short) ((f & (F_SUBTRACT + F_ZERO + F_HALFCARRY)));
-                        f.cf(Bit.BitValue.ZERO);
+                        f.cf(ZERO);
                     }
                     hl.setValue(result);
                     break;
@@ -1204,9 +1204,9 @@ class Dmgcpu {
                     break;
                 case 0x3C:               // INC A
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
-                    f.nf(Bit.BitValue.ZERO);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
+                    f.nf(ZERO);
+                    f.hf(ZERO);
                     switch (a.intValue()) {
                         case 0xFF:
                             f.hf(ONE);
@@ -1224,8 +1224,8 @@ class Dmgcpu {
                     break;
                 case 0x3D:               // DEC A
                     pc.inc();
-                    f.zf(Bit.BitValue.ZERO);
-                    f.hf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
+                    f.hf(ZERO);
 
                     f.nf(ONE);
                     switch (a.intValue()) {
@@ -1257,17 +1257,17 @@ class Dmgcpu {
                     if (f.cf().intValue() == 0) {
                         //f = (short) ((f & F_ZERO) | F_CARRY);
 
-                        f.nf(Bit.BitValue.ZERO);
-                        f.hf(Bit.BitValue.ZERO);
+                        f.nf(ZERO);
+                        f.hf(ZERO);
                         f.cf(ONE);
 
 
                     } else {
                         //f = (short) (f & F_ZERO);
 
-                        f.nf(Bit.BitValue.ZERO);
-                        f.hf(Bit.BitValue.ZERO);
-                        f.cf(Bit.BitValue.ZERO);
+                        f.nf(ZERO);
+                        f.hf(ZERO);
+                        f.cf(ZERO);
                     }
                     break;
                 case 0x52:
@@ -1282,14 +1282,13 @@ class Dmgcpu {
                     }
                     pc.inc();
                     break;
-                case 0xAF:               // XOR A, A (== LD A, 0)
+
+                // XOR A, A (== LD A, 0)
+                case 0xAF:
                     pc.inc();
-                    a.setValue(0);
-                    f.zf(ONE);
-                    f.nf(Bit.BitValue.ZERO);
-                    f.hf(Bit.BitValue.ZERO);
-                    f.cf(Bit.BitValue.ZERO);
+                    xor(a, a, f);
                     break;
+
                 case 0xC0:               // RET NZ
                     if (f.zf().intValue() == 0) {
                         pc.setValue((JavaBoy.unsign(addressRead(sp.intValue() + 1)) << 8) + JavaBoy.unsign(addressRead(sp.intValue())));
@@ -1325,7 +1324,7 @@ class Dmgcpu {
                         pc.inc();
                         sp.dec();
                         sp.dec();
-                        addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                        addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                         addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                         pc.setValue((b3 << 8) + b2);
                     } else {
@@ -1369,7 +1368,7 @@ class Dmgcpu {
                     pc.inc();
                     sp.dec();
                     sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue(0x08);
                     break;
@@ -1396,7 +1395,7 @@ class Dmgcpu {
                         pc.inc();
                     }
                     break;
-                case 0xCB:               // Shift/bit test
+                case 0xCB: {              // Shift/bit test
                     pc.inc();
                     pc.inc();
                     int regNum = b2 & 0x07;
@@ -1406,9 +1405,9 @@ class Dmgcpu {
                         switch ((b2 & 0xF8)) {
                             case 0x00:          // RLC A
                                 if ((data & 0x80) == 0x80) {
-                                    f.zf(Bit.BitValue.ZERO);
-                                    f.nf(Bit.BitValue.ZERO);
-                                    f.hf(Bit.BitValue.ZERO);
+                                    f.zf(ZERO);
+                                    f.nf(ZERO);
+                                    f.hf(ZERO);
                                     f.cf(ONE);
                                 } else {
                                     f.setValue(0);
@@ -1426,9 +1425,9 @@ class Dmgcpu {
                                 break;
                             case 0x08:          // RRC A
                                 if ((data & 0x01) == 0x01) {
-                                    f.zf(Bit.BitValue.ZERO);
-                                    f.nf(Bit.BitValue.ZERO);
-                                    f.hf(Bit.BitValue.ZERO);
+                                    f.zf(ZERO);
+                                    f.nf(ZERO);
+                                    f.hf(ZERO);
                                     f.cf(ONE);
                                 } else {
                                     f.setValue(0);
@@ -1481,9 +1480,9 @@ class Dmgcpu {
                                 break;
                             case 0x20:          // SLA r
                                 if ((data & 0x80) == 0x80) {
-                                    f.zf(Bit.BitValue.ZERO);
-                                    f.nf(Bit.BitValue.ZERO);
-                                    f.hf(Bit.BitValue.ZERO);
+                                    f.zf(ZERO);
+                                    f.nf(ZERO);
+                                    f.hf(ZERO);
                                     f.cf(ONE);
                                 } else {
                                     f.setValue(0);
@@ -1502,9 +1501,9 @@ class Dmgcpu {
 
                                 topBit = (short) (data & 0x80);
                                 if ((data & 0x01) == 0x01) {
-                                    f.zf(Bit.BitValue.ZERO);
-                                    f.nf(Bit.BitValue.ZERO);
-                                    f.hf(Bit.BitValue.ZERO);
+                                    f.zf(ZERO);
+                                    f.nf(ZERO);
+                                    f.hf(ZERO);
                                     f.cf(ONE);
                                 } else {
                                     f.setValue(0);
@@ -1523,9 +1522,9 @@ class Dmgcpu {
                                 data = (short) (((data & 0x0F) << 4) | ((data & 0xF0) >> 4));
                                 if (data == 0) {
                                     f.zf(ONE);
-                                    f.nf(Bit.BitValue.ZERO);
-                                    f.hf(Bit.BitValue.ZERO);
-                                    f.cf(Bit.BitValue.ZERO);
+                                    f.nf(ZERO);
+                                    f.hf(ZERO);
+                                    f.cf(ZERO);
                                 } else {
                                     f.setValue(0);
                                 }
@@ -1534,9 +1533,9 @@ class Dmgcpu {
                                 break;
                             case 0x38:          // SRL r
                                 if ((data & 0x01) == 0x01) {
-                                    f.zf(Bit.BitValue.ZERO);
-                                    f.nf(Bit.BitValue.ZERO);
-                                    f.hf(Bit.BitValue.ZERO);
+                                    f.zf(ZERO);
+                                    f.nf(ZERO);
+                                    f.hf(ZERO);
                                     f.cf(ONE);
                                 } else {
                                     f.setValue(0);
@@ -1557,10 +1556,10 @@ class Dmgcpu {
 
                         if ((b2 & 0xC0) == 0x40) {  // BIT n, r
                             mask = (short) (0x01 << bitNumber);
-                            f.nf(Bit.BitValue.ZERO);
+                            f.nf(ZERO);
                             f.hf(ONE);
                             if ((data & mask) != 0) {
-                                f.zf(Bit.BitValue.ZERO);
+                                f.zf(ZERO);
                             } else {
                                 f.zf(ONE);
                             }
@@ -1578,6 +1577,7 @@ class Dmgcpu {
                     }
 
                     break;
+                }
                 case 0xCC:               // CALL Z, nnnnn
                     if (f.zf().intValue() == 1) {
                         pc.inc();
@@ -1585,7 +1585,7 @@ class Dmgcpu {
                         pc.inc();
                         sp.dec();
                         sp.dec();
-                        addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                        addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                         addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                         pc.setValue((b3 << 8) + b2);
                     } else {
@@ -1600,7 +1600,7 @@ class Dmgcpu {
                     pc.inc();
                     sp.dec();
                     sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue((b3 << 8) + b2);
                     break;
@@ -1633,7 +1633,7 @@ class Dmgcpu {
                     pc.inc();
                     sp.dec();
                     sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     //        terminate = true;
                     pc.setValue(0x00);
@@ -1670,7 +1670,7 @@ class Dmgcpu {
                         pc.inc();
                         sp.dec();
                         sp.dec();
-                        addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                        addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                         addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                         pc.setValue((b3 << 8) + b2);
                     } else {
@@ -1690,10 +1690,10 @@ class Dmgcpu {
                     pc.inc();
                     pc.inc();
 
-                    f.zf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
                     f.nf(ONE);
-                    f.hf(Bit.BitValue.ZERO);
-                    f.cf(Bit.BitValue.ZERO);
+                    f.hf(ZERO);
+                    f.cf(ZERO);
 
                     if ((((a.intValue() & 0x0F) - (b2 & 0x0F)) & 0xFFF0) != 0x00) {
                         f.hf(ONE);
@@ -1714,7 +1714,7 @@ class Dmgcpu {
                     pc.inc();
                     sp.dec();
                     sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue(0x10);
                     break;
@@ -1749,7 +1749,7 @@ class Dmgcpu {
                         pc.inc();
                         sp.dec();
                         sp.dec();
-                        addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                        addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                         addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                         pc.setValue((b3 << 8) + b2);
                     } else {
@@ -1765,10 +1765,10 @@ class Dmgcpu {
                         b2++;
                     }
 
-                    f.zf(Bit.BitValue.ZERO);
+                    f.zf(ZERO);
                     f.nf(ONE);
-                    f.hf(Bit.BitValue.ZERO);
-                    f.cf(Bit.BitValue.ZERO);
+                    f.hf(ZERO);
+                    f.cf(ZERO);
                     if ((((a.intValue() & 0x0F) - (b2 & 0x0F)) & 0xFFF0) != 0x00) {
                         f.hf(ONE);
                     }
@@ -1789,7 +1789,7 @@ class Dmgcpu {
                     pc.inc();
                     sp.dec();
                     sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue(0x18);
                     break;
@@ -1821,9 +1821,9 @@ class Dmgcpu {
                     a.setValue(a.intValue() & b2);
                     if (a.intValue() == 0) {
                         f.zf(ONE);
-                        f.nf(Bit.BitValue.ZERO);
-                        f.hf(Bit.BitValue.ZERO);
-                        f.cf(Bit.BitValue.ZERO);
+                        f.nf(ZERO);
+                        f.hf(ZERO);
+                        f.cf(ZERO);
                     } else {
                         f.setValue(0);
                     }
@@ -1832,7 +1832,7 @@ class Dmgcpu {
                     pc.inc();
                     sp.dec();
                     sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue(0x20);
                     break;
@@ -1843,7 +1843,7 @@ class Dmgcpu {
                     if ((result & 0xFFFF0000) != 0) {
                         f.cf(ONE);
                     } else {
-                        f.cf(Bit.BitValue.ZERO);
+                        f.cf(ZERO);
                     }
                     sp.setValue(result);
                     break;
@@ -1858,24 +1858,19 @@ class Dmgcpu {
                     pc.inc();
                     addressWrite((b3 << 8) + b2, a.intValue());
                     break;
-                case 0xEE:               // XOR A, nn
+
+                // XOR A, n
+                case 0xEE: {
                     pc.inc();
-                    pc.inc();
-                    a.setValue(a.intValue() ^ b2);
-                    if (a.intValue() == 0) {
-                        f.zf(ONE);
-                        f.nf(Bit.BitValue.ZERO);
-                        f.hf(Bit.BitValue.ZERO);
-                        f.cf(Bit.BitValue.ZERO);
-                    } else {
-                        f.setValue(0);
-                    }
+                    Byte data = loadImmediateByte(pc);
+                    xor(a, data, f);
                     break;
+                }
                 case 0xEF:               // RST 28
                     pc.inc();
                     sp.dec();
                     sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue(0x28);
                     break;
@@ -1912,9 +1907,9 @@ class Dmgcpu {
                     a.setValue(a.intValue() | b2);
                     if (a.intValue() == 0) {
                         f.zf(ONE);
-                        f.nf(Bit.BitValue.ZERO);
-                        f.hf(Bit.BitValue.ZERO);
-                        f.cf(Bit.BitValue.ZERO);
+                        f.nf(ZERO);
+                        f.hf(ZERO);
+                        f.cf(ZERO);
                     } else {
                         f.setValue(0);
                     }
@@ -1923,7 +1918,7 @@ class Dmgcpu {
                     pc.inc();
                     sp.dec();
                     sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue(0x30);
                     break;
@@ -1932,9 +1927,9 @@ class Dmgcpu {
                     pc.inc();
                     int result = sp.intValue() + offset;
                     if ((result & 0x10000) != 0) {
-                        f.zf(Bit.BitValue.ZERO);
-                        f.nf(Bit.BitValue.ZERO);
-                        f.hf(Bit.BitValue.ZERO);
+                        f.zf(ZERO);
+                        f.nf(ZERO);
+                        f.hf(ZERO);
                         f.cf(ONE);
                         result = result & 0xFFFF;
                     } else {
@@ -1973,7 +1968,7 @@ class Dmgcpu {
                     pc.inc();
                     sp.dec();
                     sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getHigherByte().intValue());
+                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue(0x38);
                     break;
@@ -2005,12 +2000,12 @@ class Dmgcpu {
 
                                 if ((result & 0xFF00) != 0) {     // Perform 8-bit overflow and set zero flag
                                     if ((result & 0x0100) == 0x0100) {
-//                                        f.zf(ONE);
-//                                        f.hf(ONE);
+                                        //                                        f.zf(ONE);
+                                        //                                        f.hf(ONE);
                                         f.cf(ONE);
                                     } else {
-//                                        f.hf(ONE);
-//                                        f.cf(ONE);
+                                        //                                        f.hf(ONE);
+                                        //                                        f.cf(ONE);
                                     }
                                 }
                                 a.setValue(result);
@@ -2023,10 +2018,10 @@ class Dmgcpu {
                                 // Note! No break!
                                 // todo ARRRRRRGH
                             case 2: {// SUB A, r
-                                f.zf(Bit.BitValue.ZERO);
+                                f.zf(ZERO);
                                 f.nf(ONE);
-                                f.hf(Bit.BitValue.ZERO);
-                                f.cf(Bit.BitValue.ZERO);
+                                f.hf(ZERO);
+                                f.cf(ZERO);
 
                                 if ((((a.intValue() & 0x0F) - (operand & 0x0F)) & 0xFFF0) != 0x00) {
                                     f.hf(ONE);
@@ -2041,14 +2036,15 @@ class Dmgcpu {
                                     f.zf(ONE);
                                 }
                                 a.setValue(result);
-                                break;}
+                                break;
+                            }
                             case 4: // AND A, r
                                 a.setValue(a.intValue() & operand);
                                 if (a.intValue() == 0) {
                                     f.zf(ONE);
-                                    f.nf(Bit.BitValue.ZERO);
-                                    f.hf(Bit.BitValue.ZERO);
-                                    f.cf(Bit.BitValue.ZERO);
+                                    f.nf(ZERO);
+                                    f.hf(ZERO);
+                                    f.cf(ZERO);
                                 } else {
                                     f.setValue(0);
                                 }
@@ -2057,9 +2053,9 @@ class Dmgcpu {
                                 a.setValue(a.intValue() ^ operand);
                                 if (a.intValue() == 0) {
                                     f.zf(ONE);
-                                    f.nf(Bit.BitValue.ZERO);
-                                    f.hf(Bit.BitValue.ZERO);
-                                    f.cf(Bit.BitValue.ZERO);
+                                    f.nf(ZERO);
+                                    f.hf(ZERO);
+                                    f.cf(ZERO);
                                 } else {
                                     f.setValue(0);
                                 }
@@ -2068,18 +2064,18 @@ class Dmgcpu {
                                 a.setValue(a.intValue() | operand);
                                 if (a.intValue() == 0) {
                                     f.zf(ONE);
-                                    f.nf(Bit.BitValue.ZERO);
-                                    f.hf(Bit.BitValue.ZERO);
-                                    f.cf(Bit.BitValue.ZERO);
+                                    f.nf(ZERO);
+                                    f.hf(ZERO);
+                                    f.cf(ZERO);
                                 } else {
                                     f.setValue(0);
                                 }
                                 break;
                             case 7: // CP A, r (compare)
-                                f.zf(Bit.BitValue.ZERO);
+                                f.zf(ZERO);
                                 f.nf(ONE);
-                                f.hf(Bit.BitValue.ZERO);
-                                f.cf(Bit.BitValue.ZERO);
+                                f.hf(ZERO);
+                                f.cf(ZERO);
                                 if (a.intValue() == operand) {
                                     f.zf(ONE);
                                 }
@@ -2122,5 +2118,43 @@ class Dmgcpu {
 
             initiateInterrupts();
         }
+    }
+
+    private Byte loadImmediateByte(Short address) {
+        address.inc();
+
+        Byte immediate = new Byte();
+        immediate.setValue(addressRead(address.intValue()));
+
+        return immediate;
+    }
+
+    private Short loadImmediateShort(Short address) {
+        address.inc();
+
+        Short immediate = new Short();
+        Byte lowerByte = loadImmediateByte(address);
+        immediate.getLowerByte().setValue(lowerByte.intValue());
+        Byte upperByte = loadImmediateByte(address);
+        immediate.getUpperByte().setValue(upperByte.intValue());
+
+        return immediate;
+    }
+
+
+    private void xor(Byte left, Byte right, FlagRegister flags) {
+
+        int result = left.intValue() ^ right.intValue();
+
+        f.nf(ZERO);
+        f.hf(ZERO);
+        f.cf(ZERO);
+        f.zf(ZERO);
+
+        if (a.intValue() == 0) {
+            f.zf(ONE);
+        }
+
+        left.setValue(result);
     }
 }
