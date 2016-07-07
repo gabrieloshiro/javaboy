@@ -2050,15 +2050,7 @@ class Dmgcpu {
                                 }
                                 break;
                             case 5: // XOR A, r
-                                a.setValue(a.intValue() ^ operand);
-                                if (a.intValue() == 0) {
-                                    f.zf(ONE);
-                                    f.nf(ZERO);
-                                    f.hf(ZERO);
-                                    f.cf(ZERO);
-                                } else {
-                                    f.setValue(0);
-                                }
+                                xor(a, new Byte(operand), f);
                                 break;
                             case 6: // OR A, r
                                 a.setValue(a.intValue() | operand);
