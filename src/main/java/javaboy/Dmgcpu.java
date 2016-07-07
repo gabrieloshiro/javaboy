@@ -2146,13 +2146,13 @@ class Dmgcpu {
 
         int result = left.intValue() ^ right.intValue();
 
-        f.nf(ZERO);
-        f.hf(ZERO);
-        f.cf(ZERO);
-        f.zf(ZERO);
+        flags.nf(ZERO);
+        flags.hf(ZERO);
+        flags.cf(ZERO);
+        flags.zf(ZERO);
 
-        if (a.intValue() == 0) {
-            f.zf(ONE);
+        if (result == 0) {
+            flags.zf(ONE);
         }
 
         left.setValue(result);
