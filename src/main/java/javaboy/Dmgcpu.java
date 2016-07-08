@@ -1253,20 +1253,12 @@ class Dmgcpu {
                     break;
                 case 0x3F:               // CCF
                     pc.inc();
+                    f.nf(ZERO);
+                    f.hf(ZERO);
 
                     if (f.cf().intValue() == 0) {
-                        //f = (short) ((f & F_ZERO) | F_CARRY);
-
-                        f.nf(ZERO);
-                        f.hf(ZERO);
                         f.cf(ONE);
-
-
                     } else {
-                        //f = (short) (f & F_ZERO);
-
-                        f.nf(ZERO);
-                        f.hf(ZERO);
                         f.cf(ZERO);
                     }
                     break;
