@@ -1,6 +1,6 @@
 package javaboy;
 
-import javaboy.lang.Bit;
+import javaboy.lang.Bit.BitValue;
 import javaboy.lang.Byte;
 import javaboy.lang.FlagRegister;
 import javaboy.lang.Short;
@@ -13,136 +13,156 @@ import static javaboy.lang.Bit.BitValue.ZERO;
  */
 public class Alu {
 
-    private void inc(Byte left, FlagRegister f) {
-        f.nf(ZERO);
+    public static class AluResult {
+        private final FlagRegister flags = new FlagRegister();
+        private final Byte result = new Byte();
 
-        int lowerResult = left.getLowerNibble() + 1;
-
-        if ((lowerResult & 0x10) == 0x10) {
-            f.hf(ONE);
-        } else {
-            f.hf(ZERO);
+        public FlagRegister flags() {
+            return flags;
         }
 
-        int result = left.intValue() + 1;
-
-        if ((result & 0xFF) == 0) {
-            f.zf(ONE);
-        } else {
-            f.zf(ZERO);
+        public Byte result() {
+            return result;
         }
-
-        left.setValue(result);
     }
 
-    private void adc(Byte left, Byte right, Bit.BitValue carry, FlagRegister f) {
-        f.nf(ZERO);
+    public static AluResult adc(Byte left, Byte right, BitValue carry) {
+        AluResult r = new AluResult();
+
+        r.flags().nf(ZERO);
 
         int lowerResult = left.getLowerNibble() + right.getLowerNibble() + carry.intValue();
 
         if ((lowerResult & 0x10) == 0x10) {
-            f.hf(ONE);
+            r.flags().hf(ONE);
         } else {
-            f.hf(ZERO);
+            r.flags().hf(ZERO);
         }
 
         int result = left.intValue() + right.intValue() + carry.intValue();
 
         if ((result & 0x100) == 0x100) {
-            f.cf(ONE);
+            r.flags().cf(ONE);
         } else {
-            f.cf(ZERO);
+            r.flags().cf(ZERO);
         }
 
         if ((result & 0xFF) == 0) {
-            f.zf(ONE);
+            r.flags().zf(ONE);
         } else {
-            f.zf(ZERO);
+            r.flags().zf(ZERO);
         }
 
-        left.setValue(result);
+        r.result().setValue(result);
+        return r;
     }
 
-    private void add(Byte left, Byte right, FlagRegister f) {
-        adc(left, right, ZERO, f);
+    public static AluResult add(Byte left, Byte right) {
+        return adc(left, right, ZERO);
     }
 
-    private void add(Short left, Short right, FlagRegister f) {
+    public static AluResult inc(Byte left) {
+        return add(left, new Byte(1));
+    }
 
-        f.nf(ZERO);
+    public static AluResult add(Short left, Short right) {
+        AluResult r = new AluResult();
+
+        r.flags.nf(ZERO);
 
         int lowerResult = (left.intValue() & 0x0FFF) + (right.intValue() & 0x0FFF);
 
         if ((lowerResult & 0x1000) == 0x1000) {
-            f.hf(ONE);
+            r.flags().hf(ONE);
         } else {
-            f.hf(ZERO);
+            r.flags().hf(ZERO);
         }
 
         int result = left.intValue() + right.intValue();
 
         if ((result & 0x10000) == 0x10000) {
-            f.cf(ONE);
+            r.flags().cf(ONE);
         } else {
-            f.cf(ZERO);
+            r.flags().cf(ZERO);
         }
 
-        left.setValue(result);
-
+        r.result().setValue(result);
+        return r;
     }
 
-    private void dec(Byte left, FlagRegister f) {
-        f.nf(ONE);
+    public static AluResult sbc(Byte left, Byte right, BitValue carry) {
+        AluResult r = new AluResult();
 
-        int lowerResult = left.getLowerNibble() - 1;
-
-        if ((lowerResult & 0x10) == 0x10) {
-            f.hf(ONE);
-        } else {
-            f.hf(ZERO);
-        }
-
-        int result = left.intValue() - 1;
-
-        if ((result & 0xFF) == 0) {
-            f.zf(ONE);
-        } else {
-            f.zf(ZERO);
-        }
-
-        left.setValue(result);
-    }
-
-    private void sbc(Byte left, Byte right, Bit carry, FlagRegister f) {
-        f.nf(ONE);
+        r.flags().nf(ONE);
 
         int lowerResult = left.getLowerNibble() - right.getLowerNibble() - carry.intValue();
 
         if ((lowerResult & 0x10) == 0x10) {
-            f.hf(ONE);
+            r.flags().hf(ONE);
         } else {
-            f.hf(ZERO);
+            r.flags().hf(ZERO);
         }
 
         int result = left.intValue() - right.intValue() - carry.intValue();
 
         if ((result & 0x100) == 0x100) {
-            f.cf(ONE);
+            r.flags().cf(ONE);
         } else {
-            f.cf(ZERO);
+            r.flags().cf(ZERO);
         }
 
         if ((result & 0xFF) == 0) {
-            f.zf(ONE);
+            r.flags().zf(ONE);
         } else {
-            f.zf(ZERO);
+            r.flags().zf(ZERO);
+        }
+
+        r.result().setValue(result);
+        return r;
+    }
+
+    public static AluResult sub(Byte left, Byte right) {
+        return sbc(left, right, ZERO);
+    }
+
+    public static AluResult dec(Byte left) {
+        return sub(left, new Byte(1));
+    }
+
+
+    public static AluResult xor(Byte left, Byte right, FlagRegister flags) {
+        AluResult r = new AluResult();
+
+        int result = left.intValue() ^ right.intValue();
+
+        flags.nf(ZERO);
+        flags.hf(ZERO);
+        flags.cf(ZERO);
+        flags.zf(ZERO);
+
+        if (result == 0) {
+            flags.zf(ONE);
         }
 
         left.setValue(result);
+        return r;
     }
 
-    private void sub(Byte left, Byte right, FlagRegister f) {
-                adc(left, right, ZERO, f);
-    }
+    public static AluResult or(Byte left, Byte right, FlagRegister flags) {
+        AluResult r = new AluResult();
 
+        int result = left.intValue() | right.intValue();
+
+        flags.nf(ZERO);
+        flags.hf(ZERO);
+        flags.cf(ZERO);
+        flags.zf(ZERO);
+
+        if (result == 0) {
+            flags.zf(ONE);
+        }
+
+        left.setValue(result);
+        return r;
+    }
 }
