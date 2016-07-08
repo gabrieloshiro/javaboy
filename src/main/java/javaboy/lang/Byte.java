@@ -1,5 +1,7 @@
 package javaboy.lang;
 
+import static javaboy.lang.Bit.BitValue.ONE;
+
 /**
  * Created by gabrieloshiro on 2016-06-27.
  */
@@ -19,8 +21,8 @@ public class Byte {
     }
 
     public int signedIntValue() {
-        if (value > 127) {
-            return value - 256;
+        if (getBit(7) == ONE) {
+            return value | 0xFF00;
         }
 
         return value;
@@ -28,6 +30,10 @@ public class Byte {
 
     public void setValue(int value) {
         this.value = value & 0xFF;
+    }
+
+    public void setValue(Byte b) {
+        this.setValue(b.intValue());
     }
 
     public int getLowerNibble() {
@@ -55,7 +61,7 @@ public class Byte {
             throw new IllegalArgumentException("Bit index on a byte should be in the range 0..7. Index passed: " + index);
         }
         if (((value >> index) & 1) == 1) {
-            return Bit.BitValue.ONE;
+            return ONE;
         } else {
             return Bit.BitValue.ZERO;
         }
@@ -66,12 +72,11 @@ public class Byte {
             throw new IllegalArgumentException("Bit index on a byte should be in the range 0..7. Index passed: " + index);
         }
 
-        if (value == Bit.BitValue.ONE) {
+        if (value == ONE) {
             this.value = this.value | (1 << index);
         } else {
             this.value = this.value & ~(1 << index);
         }
 
     }
-
 }

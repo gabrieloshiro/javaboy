@@ -11,6 +11,15 @@ public class Short {
     public Short() {
     }
 
+    public Short(int i) {
+        setValue(i);
+    }
+
+    public Short(Byte higher, Byte lower) {
+        lowerByte.setValue(lower.intValue());
+        higherByte.setValue(higher.intValue());
+    }
+
     public int intValue() {
         return higherByte.intValue() << 8 | lowerByte.intValue();
     }
@@ -36,4 +45,3 @@ public class Short {
         setValue(intValue() - 1);
     }
 }
-
