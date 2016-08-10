@@ -1524,19 +1524,15 @@ class Dmgcpu {
                     break;
                 }
                 case 0xCC:               // CALL Z, nnnnn
+                    pc.inc();
+                    pc.inc();
+                    pc.inc();
                     if (f.zf().intValue() == 1) {
-                        pc.inc();
-                        pc.inc();
-                        pc.inc();
                         sp.dec();
                         sp.dec();
                         addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                         addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                         pc.setValue((b3 << 8) + b2);
-                    } else {
-                        pc.inc();
-                        pc.inc();
-                        pc.inc();
                     }
                     break;
                 case 0xCD:               // CALL nnnn
@@ -1549,50 +1545,39 @@ class Dmgcpu {
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue((b3 << 8) + b2);
                     break;
-                case 0xCE: {              // ADC A, nn
+
+                /*
+                *  ADC A, nn
+                */
+                case 0xCE: {
                     pc.inc();
                     pc.inc();
-
-                    if (f.cf().intValue() == 1) {
-                        b2++;
-                    }
-                    f.setValue(0);
-
-                    if ((((a.intValue() & 0x0F) + (b2 & 0x0F)) & 0xF0) != 0x00) {
-                        f.hf(ONE);
-                    }
-
-                    int result = a.intValue() + b2;
-
-                    if ((result & 0xFF00) != 0) {     // Perform 8-bit overflow and set zero flag
-                        //f.hf(ONE);
-                        f.cf(ONE);
-                    }
-                    if (result == 0) {
-                        f.zf(ONE);
-                    }
-                    a.setValue(result);
+                    adc(a, new Byte(b2), f.cf());
                     break;
                 }
-                case 0xC7:               // RST 00
+
+                // RST 00
+                case 0xC7:
                     pc.inc();
                     sp.dec();
                     sp.dec();
                     addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                    //        terminate = true;
                     pc.setValue(0x00);
                     break;
-                case 0xD0:               // RET NC
+
+                // RET NC
+                case 0xD0:
+                    pc.inc();
                     if (f.cf().intValue() == 0) {
                         pc.setValue((JavaBoy.unsign(addressRead(sp.intValue() + 1)) << 8) + JavaBoy.unsign(addressRead(sp.intValue())));
                         sp.inc();
                         sp.inc();
-                    } else {
-                        pc.inc();
                     }
                     break;
-                case 0xD1:               // POP DE
+
+                // POP DE
+                case 0xD1:
                     pc.inc();
                     e.setValue(JavaBoy.unsign(addressRead(sp.intValue())));
                     d.setValue(JavaBoy.unsign(addressRead(sp.intValue() + 1)));
@@ -1600,28 +1585,23 @@ class Dmgcpu {
                     sp.inc();
                     break;
                 case 0xD2:               // JP NC, nnnn
+                    pc.inc();
+                    pc.inc();
+                    pc.inc();
                     if (f.cf().intValue() == 0) {
                         pc.setValue((b3 << 8) + b2);
-                    } else {
-                        pc.inc();
-                        pc.inc();
-                        pc.inc();
                     }
                     break;
                 case 0xD4:               // CALL NC, nnnn
+                    pc.inc();
+                    pc.inc();
+                    pc.inc();
                     if (f.cf().intValue() == 0) {
-                        pc.inc();
-                        pc.inc();
-                        pc.inc();
                         sp.dec();
                         sp.dec();
                         addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                         addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                         pc.setValue((b3 << 8) + b2);
-                    } else {
-                        pc.inc();
-                        pc.inc();
-                        pc.inc();
                     }
                     break;
                 case 0xD5:               // PUSH DE
@@ -1635,10 +1615,8 @@ class Dmgcpu {
                     pc.inc();
                     pc.inc();
 
-                    f.zf(ZERO);
+                    f.setValue(0);
                     f.nf(ONE);
-                    f.hf(ZERO);
-                    f.cf(ZERO);
 
                     if ((((a.intValue() & 0x0F) - (b2 & 0x0F)) & 0xFFF0) != 0x00) {
                         f.hf(ONE);
@@ -1663,57 +1641,58 @@ class Dmgcpu {
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue(0x10);
                     break;
+
                 case 0xD8:               // RET C
+                    pc.inc();
                     if (f.cf().intValue() == 1) {
                         pc.setValue((JavaBoy.unsign(addressRead(sp.intValue() + 1)) << 8) + JavaBoy.unsign(addressRead(sp.intValue())));
                         sp.inc();
                         sp.inc();
-                    } else {
-                        pc.inc();
                     }
                     break;
-                case 0xD9:               // RETI
+
+                // RETI
+                case 0xD9:
                     interruptsEnabled = true;
                     pc.setValue((JavaBoy.unsign(addressRead(sp.intValue() + 1)) << 8) + JavaBoy.unsign(addressRead(sp.intValue())));
                     sp.inc();
                     sp.inc();
                     break;
-                case 0xDA:               // JP C, nnnn
+
+                // JP C, nnnn
+                case 0xDA:
+                    pc.inc();
+                    pc.inc();
+                    pc.inc();
                     if (f.cf().intValue() == 1) {
                         pc.setValue((b3 << 8) + b2);
-                    } else {
-                        pc.inc();
-                        pc.inc();
-                        pc.inc();
                     }
                     break;
-                case 0xDC:               // CALL C, nnnn
+
+                // CALL C, nnnn
+                case 0xDC:
+                    pc.inc();
+                    pc.inc();
+                    pc.inc();
                     if (f.cf().intValue() == 1) {
-                        pc.inc();
-                        pc.inc();
-                        pc.inc();
                         sp.dec();
                         sp.dec();
                         addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
                         addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                         pc.setValue((b3 << 8) + b2);
-                    } else {
-                        pc.inc();
-                        pc.inc();
-                        pc.inc();
                     }
                     break;
-                case 0xDE: {               // SBC A, nn
+
+                // SBC A, nn
+                case 0xDE: {
                     pc.inc();
                     pc.inc();
                     if (f.cf().intValue() == 1) {
                         b2++;
                     }
 
-                    f.zf(ZERO);
+                    f.setValue(0);
                     f.nf(ONE);
-                    f.hf(ZERO);
-                    f.cf(ZERO);
                     if ((((a.intValue() & 0x0F) - (b2 & 0x0F)) & 0xFFF0) != 0x00) {
                         f.hf(ONE);
                     }
@@ -1730,7 +1709,9 @@ class Dmgcpu {
                     a.setValue(result);
                     break;
                 }
-                case 0xDF:               // RST 18
+
+                // RST 18
+                case 0xDF:
                     pc.inc();
                     sp.dec();
                     sp.dec();
@@ -1738,22 +1719,30 @@ class Dmgcpu {
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue(0x18);
                     break;
-                case 0xE0:               // LDH (FFnn), A
+
+                // LDH (FFnn), A
+                case 0xE0:
                     pc.inc();
                     pc.inc();
                     addressWrite(0xFF00 + b2, a.intValue());
                     break;
-                case 0xE1:               // POP HL
+
+                // POP HL
+                case 0xE1:
                     pc.inc();
                     hl.setValue((JavaBoy.unsign(addressRead(sp.intValue() + 1)) << 8) + JavaBoy.unsign(addressRead(sp.intValue())));
                     sp.inc();
                     sp.inc();
                     break;
-                case 0xE2:               // LDH (FF00 + C), A
+
+                // LDH (FF00 + C), A
+                case 0xE2:
                     pc.inc();
                     addressWrite(0xFF00 + c.intValue(), a.intValue());
                     break;
-                case 0xE5:               // PUSH HL
+
+                // PUSH HL
+                case 0xE5:
                     pc.inc();
                     sp.dec();
                     sp.dec();
@@ -1769,7 +1758,9 @@ class Dmgcpu {
                         f.zf(ONE);
                     }
                     break;
-                case 0xE7:               // RST 20
+
+                // RST 20
+                case 0xE7:
                     pc.inc();
                     sp.dec();
                     sp.dec();
@@ -1777,7 +1768,9 @@ class Dmgcpu {
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue(0x20);
                     break;
-                case 0xE8: {               // ADD SP, nn
+
+                // ADD SP, nn
+                case 0xE8: {
                     pc.inc();
                     pc.inc();
                     int result = sp.intValue() + offset;
@@ -1789,11 +1782,15 @@ class Dmgcpu {
                     sp.setValue(result);
                     break;
                 }
-                case 0xE9:               // JP (HL)
+
+                // JP (HL)
+                case 0xE9:
                     pc.inc();
                     pc.setValue(hl.intValue());
                     break;
-                case 0xEA:               // LD (nnnn), A
+
+                // LD (nnnn), A
+                case 0xEA:
                     pc.inc();
                     pc.inc();
                     pc.inc();
@@ -1807,7 +1804,9 @@ class Dmgcpu {
                     xor(a, data);
                     break;
                 }
-                case 0xEF:               // RST 28
+
+                // RST 28
+                case 0xEF:
                     pc.inc();
                     sp.dec();
                     sp.dec();
@@ -1815,27 +1814,37 @@ class Dmgcpu {
                     addressWrite(sp.intValue(), pc.getLowerByte().intValue());
                     pc.setValue(0x28);
                     break;
-                case 0xF0:               // LDH A, (FFnn)
+
+                // LDH A, (FFnn)
+                case 0xF0:
                     pc.inc();
                     pc.inc();
                     a.setValue(JavaBoy.unsign(addressRead(0xFF00 + b2)));
                     break;
-                case 0xF1:               // POP AF
+
+                // POP AF
+                case 0xF1:
                     pc.inc();
                     f.setValue(addressRead(sp.intValue()));
                     a.setValue(JavaBoy.unsign(addressRead(sp.intValue() + 1)));
                     sp.inc();
                     sp.inc();
                     break;
-                case 0xF2:               // LD A, (FF00 + C)
+
+                // LD A, (FF00 + C)
+                case 0xF2:
                     pc.inc();
                     a.setValue(JavaBoy.unsign(addressRead(0xFF00 + c.intValue())));
                     break;
-                case 0xF3:               // DI
+
+                // DI
+                case 0xF3:
                     pc.inc();
                     interruptsEnabled = false;
                     break;
-                case 0xF5:               // PUSH AF
+
+                // PUSH AF
+                case 0xF5:
                     pc.inc();
                     sp.dec();
                     sp.dec();
@@ -1871,7 +1880,9 @@ class Dmgcpu {
                     hl.setValue(result);
                     break;
                 }
-                case 0xF9:               // LD SP, HL
+
+                // LD SP, HL
+                case 0xF9:
                     pc.inc();
                     sp.setValue(hl.intValue());
                     break;
@@ -1912,20 +1923,18 @@ class Dmgcpu {
                         pc.inc();
                         int operand = registerRead(b1 & 0x07);
                         switch ((b1 & 0x38) >> 3) {
-                            case 1: // ADC A, r
 
-                                
+                            // ADC A, r
+                            case 1:
+                                adc(a, new Byte(operand), f.cf());
+                                break;
 
-                                if (f.cf().intValue() == 1) {
-                                    operand++;
-                                }
-                                // Note!  No break!
-
-                                // ADD A, r
+                            // ADD A, r
                             case 0: {
                                 add(a, new Byte(operand));
                                 break;
                             }
+
                             // SBC A, r
                             case 3:
                                 if (f.cf().intValue() == 1) {
