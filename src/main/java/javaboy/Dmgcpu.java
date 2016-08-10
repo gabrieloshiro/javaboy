@@ -1331,24 +1331,8 @@ class Dmgcpu {
                 case 0xC6: {            // ADD A, nn
                     pc.inc();
                     pc.inc();
-                    f.setValue(0);
 
-                    if ((((a.intValue() & 0x0F) + (b2 & 0x0F)) & 0xF0) != 0x00) {
-                        f.hf(ONE);
-                    }
-
-                    int result = a.intValue() + b2;
-
-                    if ((result & 0xFF00) != 0) {     // Perform 8-bit overflow and set zero flag
-                        f.hf(ONE);
-                        f.cf(ONE);
-                    }
-
-                    if (result == 0x0100) {
-                        f.zf(ONE);
-                    }
-
-                    a.setValue(result);
+                    add(a, new Byte(b2));
                     break;
                 }
                 case 0xCF:               // RST 08
@@ -1929,39 +1913,28 @@ class Dmgcpu {
                         int operand = registerRead(b1 & 0x07);
                         switch ((b1 & 0x38) >> 3) {
                             case 1: // ADC A, r
+
+                                
+
                                 if (f.cf().intValue() == 1) {
                                     operand++;
                                 }
                                 // Note!  No break!
-                            case 0: {// ADD A, r
 
-                                f.setValue(0);
-
-                                if ((((a.intValue() & 0x0F) + (operand & 0x0F)) & 0xF0) != 0x00) {
-                                    f.hf(ONE);
-                                }
-
-                                int result = a.intValue() + operand;
-
-                                if (result == 0) {
-                                    f.zf(ONE);
-                                }
-
-                                if ((result & 0xFF00) != 0) {     // Perform 8-bit overflow and set zero flag
-                                    if ((result & 0x0100) == 0x0100) {
-                                        f.cf(ONE);
-                                    }
-                                }
-                                a.setValue(result);
+                                // ADD A, r
+                            case 0: {
+                                add(a, new Byte(operand));
                                 break;
                             }
-                            case 3: // SBC A, r
+                            // SBC A, r
+                            case 3:
                                 if (f.cf().intValue() == 1) {
                                     operand++;
                                 }
                                 // Note! No break!
                                 // todo ARRRRRRGH
-                            case 2: {// SUB A, r
+                                // SUB A, r
+                            case 2: {
                                 f.zf(ZERO);
                                 f.nf(ONE);
                                 f.hf(ZERO);
