@@ -1,5 +1,6 @@
 package javaboy;
 
+import javaboy.lang.BitValue;
 import javaboy.lang.Byte;
 import javaboy.lang.FlagRegister;
 import javaboy.lang.Short;
@@ -455,7 +456,7 @@ class Dmgcpu {
 
     final void execute() {
 
-        FlagRegister newf = new FlagRegister();
+        final FlagRegister newf = new FlagRegister();
 
         int dat;
         graphicsChip.startTime = System.currentTimeMillis();
@@ -471,19 +472,17 @@ class Dmgcpu {
 
             switch (b1) {
 
-                /**
-                 * NOP
+                /*
+                  NOP
                  */
                 case 0x00:
                     pc.inc();
                     break;
 
-                /**
-                 * LD BC, nn
+                /*
+                  LD BC, nn
                  */
                 case 0x01:
-
-
                     pc.inc();
                     pc.inc();
                     pc.inc();
@@ -639,13 +638,9 @@ class Dmgcpu {
                     break;
                 case 0x0F:               // RRC A
                     pc.inc();
+                    f.setValue(0);
                     if (a.getBit(0) == ONE) {
-                        f.zf(ZERO);
-                        f.nf(ZERO);
-                        f.hf(ZERO);
                         f.cf(ONE);
-                    } else {
-                        f.setValue(0);
                     }
                     a.setValue(a.intValue() >> 1);
                     if (f.cf().intValue() == 1) {
@@ -1278,7 +1273,7 @@ class Dmgcpu {
                 // XOR A, A (== LD A, 0)
                 case 0xAF:
                     pc.inc();
-                    xor(a, a, f);
+                    xor(a, a);
                     break;
 
                 case 0xC0:               // RET NZ
@@ -1396,13 +1391,9 @@ class Dmgcpu {
                     if ((b2 & 0xC0) == 0) {
                         switch ((b2 & 0xF8)) {
                             case 0x00:          // RLC A
+                                f.setValue(0);
                                 if ((data & 0x80) == 0x80) {
-                                    f.zf(ZERO);
-                                    f.nf(ZERO);
-                                    f.hf(ZERO);
                                     f.cf(ONE);
-                                } else {
-                                    f.setValue(0);
                                 }
                                 data <<= 1;
                                 if (f.cf().intValue() == 1) {
@@ -1416,13 +1407,9 @@ class Dmgcpu {
                                 registerWrite(regNum, data);
                                 break;
                             case 0x08:          // RRC A
+                                f.setValue(0);
                                 if ((data & 0x01) == 0x01) {
-                                    f.zf(ZERO);
-                                    f.nf(ZERO);
-                                    f.hf(ZERO);
                                     f.cf(ONE);
-                                } else {
-                                    f.setValue(0);
                                 }
                                 data >>= 1;
                                 if (f.cf().intValue() == 1) {
@@ -1464,20 +1451,15 @@ class Dmgcpu {
                                 }
 
                                 if (data == 0) {
-                                    //newf |= F_ZERO;
                                     newf.zf(ONE);
                                 }
                                 f.setValue(newf.intValue());
                                 registerWrite(regNum, data);
                                 break;
                             case 0x20:          // SLA r
+                                f.setValue(0);
                                 if ((data & 0x80) == 0x80) {
-                                    f.zf(ZERO);
-                                    f.nf(ZERO);
-                                    f.hf(ZERO);
                                     f.cf(ONE);
-                                } else {
-                                    f.setValue(0);
                                 }
 
                                 data <<= 1;
@@ -1492,13 +1474,9 @@ class Dmgcpu {
                                 short topBit;
 
                                 topBit = (short) (data & 0x80);
+                                f.setValue(0);
                                 if ((data & 0x01) == 0x01) {
-                                    f.zf(ZERO);
-                                    f.nf(ZERO);
-                                    f.hf(ZERO);
                                     f.cf(ONE);
-                                } else {
-                                    f.setValue(0);
                                 }
 
                                 data >>= 1;
@@ -1512,25 +1490,16 @@ class Dmgcpu {
                             case 0x30:          // SWAP r
 
                                 data = (short) (((data & 0x0F) << 4) | ((data & 0xF0) >> 4));
+                                f.setValue(0);
                                 if (data == 0) {
                                     f.zf(ONE);
-                                    f.nf(ZERO);
-                                    f.hf(ZERO);
-                                    f.cf(ZERO);
-                                } else {
-                                    f.setValue(0);
                                 }
-                                //           Logger.debug("SWAP - answer is " + JavaBoy.hexByte(data));
                                 registerWrite(regNum, data);
                                 break;
                             case 0x38:          // SRL r
+                                f.setValue(0);
                                 if ((data & 0x01) == 0x01) {
-                                    f.zf(ZERO);
-                                    f.nf(ZERO);
-                                    f.hf(ZERO);
                                     f.cf(ONE);
-                                } else {
-                                    f.setValue(0);
                                 }
 
                                 data >>= 1;
@@ -1811,13 +1780,9 @@ class Dmgcpu {
                     pc.inc();
                     pc.inc();
                     a.setValue(a.intValue() & b2);
+                    f.setValue(0);
                     if (a.intValue() == 0) {
                         f.zf(ONE);
-                        f.nf(ZERO);
-                        f.hf(ZERO);
-                        f.cf(ZERO);
-                    } else {
-                        f.setValue(0);
                     }
                     break;
                 case 0xE7:               // RST 20
@@ -1855,7 +1820,7 @@ class Dmgcpu {
                 case 0xEE: {
                     pc.inc();
                     Byte data = loadImmediateByte(pc);
-                    xor(a, data, f);
+                    xor(a, data);
                     break;
                 }
                 case 0xEF:               // RST 28
@@ -1897,13 +1862,9 @@ class Dmgcpu {
                     pc.inc();
                     pc.inc();
                     a.setValue(a.intValue() | b2);
+                    f.setValue(0);
                     if (a.intValue() == 0) {
                         f.zf(ONE);
-                        f.nf(ZERO);
-                        f.hf(ZERO);
-                        f.cf(ZERO);
-                    } else {
-                        f.setValue(0);
                     }
                     break;
                 case 0xF7:               // RST 30
@@ -1918,14 +1879,10 @@ class Dmgcpu {
                     pc.inc();
                     pc.inc();
                     int result = sp.intValue() + offset;
+                    f.setValue(0);
                     if ((result & 0x10000) != 0) {
-                        f.zf(ZERO);
-                        f.nf(ZERO);
-                        f.hf(ZERO);
                         f.cf(ONE);
                         result = result & 0xFFFF;
-                    } else {
-                        f.setValue(0);
                     }
                     hl.setValue(result);
                     break;
@@ -1992,12 +1949,7 @@ class Dmgcpu {
 
                                 if ((result & 0xFF00) != 0) {     // Perform 8-bit overflow and set zero flag
                                     if ((result & 0x0100) == 0x0100) {
-                                        //                                        f.zf(ONE);
-                                        //                                        f.hf(ONE);
                                         f.cf(ONE);
-                                    } else {
-                                        //                                        f.hf(ONE);
-                                        //                                        f.cf(ONE);
                                     }
                                 }
                                 a.setValue(result);
@@ -2032,34 +1984,24 @@ class Dmgcpu {
                             }
                             case 4: // AND A, r
                                 a.setValue(a.intValue() & operand);
+                                f.setValue(0);
                                 if (a.intValue() == 0) {
                                     f.zf(ONE);
-                                    f.nf(ZERO);
-                                    f.hf(ZERO);
-                                    f.cf(ZERO);
-                                } else {
-                                    f.setValue(0);
                                 }
                                 break;
                             case 5: // XOR A, r
-                                xor(a, new Byte(operand), f);
+                                xor(a, new Byte(operand));
                                 break;
                             case 6: // OR A, r
                                 a.setValue(a.intValue() | operand);
+                                f.setValue(0);
                                 if (a.intValue() == 0) {
                                     f.zf(ONE);
-                                    f.nf(ZERO);
-                                    f.hf(ZERO);
-                                    f.cf(ZERO);
-                                } else {
-                                    f.setValue(0);
                                 }
                                 break;
                             case 7: // CP A, r (compare)
-                                f.zf(ZERO);
+                                f.setValue(0);
                                 f.nf(ONE);
-                                f.hf(ZERO);
-                                f.cf(ZERO);
                                 if (a.intValue() == operand) {
                                     f.zf(ONE);
                                 }
@@ -2126,19 +2068,54 @@ class Dmgcpu {
     }
 
 
-    private void xor(Byte left, Byte right, FlagRegister flags) {
+    private void xor(Byte left, Byte right) {
 
         int result = left.intValue() ^ right.intValue();
 
-        flags.nf(ZERO);
-        flags.hf(ZERO);
-        flags.cf(ZERO);
-        flags.zf(ZERO);
+        f.setValue(0);
 
         if (result == 0) {
-            flags.zf(ONE);
+            f.zf(ONE);
+        }
+
+        a.setValue(result);
+    }
+
+    public void adc(Byte left, Byte right, BitValue carry) {
+
+        f.nf(ZERO);
+
+        int lowerResult = left.getLowerNibble() + right.getLowerNibble() + carry.intValue();
+
+        if ((lowerResult & 0x10) == 0x10) {
+            f.hf(ONE);
+        } else {
+            f.hf(ZERO);
+        }
+
+        int result = left.intValue() + right.intValue() + carry.intValue();
+
+        if ((result & 0x100) == 0x100) {
+            f.cf(ONE);
+        } else {
+            f.cf(ZERO);
+        }
+
+        if ((result & 0xFF) == 0) {
+            f.zf(ONE);
+        } else {
+            f.zf(ZERO);
         }
 
         left.setValue(result);
     }
+
+    public void add(Byte left, Byte right) {
+        adc(left, right, ZERO);
+    }
+
+    public void inc(Byte left) {
+        add(left, new Byte(1));
+    }
+
 }
