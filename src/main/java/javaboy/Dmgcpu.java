@@ -11,8 +11,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static javaboy.lang.Bit.BitValue.ONE;
-import static javaboy.lang.Bit.BitValue.ZERO;
+import static javaboy.lang.BitValue.ONE;
+import static javaboy.lang.BitValue.ZERO;
 
 /**
  * This is the main controlling class for the emulation

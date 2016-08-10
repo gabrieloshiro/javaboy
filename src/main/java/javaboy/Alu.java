@@ -1,12 +1,12 @@
 package javaboy;
 
-import javaboy.lang.Bit.BitValue;
+import javaboy.lang.BitValue;
 import javaboy.lang.Byte;
 import javaboy.lang.FlagRegister;
 import javaboy.lang.Short;
 
-import static javaboy.lang.Bit.BitValue.ONE;
-import static javaboy.lang.Bit.BitValue.ZERO;
+import static javaboy.lang.BitValue.ONE;
+import static javaboy.lang.BitValue.ZERO;
 
 /**
  * Created by gabrieloshiro on 2016-07-03.

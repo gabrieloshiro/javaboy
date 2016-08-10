@@ -1,6 +1,6 @@
 package javaboy.lang;
 
-import static javaboy.lang.Bit.BitValue.ONE;
+import static javaboy.lang.BitValue.ONE;
 
 /**
  * Created by gabrieloshiro on 2016-06-27.
@@ -56,18 +56,18 @@ public class Byte {
         value = (getUpperNibble() << 4) | getLowerNibble();
     }
 
-    public Bit.BitValue getBit(int index) {
+    public BitValue getBit(int index) {
         if (index > 7 || index < 0) {
             throw new IllegalArgumentException("Bit index on a byte should be in the range 0..7. Index passed: " + index);
         }
         if (((value >> index) & 1) == 1) {
             return ONE;
         } else {
-            return Bit.BitValue.ZERO;
+            return BitValue.ZERO;
         }
     }
 
-    public void setBit(int index, Bit.BitValue value) {
+    public void setBit(int index, BitValue value) {
         if (index > 7 || index < 0) {
             throw new IllegalArgumentException("Bit index on a byte should be in the range 0..7. Index passed: " + index);
         }

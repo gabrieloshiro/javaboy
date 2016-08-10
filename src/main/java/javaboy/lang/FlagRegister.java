@@ -1,7 +1,7 @@
 package javaboy.lang;
 
-import static javaboy.lang.Bit.BitValue.ONE;
-import static javaboy.lang.Bit.BitValue.ZERO;
+import static javaboy.lang.BitValue.ONE;
+import static javaboy.lang.BitValue.ZERO;
 
 /**
  * Created by gabrieloshiro on 2016-06-28.
@@ -19,35 +19,35 @@ public class FlagRegister extends Byte {
         this.value = i & 0xF0;
     }
 
-    public Bit.BitValue zf() {
+    public BitValue zf() {
         return getBit(7);
     }
 
-    public Bit.BitValue nf() {
+    public BitValue nf() {
         return getBit(6);
     }
 
-    public Bit.BitValue hf() {
+    public BitValue hf() {
         return getBit(5);
     }
 
-    public Bit.BitValue cf() {
+    public BitValue cf() {
         return getBit(4);
     }
 
-    public void zf(Bit.BitValue value) {
+    public void zf(BitValue value) {
         setBit(7, value);
     }
 
-    public void nf(Bit.BitValue value) {
+    public void nf(BitValue value) {
         setBit(6, value);
     }
 
-    public void hf(Bit.BitValue value) {
+    public void hf(BitValue value) {
         setBit(5, value);
     }
 
-    public void cf(Bit.BitValue value) {
+    public void cf(BitValue value) {
         setBit(4, value);
     }
 
