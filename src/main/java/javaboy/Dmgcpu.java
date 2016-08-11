@@ -15,13 +15,6 @@ import java.io.InputStream;
 import static javaboy.lang.BitValue.ONE;
 import static javaboy.lang.BitValue.ZERO;
 
-/**
- * This is the main controlling class for the emulation
- * It contains the code to emulate the Z80-like processor
- * found in the Gameboy, and code to provide the locations
- * in CPU address space that points to the correct area of
- * ROM/RAM/IO.
- */
 class Dmgcpu {
 
     private final Byte a = new Byte();
@@ -1159,12 +1152,12 @@ class Dmgcpu {
 
                 // JP NZ, nnnn
                 case 0xC2:
+                    pc.inc();
+                    pc.inc();
+                    pc.inc();
+
                     if (f.zf().intValue() == 0) {
                         pc.setValue((b3 << 8) + b2);
-                    } else {
-                        pc.inc();
-                        pc.inc();
-                        pc.inc();
                     }
                     break;
 
