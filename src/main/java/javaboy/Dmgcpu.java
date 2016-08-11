@@ -1625,14 +1625,12 @@ class Dmgcpu {
                     addressWrite(sp.intValue() + 1, h.intValue());
                     addressWrite(sp.intValue(), l.intValue());
                     break;
-                case 0xE6:               // AND nn
+
+                // AND nn
+                case 0xE6:
                     pc.inc();
                     pc.inc();
-                    a.setValue(a.intValue() & b2);
-                    f.setValue(0);
-                    if (a.intValue() == 0) {
-                        f.zf(ONE);
-                    }
+                    and(a, new Byte(b2));
                     break;
 
                 // RST 20
@@ -1732,11 +1730,7 @@ class Dmgcpu {
                 case 0xF6:
                     pc.inc();
                     pc.inc();
-                    a.setValue(a.intValue() | b2);
-                    f.setValue(0);
-                    if (a.intValue() == 0) {
-                        f.zf(ONE);
-                    }
+                    or(a, new Byte(b2));
                     break;
 
                 // RST 30
@@ -1839,10 +1833,7 @@ class Dmgcpu {
                             // AND A, r
                             case 4:
                                 a.setValue(a.intValue() & operand);
-                                f.setValue(0);
-                                if (a.intValue() == 0) {
-                                    f.zf(ONE);
-                                }
+                                and(a, new Byte(operand));
                                 break;
 
                             // XOR A, r
@@ -1852,11 +1843,7 @@ class Dmgcpu {
 
                             // OR A, r
                             case 6:
-                                a.setValue(a.intValue() | operand);
-                                f.setValue(0);
-                                if (a.intValue() == 0) {
-                                    f.zf(ONE);
-                                }
+                                or(a, new Byte(operand));
                                 break;
 
                             // CP A, r (compare)
@@ -1927,20 +1914,6 @@ class Dmgcpu {
         immediate.getUpperByte().setValue(upperByte.intValue());
 
         return immediate;
-    }
-
-
-    private void xor(Byte left, Byte right) {
-
-        int result = left.intValue() ^ right.intValue();
-
-        f.setValue(0);
-
-        if (result == 0) {
-            f.zf(ONE);
-        }
-
-        left.setValue(result);
     }
 
     public void adc(Byte left, Byte right, BitValue carry) {
@@ -2016,5 +1989,44 @@ class Dmgcpu {
         sub(left, new Byte(1));
     }
 
+    public void or(Byte left, Byte right) {
+        int result = left.intValue() | right.intValue();
+
+        f.setValue(0);
+
+        if (result == 0) {
+            f.zf(ONE);
+        }
+
+        left.setValue(result);
+    }
+
+    private void xor(Byte left, Byte right) {
+        int result = left.intValue() ^ right.intValue();
+
+        f.setValue(0);
+
+        if (result == 0) {
+            f.zf(ONE);
+        }
+
+        left.setValue(result);
+    }
+
+    private void and(Byte left, Byte right) {
+        int result = left.intValue() & right.intValue();
+
+        f.nf(ZERO);
+        f.hf(ONE);
+        f.cf(ZERO);
+
+        if (result == 0) {
+            f.zf(ONE);
+        } else {
+            f.zf(ZERO);
+        }
+
+        left.setValue(result);
+    }
 
 }
