@@ -1127,11 +1127,7 @@ class Dmgcpu {
 
                 // RST 08
                 case 0xCF:
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                    addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                    pc.setValue(0x08);
+                    rst(0x08);
                     break;
 
                 // RET Z
@@ -1372,11 +1368,7 @@ class Dmgcpu {
 
                 // RST 00
                 case 0xC7:
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                    addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                    pc.setValue(0x00);
+                    rst(0x00);
                     break;
 
                 // RET NC
@@ -1435,11 +1427,7 @@ class Dmgcpu {
 
                 // RST 10
                 case 0xD7:
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                    addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                    pc.setValue(0x10);
+                    rst(0x10);
                     break;
 
                 // RET C
@@ -1490,11 +1478,7 @@ class Dmgcpu {
 
                 // RST 18
                 case 0xDF:
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                    addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                    pc.setValue(0x18);
+                    rst(0x18);
                     break;
 
                 // LDH (FFnn), A
@@ -1531,11 +1515,7 @@ class Dmgcpu {
 
                 // RST 20
                 case 0xE7:
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                    addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                    pc.setValue(0x20);
+                    rst(0x20);
                     break;
 
                 // ADD SP, nn
@@ -1572,11 +1552,7 @@ class Dmgcpu {
 
                 // RST 28
                 case 0xEF:
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                    addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                    pc.setValue(0x28);
+                    rst(0x28);
                     break;
 
                 // LDH A, (FFnn)
@@ -1619,11 +1595,7 @@ class Dmgcpu {
 
                 // RST 30
                 case 0xF7:
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                    addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                    pc.setValue(0x30);
+                    rst(0x30);
                     break;
 
                 // LD HL, SP + nn  ** HALFCARRY FLAG NOT SET ***
@@ -1671,11 +1643,7 @@ class Dmgcpu {
 
                 // RST 38
                 case 0xFF:
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                    addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                    pc.setValue(0x38);
+                    rst(0x38);
                     break;
 
                 default:
@@ -1765,6 +1733,15 @@ class Dmgcpu {
 
             initiateInterrupts();
         }
+    }
+
+    private void rst(int address) {
+        sp.dec();
+        sp.dec();
+        addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
+        addressWrite(sp.intValue(), pc.getLowerByte().intValue());
+        pc.setValue(address);
+
     }
 
     private Byte loadImmediateByte(Short address) {
