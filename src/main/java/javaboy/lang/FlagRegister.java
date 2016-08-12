@@ -48,36 +48,12 @@ public class FlagRegister extends Byte {
         setBit(4, value);
     }
 
-    public void setZf() {
-        setBit(7, ONE);
-    }
-
-    public void setNf() {
-        setBit(6, ONE);
-    }
-
-    public void setHf() {
-        setBit(5, ONE);
-    }
-
-    public void setCf() {
-        setBit(4, ONE);
-    }
-
-    public void resetZf() {
-        setBit(7, ZERO);
-    }
-
-    public void resetNf() {
-        setBit(6, ZERO);
-    }
-
-    public void resetHf() {
-        setBit(5, ZERO);
-    }
-
-    public void resetCf() {
-        setBit(4, ZERO);
+    public void setZeroFlagForResult(int value) {
+        if (value == 0) {
+            zf(ONE);
+        } else {
+            zf(ZERO);
+        }
     }
 
 }

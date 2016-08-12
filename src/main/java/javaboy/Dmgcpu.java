@@ -1895,6 +1895,137 @@ class Dmgcpu {
         left.setValue(result);
     }
 
+    /**
+     * RL
+     * <p>
+     * ╔═════════════════════════════════╗
+     * ║  ┌────┐    ┌───┬────────┬───┐   ║
+     * ╚══│ CF │<═══│ 7 │ <═════ │ 0 │<══╝
+     *    └────┘    └───┴────────┴───┘
+     */
+    private void rl(Byte operand, BitValue carry) {
+        int result = ((operand.intValue() << 1) | carry.intValue()) & 0xFF;
+
+        f.nf(ZERO);
+        f.hf(ZERO);
+        f.cf(operand.getBit(7));
+        f.setZeroFlagForResult(result);
+
+        operand.setValue(result);
+    }
+
+    private void rla(Byte operand) {
+        rl(operand, operand.getBit(7));
+        f.zf(ZERO);
+    }
+
+
+    /**
+     * RLC
+     * <p>
+     *         ╔══════════════════════╗
+     * ┌────┐  ║ ┌───┬────────┬───┐   ║
+     * │ CF │<═╩═│ 7 │ <═════ │ 0 │<══╝
+     * └────┘    └───┴────────┴───┘
+     */
+    private void rlc(Byte operand) {
+        rl(operand, operand.getBit(7));
+    }
+
+    private void rlca(Byte operand) {
+        rlc(operand);
+        f.zf(ZERO);
+    }
+
+    /**
+     * RR
+     * <p>
+     * ╔════════════════════════════════╗
+     * ║  ┌────┐    ┌───┬────────┬───┐  ║
+     * ╚═>│ CF │═══>│ 7 │ ═════> │ 0 │══╝
+     *    └────┘    └───┴────────┴───┘
+     */
+    private void rr(Byte operand, BitValue carry) {
+        int result = (carry.intValue() << 7) | (operand.intValue() >> 1);
+
+        f.nf(ZERO);
+        f.hf(ZERO);
+        f.cf(operand.getBit(0));
+        f.setZeroFlagForResult(result);
+
+        operand.setValue(result);
+    }
+
+    private void rra(Byte operand, BitValue carry) {
+        rr(operand, carry);
+        f.zf(ZERO);
+    }
+
+    /**
+     * RRC
+     * <p>
+     * ╔═════════╦═══════════════════════╗
+     * ║  ┌────┐ ║  ┌───┬────────┬───┐   ║
+     * ╚═>│ CF │ ╚═>│ 7 │ ═════> │ 0 │═══╝
+     *    └────┘    └───┴────────┴───┘
+     */
+    private void rrc(Byte operand) {
+        rr(operand, operand.getBit(0));
+    }
+    private void rrca(Byte operand) {
+        rrc(operand);
+        f.zf(ZERO);
+    }
+
+    /**
+     * SLA
+     * <p>
+     * ┌────┐    ┌───┬────────┬───┐
+     * │ CF │<═══│ 7 │ <═════ │ 0 │<══ 0
+     * └────┘    └───┴────────┴───┘
+     */
+    private void sla(Byte operand) {
+        int result = operand.intValue() << 1;
+
+        f.nf(ZERO);
+        f.hf(ZERO);
+        f.cf(operand.getBit(7));
+        f.setZeroFlagForResult(result);
+
+        operand.setValue(result);
+    }
+
+    /**
+     * SRA
+     * <p>
+     * ╔════╗
+     * ║  ┌───┬────────┬───┐    ┌────┐
+     * ╚═>│ 7 │ ═════> │ 0 │═══>│ CF │
+     *    └───┴────────┴───┘    └────┘
+     */
+    private void sra(Byte operand, BitValue sign) {
+        int result = (sign.intValue() << 7) | (operand.intValue() >> 1);
+
+        f.nf(ZERO);
+        f.hf(ZERO);
+        f.cf(operand.getBit(0));
+        f.setZeroFlagForResult(result);
+
+        operand.setValue(result);
+    }
+
+    /**
+     * SRL
+     * <p>
+     *      ┌───┬────────┬───┐    ┌────┐
+     * 0 ══>│ 7 │ ═════> │ 0 │═══>│ CF │
+     *      └───┴────────┴───┘    └────┘
+     */
+    private void srl(Byte operand) {
+        sra(operand, ZERO);
+    }
+
+
     private void load(Byte destination, Byte source) {
         destination.setValue(source.intValue());
     }
