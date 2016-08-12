@@ -183,6 +183,11 @@ class Dmgcpu {
         addressWrite(addr.intValue(), data.intValue());
     }
 
+    private void addressWrite(Short addr, Short data) {
+        addressWrite(addr.intValue(), data.getLowerByte().intValue());
+        addressWrite(addr.intValue() + 1, data.getUpperByte().intValue());
+    }
+
     final void addressWrite(int addr, int data) {
 
         addr = addr & 0xFFFF;
@@ -531,14 +536,13 @@ class Dmgcpu {
                     break;
 
                 /*
-                  LD (nn), SP   May be wrong!
+                  LD (nn), SP
                 */
-                case 0x08:
-                    pc.inc();
-                    pc.inc();
-                    addressWrite((b3 << 8) + b2 + 1, sp.getUpperByte().intValue());
-                    addressWrite((b3 << 8) + b2, sp.getLowerByte().intValue());
+                case 0x08: {
+                    Short address = loadImmediateShort(pc);
+                    addressWrite(address, sp);
                     break;
+                }
 
                 /*
                   ADD HL, BC
