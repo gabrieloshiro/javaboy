@@ -1658,18 +1658,12 @@ class Dmgcpu {
                     ieDelay = 1;
                     break;
 
-                // CP n     ** FLAGS ARE WRONG! **
-                case 0xFE:
-                    pc.inc();
-                    f.setValue(0);
-                    if (b2 == a.intValue()) {
-                        f.zf(ONE);
-                    } else {
-                        if (a.intValue() < b2) {
-                            f.cf(ONE);
-                        }
-                    }
+                // CP n
+                case 0xFE: {
+                    Byte data = loadImmediateByte(pc);
+                    cp(a, data);
                     break;
+                }
 
                 // RST 38
                 case 0xFF:
@@ -1678,7 +1672,8 @@ class Dmgcpu {
 
                 default:
 
-                    if ((b1 & 0xC0) == 0x80) {       // Byte 0x10?????? indicates ALU op
+                    // ALU Operations
+                    if ((b1 & 0xC0) == 0x80) {
                         int operand = registerRead(b1 & 0x07);
                         switch ((b1 & 0x38) >> 3) {
 
@@ -1722,17 +1717,7 @@ class Dmgcpu {
 
                             // CP A, r (compare)
                             case 7:
-                                f.setValue(0);
-                                f.nf(ONE);
-                                if (a.intValue() == operand) {
-                                    f.zf(ONE);
-                                }
-                                if (a.intValue() < operand) {
-                                    f.cf(ONE);
-                                }
-                                if ((a.intValue() & 0x0F) < (operand & 0x0F)) {
-                                    f.hf(ONE);
-                                }
+                                cp(a, new Byte(operand));
                                 break;
                         }
 
