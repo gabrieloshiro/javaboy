@@ -3,9 +3,6 @@ package javaboy.lang;
 import static javaboy.lang.BitValue.ONE;
 import static javaboy.lang.BitValue.ZERO;
 
-/**
- * Created by gabrieloshiro on 2016-06-28.
- */
 public class FlagRegister extends Byte {
 
     public FlagRegister() {

@@ -16,21 +16,22 @@ import static javaboy.lang.BitValue.ONE;
 import static javaboy.lang.BitValue.ZERO;
 
 class Dmgcpu {
-
+    
     private final Byte a = new Byte();
     private final FlagRegister f = new FlagRegister();
+    private final Short af = new Short(a, f);
 
-    private final Short bc = new Short();
-    private final Byte b = bc.getUpperByte();
-    private final Byte c = bc.getLowerByte();
+    private final Byte b = new Byte();
+    private final Byte c = new Byte();
+    private final Short bc = new Short(b, c);
 
-    private final Short de = new Short();
-    private final Byte d = de.getUpperByte();
-    private final Byte e = de.getLowerByte();
+    private final Byte d = new Byte();
+    private final Byte e = new Byte();
+    private final Short de = new Short(d, e);
 
-    private final Short hl = new Short();
-    private final Byte h = hl.getUpperByte();
-    private final Byte l = hl.getLowerByte();
+    private final Byte h = new Byte();
+    private final Byte l = new Byte();
+    private final Short hl = new Short(h, l);
 
     private final Short pc = new Short();
     private final Short sp = new Short();

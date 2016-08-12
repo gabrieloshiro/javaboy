@@ -5,19 +5,22 @@ package javaboy.lang;
  */
 public class Short {
 
-    private final Byte lowerByte = new Byte();
-    private final Byte higherByte = new Byte();
+    private final Byte lowerByte;
+    private final Byte higherByte;
 
     public Short() {
+        lowerByte = new Byte();
+        higherByte = new Byte();
     }
 
     public Short(int i) {
+        this();
         setValue(i);
     }
 
     public Short(Byte higher, Byte lower) {
-        lowerByte.setValue(lower.intValue());
-        higherByte.setValue(higher.intValue());
+        lowerByte = lower;
+        higherByte = higher;
     }
 
     public int intValue() {
