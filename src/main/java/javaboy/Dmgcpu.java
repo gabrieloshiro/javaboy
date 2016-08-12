@@ -517,10 +517,11 @@ class Dmgcpu {
                 /*
                   LD B, n
                  */
-                case 0x06:
-                    pc.inc();
-                    b.setValue(b2);
+                case 0x06: {
+                    Byte data = loadImmediateByte(pc);
+                    load(b, data);
                     break;
+                }
 
                 /*
                   RLC A
