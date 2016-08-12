@@ -548,14 +548,7 @@ class Dmgcpu {
                   ADD HL, BC
                  */
                 case 0x09: {
-                    int result = hl.intValue() + bc.intValue();
-                    if ((result & 0xFFFF0000) != 0) {
-                        f.cf(ONE);
-                        result = result & 0xFFFF;
-                    } else {
-                        f.cf(ZERO);
-                    }
-                    hl.setValue(result);
+                    add(hl, bc);
                     break;
                 }
 
@@ -2019,6 +2012,28 @@ class Dmgcpu {
         sra(operand, ZERO);
     }
 
+    public void add(Short left, Short right) {
+
+        f.nf(ZERO);
+
+        int lowerResult = (left.intValue() & 0x0FFF) + (right.intValue() & 0x0FFF);
+
+        if ((lowerResult & 0x1000) == 0x1000) {
+            f.hf(ONE);
+        } else {
+            f.hf(ZERO);
+        }
+
+        int result = left.intValue() + right.intValue();
+
+        if ((result & 0x10000) == 0x10000) {
+            f.cf(ONE);
+        } else {
+            f.cf(ZERO);
+        }
+
+        left.setValue(result);
+    }
 
     private void load(Byte destination, Byte source) {
         destination.setValue(source.intValue());
