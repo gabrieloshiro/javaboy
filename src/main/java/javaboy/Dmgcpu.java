@@ -524,20 +524,10 @@ class Dmgcpu {
                 }
 
                 /*
-                  RLC A
+                  RLCA
                  */
                 case 0x07:
-                    f.setValue(0);
-
-                    a.setValue(a.intValue() << 1);
-
-                    if ((a.intValue() & 0x0100) != 0) {
-                        f.cf(ONE);
-                        a.setBit(0, ONE);
-                    }
-                    if (a.intValue() == 0) {
-                        f.zf(ONE);
-                    }
+                    rlca(a);
                     break;
 
                 /*
