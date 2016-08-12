@@ -179,6 +179,10 @@ class Dmgcpu {
 
     }
 
+    private void addressWrite(Short addr, Byte data) {
+        addressWrite(addr.intValue(), data.intValue());
+    }
+
     final void addressWrite(int addr, int data) {
 
         addr = addr & 0xFFFF;
@@ -476,18 +480,17 @@ class Dmgcpu {
                 /*
                   LD BC, nn
                  */
-                case 0x01:
-                    pc.inc();
-                    pc.inc();
-                    b.setValue(b3);
-                    c.setValue(b2);
+                case 0x01: {
+                    Short data = loadImmediateShort(pc);
+                    load(bc, data);
                     break;
+                }
 
                 /*
                   LD (BC), A
                  */
                 case 0x02:
-                    addressWrite(bc.intValue(), a.intValue());
+                    addressWrite(bc, a);
                     break;
 
                 /*
@@ -1906,4 +1909,11 @@ class Dmgcpu {
         left.setValue(result);
     }
 
+    private void load(Byte destination, Byte source) {
+        destination.setValue(source.intValue());
+    }
+
+    private void load(Short destination, Short source) {
+        destination.setValue(source.intValue());
+    }
 }
