@@ -16,7 +16,7 @@ import static javaboy.lang.BitValue.ONE;
 import static javaboy.lang.BitValue.ZERO;
 
 class Dmgcpu {
-    
+
     private final Byte a = new Byte();
     private final FlagRegister f = new FlagRegister();
     private final Short af = new Short(a, f);
@@ -304,7 +304,6 @@ class Dmgcpu {
         sp.setValue(0xFFFE);
 
         f.zf(ONE);
-
         f.nf(ZERO);
         f.hf(ONE);
         f.cf(ONE);
@@ -484,33 +483,45 @@ class Dmgcpu {
                     c.setValue(b2);
                     break;
 
-                // LD (BC), A
+                /*
+                  LD (BC), A
+                 */
                 case 0x02:
                     addressWrite(bc.intValue(), a.intValue());
                     break;
 
-                // INC BC
+                /*
+                  INC BC
+                 */
                 case 0x03:
                     bc.inc();
                     break;
 
-                // INC B
+                /*
+                  INC B
+                */
                 case 0x04:
                     inc(b);
                     break;
 
-                // DEC B
+                /*
+                  DEC B
+                 */
                 case 0x05:
                     dec(b);
                     break;
 
-                // LD B, nn
+                /*
+                  LD B, nn
+                 */
                 case 0x06:
                     pc.inc();
                     b.setValue(b2);
                     break;
 
-                // RLC A
+                /*
+                  RLC A
+                 */
                 case 0x07:
                     f.setValue(0);
 
@@ -525,7 +536,9 @@ class Dmgcpu {
                     }
                     break;
 
-                // LD (nnnn), SP   /* **** May be wrong! **** */
+                /*
+                  LD (nn), SP   May be wrong!
+                */
                 case 0x08:
                     pc.inc();
                     pc.inc();
@@ -533,7 +546,9 @@ class Dmgcpu {
                     addressWrite((b3 << 8) + b2, sp.getLowerByte().intValue());
                     break;
 
-                // ADD HL, BC
+                /*
+                  ADD HL, BC
+                 */
                 case 0x09: {
                     int result = hl.intValue() + bc.intValue();
                     if ((result & 0xFFFF0000) != 0) {
@@ -546,27 +561,37 @@ class Dmgcpu {
                     break;
                 }
 
-                // LD A, (BC)
+                /*
+                  LD A, (BC)
+                 */
                 case 0x0A:
                     a.setValue(JavaBoy.unsign(addressRead(bc.intValue())));
                     break;
 
-                // DEC BC
+                /*
+                  DEC BC
+                 */
                 case 0x0B:
                     bc.dec();
                     break;
 
-                // INC C
+                /*
+                  INC C
+                 */
                 case 0x0C:
                     inc(c);
                     break;
 
-                // DEC C
+                /*
+                  DEC C
+                 */
                 case 0x0D:
                     dec(c);
                     break;
 
-                // LD C, nn
+                /*
+                  LD C, n
+                 */
                 case 0x0E:
                     pc.inc();
                     c.setValue(b2);
@@ -592,7 +617,7 @@ class Dmgcpu {
                     pc.inc();
                     break;
 
-                // LD DE, nnnn
+                // LD DE, nn
                 case 0x11:
                     pc.inc();
                     pc.inc();
@@ -620,7 +645,7 @@ class Dmgcpu {
                     dec(d);
                     break;
 
-                // LD D, nn
+                // LD D, n
                 case 0x16:
                     pc.inc();
                     d.setValue(b2);
@@ -715,7 +740,7 @@ class Dmgcpu {
                     }
                     break;
 
-                // LD HL, nnnn
+                // LD HL, nn
                 case 0x21:
                     pc.inc();
                     pc.inc();
@@ -909,7 +934,7 @@ class Dmgcpu {
                     }
                     break;
 
-                // LD SP, nnnn
+                // LD SP, nn
                 case 0x31:
                     pc.inc();
                     pc.inc();
@@ -1083,7 +1108,7 @@ class Dmgcpu {
                     sp.inc();
                     break;
 
-                // JP NZ, nnnn
+                // JP NZ, nn
                 case 0xC2:
                     pc.inc();
                     pc.inc();
@@ -1093,12 +1118,12 @@ class Dmgcpu {
                     }
                     break;
 
-                // JP nnnn
+                // JP nn
                 case 0xC3:
                     pc.setValue((b3 << 8) + b2);
                     break;
 
-                // CALL NZ, nnnnn
+                // CALL NZ, nn
                 case 0xC4:
                     pc.inc();
                     pc.inc();
@@ -1147,7 +1172,7 @@ class Dmgcpu {
                     sp.inc();
                     break;
 
-                // JP Z, nnnn
+                // JP Z, nn
                 case 0xCA:
                     pc.inc();
                     pc.inc();
@@ -1334,7 +1359,7 @@ class Dmgcpu {
                     break;
                 }
 
-                // CALL Z, nnnnn
+                // CALL Z, nn
                 case 0xCC:
                     pc.inc();
                     pc.inc();
@@ -1347,7 +1372,7 @@ class Dmgcpu {
                     }
                     break;
 
-                // CALL nnnn
+                // CALL nn
                 case 0xCD:
                     pc.inc();
                     pc.inc();
@@ -1359,7 +1384,7 @@ class Dmgcpu {
                     break;
 
                 /*
-                *  ADC A, nn
+                *  ADC A, n
                 */
                 case 0xCE: {
                     pc.inc();
@@ -1389,7 +1414,7 @@ class Dmgcpu {
                     sp.inc();
                     break;
 
-                // JP NC, nnnn
+                // JP NC, nn
                 case 0xD2:
                     pc.inc();
                     pc.inc();
@@ -1398,7 +1423,7 @@ class Dmgcpu {
                     }
                     break;
 
-                // CALL NC, nnnn
+                // CALL NC, nn
                 case 0xD4:
                     pc.inc();
                     pc.inc();
@@ -1448,7 +1473,7 @@ class Dmgcpu {
                     sp.inc();
                     break;
 
-                // JP C, nnnn
+                // JP C, nn
                 case 0xDA:
                     pc.inc();
                     pc.inc();
@@ -1457,7 +1482,7 @@ class Dmgcpu {
                     }
                     break;
 
-                // CALL C, nnnn
+                // CALL C, nn
                 case 0xDC:
                     pc.inc();
                     pc.inc();
@@ -1537,7 +1562,7 @@ class Dmgcpu {
                     pc.setValue(hl.intValue());
                     break;
 
-                // LD (nnnn), A
+                // LD (nn), A
                 case 0xEA:
                     pc.inc();
                     pc.inc();
@@ -1617,7 +1642,7 @@ class Dmgcpu {
                     sp.setValue(hl.intValue());
                     break;
 
-                // LD A, (nnnn)
+                // LD A, (nn)
                 case 0xFA:
                     pc.inc();
                     pc.inc();
@@ -1746,17 +1771,13 @@ class Dmgcpu {
     }
 
     private Byte loadImmediateByte(Short address) {
-        address.inc();
-
         Byte immediate = new Byte();
         immediate.setValue(addressRead(address.intValue()));
-
+        address.inc();
         return immediate;
     }
 
     private Short loadImmediateShort(Short address) {
-        address.inc();
-
         Short immediate = new Short();
         Byte lowerByte = loadImmediateByte(address);
         immediate.getLowerByte().setValue(lowerByte.intValue());
@@ -1833,6 +1854,12 @@ class Dmgcpu {
 
     public void sub(Byte left, Byte right) {
         sbc(left, right, ZERO);
+    }
+
+    public void cp(Byte left, Byte right) {
+        int originalValue = left.intValue();
+        sub(left, right);
+        left.setValue(originalValue);
     }
 
     public void dec(Byte left) {
