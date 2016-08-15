@@ -638,67 +638,82 @@ class Dmgcpu {
                     inc(d);
                     break;
 
-                // DEC D
+                /*
+                 DEC D
+                 */
                 case 0x15:
                     dec(d);
                     break;
 
-                // LD D, n
+                /*
+                 LD D, n
+                 */
                 case 0x16:
                     pc.inc();
                     d.setValue(b2);
                     break;
 
-                // RL A
+                /*
+                 RL A
+                 */
                 case 0x17:
                     rl(a, f.cf());
                     break;
 
-                // JR n
+                /*
+                 JR n
+                 */
                 case 0x18:
                     pc.setValue(pc.intValue() + 1 + offset);
                     break;
 
-                // ADD HL, DE
+                /*
+                 ADD HL, DE
+                 */
                 case 0x19: {
-                    int result = hl.intValue() + de.intValue();
-
-                    if ((result & 0xFFFF0000) != 0) {
-                        f.cf(ONE);
-                        result = result & 0xFFFF;
-                    } else {
-                        f.cf(ONE);
-                    }
-                    hl.setValue(result);
+                    add(hl, de);
                     break;
                 }
 
-                // LD A, (DE)
-                case 0x1A:
-                    a.setValue(JavaBoy.unsign(addressRead(de.intValue())));
+                /*
+                 LD A, (DE)
+                 */
+                case 0x1A: {
+                    Byte data = read(de);
+                    load(a, data);
                     break;
+                }
 
-                // DEC DE
+                /*
+                 DEC DE
+                 */
                 case 0x1B:
                     de.inc();
                     break;
 
-                // INC E
+                /*
+                 INC E
+                 */
                 case 0x1C:
                     inc(e);
                     break;
 
-                // DEC E
+                /*
+                 DEC E
+                 */
                 case 0x1D:
                     dec(e);
                     break;
 
-                // LD E, n
-                case 0x1E:
-                    pc.inc();
-                    e.setValue(b2);
+                /*
+                LD E, n
+                */
+                case 0x1E: {
+                    Byte data = loadImmediateByte(pc);
+                    load(e, data);
                     break;
-
+                }
+                
                 // RR A
                 case 0x1F:
                     newf.setValue(0);
