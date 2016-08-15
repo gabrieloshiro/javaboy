@@ -1105,19 +1105,20 @@ class Dmgcpu {
                     break;
 
                 // JP NZ, n
-                case 0xC2:
-                    pc.inc();
-                    pc.inc();
-
-                    if (f.zf().intValue() == 0) {
-                        pc.setValue((b3 << 8) + b2);
-                    }
+                case 0xC2: {
+                    Short address = loadImmediateShort(pc);
+                    jp(f.zf() == ZERO, address);
                     break;
+                }
 
-                // JP nn
-                case 0xC3:
-                    pc.setValue((b3 << 8) + b2);
+                /*
+                 JP nn
+                 */
+                case 0xC3: {
+                    Short address =loadImmediateShort(pc);
+                    jp(address);
                     break;
+                }
 
                 // CALL NZ, nn
                 case 0xC4:
@@ -1163,14 +1164,14 @@ class Dmgcpu {
                     ret(sp);
                     break;
 
-                // JP Z, nn
-                case 0xCA:
-                    pc.inc();
-                    pc.inc();
-                    if (f.zf().intValue() == 1) {
-                        pc.setValue((b3 << 8) + b2);
-                    }
+                /*
+                 JP Z, nn
+                 */
+                case 0xCA: {
+                    Short address = loadImmediateShort(pc);
+                    jp(f.zf() == ONE, address);
                     break;
+                }
 
                 // Shift/bit test
                 case 0xCB: {
@@ -1401,14 +1402,14 @@ class Dmgcpu {
                     sp.inc();
                     break;
 
-                // JP NC, nn
-                case 0xD2:
-                    pc.inc();
-                    pc.inc();
-                    if (f.cf().intValue() == 0) {
-                        pc.setValue((b3 << 8) + b2);
-                    }
+                /*
+                 JP NC, nn
+                 */
+                case 0xD2: {
+                    Short address = loadImmediateShort(pc);
+                    jp(f.cf() == ZERO, address);
                     break;
+                }
 
                 // CALL NC, nn
                 case 0xD4:
@@ -1460,14 +1461,14 @@ class Dmgcpu {
                     ret(sp);
                     break;
 
-                // JP C, nn
-                case 0xDA:
-                    pc.inc();
-                    pc.inc();
-                    if (f.cf().intValue() == 1) {
-                        pc.setValue((b3 << 8) + b2);
-                    }
+                /*
+                 JP C, nn
+                 */
+                case 0xDA: {
+                    Short address = loadImmediateShort(pc);
+                    jp(f.cf() == ONE, address);
                     break;
+                }
 
                 // CALL C, nn
                 case 0xDC:
@@ -1544,10 +1545,13 @@ class Dmgcpu {
                     break;
                 }
 
-                // JP (HL)
-                case 0xE9:
-                    pc.setValue(hl.intValue());
+                /*
+                 JP HL
+                 */
+                case 0xE9: {
+                    jp(hl);
                     break;
+                }
 
                 // LD (nn), A
                 case 0xEA:
@@ -1731,6 +1735,16 @@ class Dmgcpu {
 
             initiateInterrupts();
         }
+    }
+
+    private void jp(boolean condition, Short address) {
+        if (condition) {
+            jp(address);
+        }
+    }
+
+    private void jp(Short address) {
+        pc.setValue(address.intValue());
     }
 
     private void ret(Short stackAddress) {
