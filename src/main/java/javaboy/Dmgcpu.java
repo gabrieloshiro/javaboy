@@ -713,32 +713,23 @@ class Dmgcpu {
                     load(e, data);
                     break;
                 }
-                
-                // RR A
-                case 0x1F:
-                    newf.setValue(0);
-                    if (a.getBit(0) == ONE) {
-                        newf.cf(ONE);
-                    }
-                    a.setValue(a.intValue() >> 1);
 
-                    if (f.cf().intValue() == 1) {
-                        a.setBit(7, ONE);
-                    }
-
-                    if (a.intValue() == 0) {
-                        newf.zf(ONE);
-                    }
-                    f.setValue(newf.intValue());
+                /*
+                 RR A
+                 */
+                case 0x1F: {
+                    rra(a, f.cf());
                     break;
+                }
 
-                // JR NZ, n
-                case 0x20:
-                    pc.inc();
-                    if (f.zf().intValue() == 0) {
-                        pc.setValue(pc.intValue() + offset);
-                    }
-                    break;
+                /*
+                 JR NZ, n
+                  */
+                case 0x20: {
+                    Byte address = loadImmediateByte(pc);
+                    jr(f.zf() == ZERO, address);
+                }
+                break;
 
                 // LD HL, nn
                 case 0x21:
@@ -1744,6 +1735,17 @@ class Dmgcpu {
 
             initiateInterrupts();
         }
+    }
+
+    private void jr(boolean condition, Byte addr) {
+        if (condition) {
+            add(pc, addr);
+        }
+    }
+
+    private void add(Short pc, Byte addr) {
+        Short addrShort = new Short(addr.signedIntValue());
+        add(pc, addrShort);
     }
 
     private void rst(int address) {
