@@ -731,41 +731,56 @@ class Dmgcpu {
                 }
                 break;
 
-                // LD HL, nn
-                case 0x21:
-                    pc.inc();
-                    pc.inc();
-                    hl.setValue((b3 << 8) + b2);
+                /*
+                 LD HL, nn
+                 */
+                case 0x21: {
+                    Short address = loadImmediateShort(pc);
+                    load(hl, address);
                     break;
+                }
 
-                // LD (HL+), A
+                /*
+                 LDH (HL), A
+                 */
                 case 0x22:
                     addressWrite(hl.intValue(), a.intValue());
                     hl.inc();
                     break;
 
-                // INC HL
+                /*
+                 INC HL
+                 */
                 case 0x23:
                     hl.inc();
                     break;
 
-                // INC H         ** May be wrong **
+                /*
+                 INC H
+                 */
                 case 0x24:
                     inc(h);
                     break;
 
-                // DEC H           ** May be wrong **
+                /*
+                 DEC H
+                 */
                 case 0x25:
                     dec(h);
                     break;
 
-                // LD H, n
-                case 0x26:
-                    pc.inc();
-                    hl.setValue((hl.intValue() & 0x00FF) | (b2 << 8));
+                /*
+                 LD H, n
+                 */
+                case 0x26: {
+                    Byte data = loadImmediateByte(pc);
+                    load(h, data);
                     break;
+                }
 
-                // DAA         ** This could be wrong! **
+                /*
+                 DAA
+                 */
                 case 0x27:
                     int upperNibble = a.getUpperNibble();
                     int lowerNibble = a.getLowerNibble();
@@ -861,69 +876,78 @@ class Dmgcpu {
 
                     break;
 
-                // JR Z, n
-                case 0x28:
-                    pc.inc();
-
-                    if (f.zf().intValue() == 1) {
-                        pc.setValue(pc.intValue() + offset);
-                    }
-                    break;
-
-                // ADD HL, HL
-                case 0x29: {
-                    int result = hl.intValue() + hl.intValue();
-                    if ((result & 0xFFFF0000) != 0) {
-                        f.cf(ONE);
-                        result = result & 0xFFFF;
-                    } else {
-                        f.cf(ZERO);
-                    }
-                    hl.setValue(result);
+                /*
+                 JR Z, n
+                 */
+                case 0x28: {
+                    Byte address = loadImmediateByte(pc);
+                    jr(f.zf() == ONE, address);
                     break;
                 }
 
-                // LDI A, (HL)
+                /*
+                 ADD HL, HL
+                 */
+                case 0x29: {
+                    add(hl, hl);
+                    break;
+                }
+
+                /*
+                 LDI A, (HL)
+                 */
                 case 0x2A:
                     a.setValue(JavaBoy.unsign(addressRead(hl.intValue())));
                     hl.inc();
                     break;
 
-                // DEC HL
+                /*
+                 DEC HL
+                 */
                 case 0x2B:
                     hl.dec();
                     break;
 
-                // INC L
+                /*
+                 INC L
+                 */
                 case 0x2C:
                     inc(l);
                     break;
 
-                // DEC L
+                /*
+                 DEC L
+                 */
                 case 0x2D:
                     dec(l);
                     break;
 
-                // LD L, n
-                case 0x2E:
-                    pc.inc();
-                    l.setValue(b2);
+                /*
+                 LD L, n
+                 */
+                case 0x2E: {
+                    Byte address = loadImmediateByte(pc);
+                    load(l, address);
                     break;
+                }
 
-                // CPL A
+                /*
+                 CPL A
+                 */
                 case 0x2F:
                     a.setValue((~a.intValue()));
                     f.nf(ONE);
                     f.hf(ONE);
                     break;
 
-                // JR NC, n
-                case 0x30:
-                    pc.inc();
-                    if (f.cf().intValue() == 0) {
-                        pc.setValue(pc.intValue() + offset);
-                    }
+                /*
+                 JR NC, n
+                 */
+                case 0x30: {
+                    Byte address = loadImmediateByte(pc);
+                    jr(f.cf() == ZERO, address);
                     break;
+                }
 
                 // LD SP, nn
                 case 0x31:
