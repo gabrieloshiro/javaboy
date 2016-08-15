@@ -23,4 +23,8 @@ public enum BitValue {
             return 0;
         }
     }
+
+    public BitValue toggle() {
+        return (this == ZERO) ? ONE : ZERO;
+    }
 }

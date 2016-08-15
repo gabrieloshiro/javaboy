@@ -999,35 +999,35 @@ class Dmgcpu {
                     break;
                 }
 
-                // SCF
+                /*
+                 SCF
+                 */
                 case 0x37:
                     f.nf(ZERO);
                     f.hf(ZERO);
                     f.cf(ONE);
                     break;
 
-                // JR C, n
-                case 0x38:
-                    pc.inc();
-                    if (f.cf().booleanValue()) {
-                        pc.setValue(pc.intValue() + offset);
-                    }
-                    break;
-
-                // ADD HL, SP      ** Could be wrong **
-                case 0x39: {
-                    int result = hl.intValue() + sp.intValue();
-                    if ((result & 0xFFFF0000) != 0) {
-                        f.cf(ONE);
-                        result = result & 0xFFFF;
-                    } else {
-                        f.cf(ZERO);
-                    }
-                    hl.setValue(result);
+                /*
+                 JR C, n
+                 */
+                case 0x38: {
+                    Byte address = loadImmediateByte(pc);
+                    jr(f.cf() == ONE, address);
                     break;
                 }
 
-                // LD A, (HL-)
+                /*
+                 ADD HL, SP
+                 */
+                case 0x39: {
+                    add(hl, sp);
+                    break;
+                }
+
+                /*
+                 LD A, (HL-)
+                 */
                 case 0x3A:
                     a.setValue(JavaBoy.unsign(addressRead(hl.intValue())));
                     hl.dec();
@@ -1038,32 +1038,36 @@ class Dmgcpu {
                     sp.dec();
                     break;
 
-                // INC A
+                /*
+                 INC A
+                 */
                 case 0x3C:
                     inc(a);
                     break;
 
-                // DEC A
+                /*
+                 DEC A
+                 */
                 case 0x3D:
                     dec(a);
                     break;
 
-                // LD A, n
-                case 0x3E:
-                    pc.inc();
-                    a.setValue(b2);
+                /*
+                 LD A, n
+                 */
+                case 0x3E: {
+                    Byte data = loadImmediateByte(pc);
+                    load(a, data);
                     break;
+                }
 
-                // CCF
+                /*
+                 CCF
+                 */
                 case 0x3F:
                     f.nf(ZERO);
                     f.hf(ZERO);
-
-                    if (f.cf().intValue() == 0) {
-                        f.cf(ONE);
-                    } else {
-                        f.cf(ZERO);
-                    }
+                    f.cf(f.cf().toggle());
                     break;
 
                 case 0x52:
