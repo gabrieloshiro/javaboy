@@ -1363,8 +1363,8 @@ class Dmgcpu {
                 *  ADC A, n
                 */
                 case 0xCE: {
-                    pc.inc();
-                    adc(a, new Byte(b2), f.cf());
+                    Byte data = loadImmediateByte(pc);
+                    adc(a, data, f.cf());
                     break;
                 }
 
