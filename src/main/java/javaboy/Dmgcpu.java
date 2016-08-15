@@ -1120,31 +1120,26 @@ class Dmgcpu {
                     break;
                 }
 
-                // CALL NZ, nn
+                /*
+                 CALL NZ, nn
+                 */
                 case 0xC4:
-                    pc.inc();
-                    pc.inc();
-                    if (f.zf().intValue() == 0) {
-                        sp.dec();
-                        sp.dec();
-                        addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                        addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                        pc.setValue((b3 << 8) + b2);
-                    }
+                    call(f.zf() == ZERO);
                     break;
 
-                // PUSH BC
+                /*
+                 PUSH BC
+                 */
                 case 0xC5:
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue(), c.intValue());
-                    addressWrite(sp.intValue() + 1, b.intValue());
+                    pushShort(sp, bc);
                     break;
 
-                // ADD A, n
+                /*
+                 ADD A, n
+                 */
                 case 0xC6: {
-                    pc.inc();
-                    add(a, new Byte(b2));
+                    Byte data = loadImmediateByte(pc);
+                    add(a, data);
                     break;
                 }
 
@@ -1159,7 +1154,9 @@ class Dmgcpu {
                     break;
                 }
 
-                // RET
+                /*
+                 RET
+                 */
                 case 0xC9:
                     ret(sp);
                     break;
@@ -1353,27 +1350,14 @@ class Dmgcpu {
 
                 // CALL Z, nn
                 case 0xCC:
-                    pc.inc();
-                    pc.inc();
-                    if (f.zf().intValue() == 1) {
-                        sp.dec();
-                        sp.dec();
-                        addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                        addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                        pc.setValue((b3 << 8) + b2);
-                    }
+                    call(f.zf() == ONE);
                     break;
 
                 // CALL nn
-                case 0xCD:
-                    pc.inc();
-                    pc.inc();
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                    addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                    pc.setValue((b3 << 8) + b2);
+                case 0xCD: {
+                    call();
                     break;
+                }
 
                 /*
                 *  ADC A, n
@@ -1411,31 +1395,26 @@ class Dmgcpu {
                     break;
                 }
 
-                // CALL NC, nn
+                /*
+                 CALL NC, nn
+                 */
                 case 0xD4:
-                    pc.inc();
-                    pc.inc();
-                    if (f.cf().intValue() == 0) {
-                        sp.dec();
-                        sp.dec();
-                        addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                        addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                        pc.setValue((b3 << 8) + b2);
-                    }
+                    call(f.cf() == ZERO);
                     break;
 
-                // PUSH DE
+                /*
+                 PUSH DE
+                 */
                 case 0xD5:
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue(), e.intValue());
-                    addressWrite(sp.intValue() + 1, d.intValue());
+                    pushShort(sp, de);
                     break;
 
-                // SUB A, n
+                /*
+                 SUB A, n
+                 */
                 case 0xD6: {
-                    pc.inc();
-                    sub(a, new Byte(b2));
+                    Byte data = loadImmediateByte(pc);
+                    sub(a, data);
                     break;
                 }
 
@@ -1470,23 +1449,17 @@ class Dmgcpu {
                     break;
                 }
 
-                // CALL C, nn
+                /*
+                 CALL C, nn
+                 */
                 case 0xDC:
-                    pc.inc();
-                    pc.inc();
-                    if (f.cf().intValue() == 1) {
-                        sp.dec();
-                        sp.dec();
-                        addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
-                        addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-                        pc.setValue((b3 << 8) + b2);
-                    }
+                    call(f.cf() == ONE);
                     break;
 
                 // SBC A, n
                 case 0xDE: {
-                    pc.inc();
-                    sbc(a, new Byte(b2), f.cf());
+                    Byte data = loadImmediateByte(pc);
+                    sbc(a, data, f.cf());
                     break;
                 }
 
@@ -1735,6 +1708,22 @@ class Dmgcpu {
 
             initiateInterrupts();
         }
+    }
+
+    private void call() {
+        call(true);
+    }
+
+    private void call(boolean condition) {
+        Short address = loadImmediateShort(pc);
+        if (condition) {
+            call(address);
+        }
+    }
+
+    private void call(Short address) {
+        pushShort(sp, pc);
+        jp(address);
     }
 
     private void jp(boolean condition, Short address) {
