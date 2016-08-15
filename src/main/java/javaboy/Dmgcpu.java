@@ -594,45 +594,46 @@ class Dmgcpu {
                     c.setValue(b2);
                     break;
 
-                // RRC A
+                /*
+                 RRCA
+                 */
                 case 0x0F:
-                    f.setValue(0);
-                    if (a.getBit(0) == ONE) {
-                        f.cf(ONE);
-                    }
-                    a.setValue(a.intValue() >> 1);
-                    if (f.cf().intValue() == 1) {
-                        a.setBit(7, ONE);
-                    }
-                    if (a.intValue() == 0) {
-                        f.zf(ONE);
-                    }
+                    rrca(a);
                     break;
 
-                // STOP
+                /*
+                 STOP
+                 */
                 case 0x10:
                     pc.inc();
                     break;
 
-                // LD DE, nn
-                case 0x11:
-                    pc.inc();
-                    pc.inc();
-                    d.setValue(b3);
-                    e.setValue(b2);
+                /*
+                 LD DE, nn
+                 */
+                case 0x11: {
+                    Short data = loadImmediateShort(pc);
+                    de.setValue(data.intValue());
                     break;
+                }
 
-                // LD (DE), A
+                /*
+                 LD (DE), A
+                 */
                 case 0x12:
                     addressWrite(de.intValue(), a.intValue());
                     break;
 
-                // INC DE
+                /*
+                 INC DE
+                 */
                 case 0x13:
                     de.inc();
                     break;
 
-                // INC D
+                /*
+                 INC D
+                 */
                 case 0x14:
                     inc(d);
                     break;
@@ -650,20 +651,7 @@ class Dmgcpu {
 
                 // RL A
                 case 0x17:
-                    newf.setValue(0);
-                    if (a.getBit(7) == ONE) {
-                        newf.cf(ONE);
-                    }
-                    a.setValue(a.intValue() << 1);
-
-                    if (f.cf().intValue() == 1) {
-                        a.setBit(0, ONE);
-                    }
-
-                    if (a.intValue() == 0) {
-                        newf.zf(ONE);
-                    }
-                    f.setValue(newf.intValue());
+                    rl(a, f.cf());
                     break;
 
                 // JR n
