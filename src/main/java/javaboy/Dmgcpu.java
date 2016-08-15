@@ -131,6 +131,10 @@ class Dmgcpu {
         applet = a;
     }
 
+    private Byte read(Short addr) {
+        return new Byte(addressRead(addr.intValue()));
+    }
+
     final short addressRead(int addr) {
 
         addr = addr & 0xFFFF;
@@ -555,9 +559,11 @@ class Dmgcpu {
                 /*
                   LD A, (BC)
                  */
-                case 0x0A:
-                    a.setValue(JavaBoy.unsign(addressRead(bc.intValue())));
+                case 0x0A: {
+                    Byte data = read(bc);
+                    a.setValue(data);
                     break;
+                }
 
                 /*
                   DEC BC
@@ -1745,6 +1751,7 @@ class Dmgcpu {
         pc.setValue(address);
 
     }
+
 
     private Byte loadImmediateByte(Short address) {
         Byte immediate = new Byte();
