@@ -1082,18 +1082,18 @@ class Dmgcpu {
                     }
                     break;
 
-                // XOR A, A (== LD A, 0)
+                /*
+                 XOR A, A
+                 */
                 case 0xAF:
                     xor(a, a);
                     break;
 
-                // RET NZ
+                /*
+                 RET NZ
+                 */
                 case 0xC0:
-                    if (f.zf().intValue() == 0) {
-                        pc.setValue((JavaBoy.unsign(addressRead(sp.intValue() + 1)) << 8) + JavaBoy.unsign(addressRead(sp.intValue())));
-                        sp.inc();
-                        sp.inc();
-                    }
+                    ret(f.zf() == ZERO, sp);
                     break;
 
                 // POP BC
@@ -1153,19 +1153,14 @@ class Dmgcpu {
                     break;
 
                 // RET Z
-                case 0xC8:
-                    if (f.zf().intValue() == 1) {
-                        pc.setValue((JavaBoy.unsign(addressRead(sp.intValue() + 1)) << 8) + JavaBoy.unsign(addressRead(sp.intValue())));
-                        sp.inc();
-                        sp.inc();
-                    }
+                case 0xC8: {
+                    ret(f.zf() == ONE, sp);
                     break;
+                }
 
                 // RET
                 case 0xC9:
-                    pc.setValue((JavaBoy.unsign(addressRead(sp.intValue() + 1)) << 8) + JavaBoy.unsign(addressRead(sp.intValue())));
-                    sp.inc();
-                    sp.inc();
+                    ret(sp);
                     break;
 
                 // JP Z, nn
@@ -1395,11 +1390,7 @@ class Dmgcpu {
 
                 // RET NC
                 case 0xD0:
-                    if (f.cf().intValue() == 0) {
-                        pc.setValue((JavaBoy.unsign(addressRead(sp.intValue() + 1)) << 8) + JavaBoy.unsign(addressRead(sp.intValue())));
-                        sp.inc();
-                        sp.inc();
-                    }
+                    ret(f.cf() == ZERO, sp);
                     break;
 
                 // POP DE
@@ -1447,26 +1438,26 @@ class Dmgcpu {
                     break;
                 }
 
-                // RST 10
+                /*
+                 RST 10
+                  */
                 case 0xD7:
                     rst(0x10);
                     break;
 
-                // RET C
+                /*
+                 RET C
+                  */
                 case 0xD8:
-                    if (f.cf().intValue() == 1) {
-                        pc.setValue((JavaBoy.unsign(addressRead(sp.intValue() + 1)) << 8) + JavaBoy.unsign(addressRead(sp.intValue())));
-                        sp.inc();
-                        sp.inc();
-                    }
+                    ret(f.cf() == ONE, sp);
                     break;
 
-                // RETI
+                /*
+                 RETI
+                  */
                 case 0xD9:
                     interruptsEnabled = true;
-                    pc.setValue((JavaBoy.unsign(addressRead(sp.intValue() + 1)) << 8) + JavaBoy.unsign(addressRead(sp.intValue())));
-                    sp.inc();
-                    sp.inc();
+                    ret(sp);
                     break;
 
                 // JP C, nn
@@ -1740,6 +1731,40 @@ class Dmgcpu {
 
             initiateInterrupts();
         }
+    }
+
+    private void ret(Short stackAddress) {
+        Short address = popShort(stackAddress);
+        pc.setValue(address.intValue());
+    }
+
+    private void ret(boolean condition, Short stackAddress) {
+        if (condition) {
+            ret(stackAddress);
+        }
+    }
+
+    private Short popShort(Short address) {
+        Byte lowerByte = pop(address);
+        Byte upperByte = pop(address);
+
+        return new Short(upperByte, lowerByte);
+    }
+
+    private Byte pop(Short address) {
+        Byte top = read(address);
+        address.inc();
+        return top;
+    }
+
+    private void pushShort(Short address, Short data) {
+        push(address, data.getUpperByte());
+        push(address, data.getLowerByte());
+    }
+
+    private void push(Short address, Byte data) {
+        address.dec();
+        write(address, data);
     }
 
     private void jr(boolean condition, Byte addr) {
