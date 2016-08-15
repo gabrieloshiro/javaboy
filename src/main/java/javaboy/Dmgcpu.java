@@ -183,11 +183,11 @@ class Dmgcpu {
 
     }
 
-    private void addressWrite(Short addr, Byte data) {
+    private void write(Short addr, Byte data) {
         addressWrite(addr.intValue(), data.intValue());
     }
 
-    private void addressWrite(Short addr, Short data) {
+    private void write(Short addr, Short data) {
         addressWrite(addr.intValue(), data.getLowerByte().intValue());
         addressWrite(addr.intValue() + 1, data.getUpperByte().intValue());
     }
@@ -499,7 +499,7 @@ class Dmgcpu {
                   LD (BC), A
                  */
                 case 0x02:
-                    addressWrite(bc, a);
+                    write(bc, a);
                     break;
 
                 /*
@@ -544,7 +544,7 @@ class Dmgcpu {
                 */
                 case 0x08: {
                     Short address = loadImmediateShort(pc);
-                    addressWrite(address, sp);
+                    write(address, sp);
                     break;
                 }
 
@@ -949,78 +949,55 @@ class Dmgcpu {
                     break;
                 }
 
-                // LD SP, nn
-                case 0x31:
-                    pc.inc();
-                    pc.inc();
-                    sp.setValue((b3 << 8) + b2);
+                /*
+                 LD SP, nn
+                 */
+                case 0x31: {
+                    Short address = loadImmediateShort(pc);
+                    load(sp, address);
                     break;
+                }
 
-                // LD (HL-), A
+                /*
+                 LD (HL-), A
+                 */
                 case 0x32:
                     addressWrite(hl.intValue(), a.intValue());
                     hl.dec();
                     break;
 
-                // INC SP
+                /*
+                 INC SP
+                 */
                 case 0x33:
                     sp.inc();
                     break;
 
-                // INC (HL)
-                case 0x34:
-                    f.zf(ZERO);
-                    f.nf(ZERO);
-                    f.hf(ZERO);
-
-                    dat = JavaBoy.unsign(addressRead(hl.intValue()));
-                    switch (dat) {
-                        case 0xFF:
-                            f.zf(ONE);
-                            f.hf(ONE);
-                            addressWrite(hl.intValue(), 0x00);
-                            break;
-                        case 0x0F:
-                            f.hf(ONE);
-                            addressWrite(hl.intValue(), 0x10);
-                            break;
-                        default:
-                            addressWrite(hl.intValue(), dat + 1);
-                            break;
-                    }
+                /*
+                 INC (HL)
+                  */
+                case 0x34: {
+                    Byte data = read(hl);
+                    inc(data);
+                    write(hl, data);
                     break;
+                }
 
-                // DEC (HL)
+                /*
+                 DEC (HL)
+                 */
                 case 0x35:
-                    f.zf(ZERO);
-                    f.nf(ONE);
-                    f.hf(ZERO);
-
-                    dat = JavaBoy.unsign(addressRead(hl.intValue()));
-                    switch (dat) {
-                        case 0x00:
-                            f.hf(ONE);
-                            addressWrite(hl.intValue(), 0xFF);
-                            break;
-                        case 0x10:
-                            f.hf(ONE);
-                            addressWrite(hl.intValue(), 0x0F);
-                            break;
-                        case 0x01:
-                            f.zf(ONE);
-                            addressWrite(hl.intValue(), 0x00);
-                            break;
-                        default:
-                            addressWrite(hl.intValue(), dat - 1);
-                            break;
-                    }
+                    hl.dec();
                     break;
 
-                // LD (HL), n
-                case 0x36:
-                    pc.inc();
-                    addressWrite(hl.intValue(), b2);
+                /*
+                 LD (HL), n
+                 */
+                case 0x36: {
+                    Byte address = loadImmediateByte(pc);
+                    write(hl, address);
                     break;
+                }
 
                 // SCF
                 case 0x37:
