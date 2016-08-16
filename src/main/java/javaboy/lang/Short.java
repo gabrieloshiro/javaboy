@@ -1,5 +1,7 @@
 package javaboy.lang;
 
+import static javaboy.lang.BitValue.ONE;
+
 /**
  * Created by gabrieloshiro on 2016-06-27.
  */
@@ -47,4 +49,13 @@ public class Short {
     public void dec() {
         setValue(intValue() - 1);
     }
+
+    public static Short signedShortFromByte(Byte value) {
+        if (value.getBit(7) == ONE) {
+            return new Short(value.intValue() | 0xFF00);
+        }
+
+        return new Short(value.intValue());
+    }
+
 }

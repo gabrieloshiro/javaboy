@@ -20,14 +20,6 @@ public class Byte {
         return value;
     }
 
-    public int signedIntValue() {
-        if (getBit(7) == ONE) {
-            return value | 0xFF00;
-        }
-
-        return value;
-    }
-
     public void setValue(int value) {
         this.value = value & 0xFF;
     }

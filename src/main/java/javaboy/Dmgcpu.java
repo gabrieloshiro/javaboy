@@ -1791,7 +1791,7 @@ class Dmgcpu {
     }
 
     private void add(Short pc, Byte addr) {
-        Short addrShort = new Short(addr.signedIntValue());
+        Short addrShort = Short.signedShortFromByte(addr);
         add(pc, addrShort);
     }
 
