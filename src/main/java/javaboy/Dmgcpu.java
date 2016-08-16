@@ -1368,23 +1368,28 @@ class Dmgcpu {
                     break;
                 }
 
-                // RST 00
+                /*
+                 RST 00
+                  */
                 case 0xC7:
                     rst(0x00);
                     break;
 
-                // RET NC
+                /*
+                 RET NC
+                  */
                 case 0xD0:
                     ret(f.cf() == ZERO, sp);
                     break;
 
-                // POP DE
-                case 0xD1:
-                    e.setValue(JavaBoy.unsign(addressRead(sp.intValue())));
-                    d.setValue(JavaBoy.unsign(addressRead(sp.intValue() + 1)));
-                    sp.inc();
-                    sp.inc();
+                /*
+                 POP DE
+                  */
+                case 0xD1: {
+                    Short data = popShort(sp);
+                    de.setValue(data.intValue());
                     break;
+                }
 
                 /*
                  JP NC, nn
@@ -1475,11 +1480,11 @@ class Dmgcpu {
                     break;
 
                 // POP HL
-                case 0xE1:
-                    hl.setValue((JavaBoy.unsign(addressRead(sp.intValue() + 1)) << 8) + JavaBoy.unsign(addressRead(sp.intValue())));
-                    sp.inc();
-                    sp.inc();
+                case 0xE1: {
+                    Short data = popShort(sp);
+                    load(hl, data);
                     break;
+                }
 
                 // LDH (FF00 + C), A
                 case 0xE2:
@@ -1488,10 +1493,7 @@ class Dmgcpu {
 
                 // PUSH HL
                 case 0xE5:
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue() + 1, h.intValue());
-                    addressWrite(sp.intValue(), l.intValue());
+                    pushShort(sp, hl);
                     break;
 
                 // AND n
@@ -1507,14 +1509,8 @@ class Dmgcpu {
 
                 // ADD SP, nn
                 case 0xE8: {
-                    pc.inc();
-                    int result = sp.intValue() + offset;
-                    if ((result & 0xFFFF0000) != 0) {
-                        f.cf(ONE);
-                    } else {
-                        f.cf(ZERO);
-                    }
-                    sp.setValue(result);
+                    Short data = loadImmediateShort(pc);
+                    add(sp, data);
                     break;
                 }
 
@@ -1526,12 +1522,14 @@ class Dmgcpu {
                     break;
                 }
 
-                // LD (nn), A
-                case 0xEA:
-                    pc.inc();
-                    pc.inc();
-                    addressWrite((b3 << 8) + b2, a.intValue());
+                /*
+                 LD (nn), A
+                 */
+                case 0xEA: {
+                    Short address = loadImmediateShort(pc);
+                    write(address, a);
                     break;
+                }
 
                 // XOR A, n
                 case 0xEE: {
@@ -1540,23 +1538,30 @@ class Dmgcpu {
                     break;
                 }
 
-                // RST 28
+                /*
+                 RST 28
+                 */
                 case 0xEF:
                     rst(0x28);
                     break;
 
-                // LDH A, (n)
-                case 0xF0:
-                    pc.inc();
-                    a.setValue(JavaBoy.unsign(addressRead(0xFF00 + b2)));
-                    break;
+                /*
+                 LDH A, (n)
+                 */
+                case 0xF0: {
+                    Byte addressOffset = loadImmediateByte(pc);
+                    Byte ff = new Byte(0xFF);
 
-                // POP AF
+                    Short address = new Short(ff, addressOffset);
+                    load(a, read(address));
+                    break;
+                }
+
+                /*
+                 POP AF
+                 */
                 case 0xF1:
-                    f.setValue(addressRead(sp.intValue()));
-                    a.setValue(JavaBoy.unsign(addressRead(sp.intValue() + 1)));
-                    sp.inc();
-                    sp.inc();
+                    load(af, popShort(sp));
                     break;
 
                 // LD A, (FF00 + C)
@@ -1606,26 +1611,35 @@ class Dmgcpu {
                     sp.setValue(hl.intValue());
                     break;
 
-                // LD A, (nn)
-                case 0xFA:
-                    pc.inc();
-                    pc.inc();
-                    a.setValue(JavaBoy.unsign(addressRead((b3 << 8) + b2)));
+                /*
+                 LD A, (nn)
+                 */
+                case 0xFA: {
+                    Short address = loadImmediateShort(pc);
+                    Byte data = read(address);
+                    load(a, data);
                     break;
+                }
 
-                // EI
+                /*
+                 EI
+                 */
                 case 0xFB:
                     ieDelay = 1;
                     break;
 
-                // CP n
+                /*
+                 CP n
+                 */
                 case 0xFE: {
                     Byte data = loadImmediateByte(pc);
                     cp(a, data);
                     break;
                 }
 
-                // RST 38
+                /*
+                 RST 38
+                 */
                 case 0xFF:
                     rst(0x38);
                     break;
