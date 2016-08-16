@@ -465,18 +465,18 @@ class Dmgcpu {
         final FlagRegister newf = new FlagRegister();
 
         graphicsChip.startTime = System.currentTimeMillis();
-        int b1, b2, offset;
+        int b2, offset;
 
         while (true) {
             instrCount++;
 
-            b1 = JavaBoy.unsign(addressRead(pc.intValue())); // opcode
+
+
             offset = addressRead(pc.intValue() + 1); // n
             b2 = JavaBoy.unsign((short) offset); // unsigned
+            Byte opcode = loadImmediateByte(pc);
 
-            pc.inc();
-
-            switch (b1) {
+            switch (opcode.intValue()) {
 
                 /*
                   NOP
@@ -1645,9 +1645,9 @@ class Dmgcpu {
                 default:
 
                     // ALU Operations
-                    if ((b1 & 0xC0) == 0x80) {
-                        int operand = registerRead(b1 & 0x07);
-                        switch ((b1 & 0x38) >> 3) {
+                    if ((opcode.intValue() & 0xC0) == 0x80) {
+                        int operand = registerRead(opcode.intValue() & 0x07);
+                        switch ((opcode.intValue() & 0x38) >> 3) {
 
                             // ADC A, r
                             case 1:
@@ -1693,10 +1693,10 @@ class Dmgcpu {
                                 break;
                         }
 
-                    } else if ((b1 & 0xC0) == 0x40) {   // Byte 0x01xxxxxxx indicates 8-bit ld
-                        registerWrite((b1 & 0x38) >> 3, registerRead(b1 & 0x07));
+                    } else if ((opcode.intValue() & 0xC0) == 0x40) {   // Byte 0x01xxxxxxx indicates 8-bit ld
+                        registerWrite((opcode.intValue() & 0x38) >> 3, registerRead(opcode.intValue() & 0x07));
                     } else {
-                        Logger.debug("Unrecognized opcode (" + String.format("%02X", b1) + ")");
+                        Logger.debug("Unrecognized opcode (" + String.format("%02X", opcode.intValue()) + ")");
                         break;
                     }
             }
@@ -1795,8 +1795,8 @@ class Dmgcpu {
 
     private void rst(int address) {
         sp.dec();
+        addressWrite(sp.intValue(), pc.getUpperByte().intValue());
         sp.dec();
-        addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());
         addressWrite(sp.intValue(), pc.getLowerByte().intValue());
         pc.setValue(address);
 
