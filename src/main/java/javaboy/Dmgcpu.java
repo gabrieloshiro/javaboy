@@ -464,16 +464,14 @@ class Dmgcpu {
 
         final FlagRegister newf = new FlagRegister();
 
-        int dat;
         graphicsChip.startTime = System.currentTimeMillis();
-        int b1, b2, b3, offset;
+        int b1, b2, offset;
 
         while (true) {
             instrCount++;
 
             b1 = JavaBoy.unsign(addressRead(pc.intValue())); // opcode
             offset = addressRead(pc.intValue() + 1); // n
-            b3 = JavaBoy.unsign(addressRead(pc.intValue() + 2)); // nn
             b2 = JavaBoy.unsign((short) offset); // unsigned
 
             pc.inc();
