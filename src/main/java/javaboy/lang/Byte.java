@@ -2,9 +2,6 @@ package javaboy.lang;
 
 import static javaboy.lang.BitValue.ONE;
 
-/**
- * Created by gabrieloshiro on 2016-06-27.
- */
 public class Byte {
 
     int value = 0;
