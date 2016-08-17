@@ -442,7 +442,6 @@ class Dmgcpu {
 
             graphicsChip.notifyScanline(JavaBoy.unsign(ioHandler.registers[0x44]));
             ioHandler.registers[0x44] = (byte) (JavaBoy.unsign(ioHandler.registers[0x44]) + 1);
-            //	Logger.debug("Reg 44 = " + JavaBoy.unsign(ioHandler.registers[0x44]));
 
             if (JavaBoy.unsign(ioHandler.registers[0x44]) >= 153) {
                 //     Logger.debug("VBlank");
@@ -1070,7 +1069,9 @@ class Dmgcpu {
                 case 0x52:
                     break;
 
-                // HALT
+                /*
+                 HALT
+                 */
                 case 0x76:
                     interruptsEnabled = true;
                     while (ioHandler.registers[0x0F] == 0) {
@@ -1094,12 +1095,10 @@ class Dmgcpu {
                     break;
 
                 // POP BC
-                case 0xC1:
-                    c.setValue(JavaBoy.unsign(addressRead(sp.intValue())));
-                    b.setValue(JavaBoy.unsign(addressRead(sp.intValue() + 1)));
-                    sp.inc();
-                    sp.inc();
+                case 0xC1: {
+                    load(bc, popShort(sp));
                     break;
+                }
 
                 // JP NZ, n
                 case 0xC2: {
@@ -1574,10 +1573,7 @@ class Dmgcpu {
 
                 // PUSH AF
                 case 0xF5:
-                    sp.dec();
-                    sp.dec();
-                    addressWrite(sp.intValue(), f.intValue());
-                    addressWrite(sp.intValue() + 1, a.intValue());
+                    pushShort(sp, af);
                     break;
 
                 // OR A, n
@@ -1596,15 +1592,7 @@ class Dmgcpu {
                 case 0xF8: {
                     Byte offset = loadImmediateByte(pc);
                     int result = sp.intValue() + offset.intValue();
-
                     add(hl, new Short(result));
-
-                    f.setValue(0);
-                    if ((result & 0x10000) != 0) {
-                        f.cf(ONE);
-                        result = result & 0xFFFF;
-                    }
-                    hl.setValue(result);
                     break;
                 }
 
@@ -1677,7 +1665,6 @@ class Dmgcpu {
 
                             // AND A, r
                             case 4:
-                                a.setValue(a.intValue() & operand);
                                 and(a, new Byte(operand));
                                 break;
 
