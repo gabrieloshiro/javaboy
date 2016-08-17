@@ -465,15 +465,10 @@ class Dmgcpu {
         final FlagRegister newf = new FlagRegister();
 
         graphicsChip.startTime = System.currentTimeMillis();
-        int b2, offset;
 
         while (true) {
             instrCount++;
 
-
-
-            offset = addressRead(pc.intValue() + 1); // n
-            b2 = JavaBoy.unsign((short) offset); // unsigned
             Byte opcode = loadImmediateByte(pc);
 
             switch (opcode.intValue()) {
@@ -587,10 +582,11 @@ class Dmgcpu {
                 /*
                   LD C, n
                  */
-                case 0x0E:
-                    pc.inc();
-                    c.setValue(b2);
+                case 0x0E: {
+                    Byte data = loadImmediateByte(pc);
+                    load(c, data);
                     break;
+                }
 
                 /*
                  RRCA
@@ -646,10 +642,11 @@ class Dmgcpu {
                 /*
                  LD D, n
                  */
-                case 0x16:
-                    pc.inc();
-                    d.setValue(b2);
+                case 0x16: {
+                    Byte data = loadImmediateByte(pc);
+                    load(d, data);
                     break;
+                }
 
                 /*
                  RL A
@@ -661,9 +658,11 @@ class Dmgcpu {
                 /*
                  JR n
                  */
-                case 0x18:
-                    pc.setValue(pc.intValue() + 1 + offset);
+                case 0x18: {
+                    Byte offset = loadImmediateByte(pc);
+                    jr(true, offset);
                     break;
+                }
 
                 /*
                  ADD HL, DE
@@ -1170,11 +1169,11 @@ class Dmgcpu {
 
                 // Shift/bit test
                 case 0xCB: {
-                    pc.inc();
-                    int regNum = b2 & 0x07;
+                    Byte operand = loadImmediateByte(pc);
+                    int regNum = operand.intValue() & 0x07;
                     int data = registerRead(regNum);
-                    if ((b2 & 0xC0) == 0) {
-                        switch ((b2 & 0xF8)) {
+                    if ((operand.intValue() & 0xC0) == 0) {
+                        switch ((operand.intValue() & 0xF8)) {
 
                             // RLC A
                             case 0x00:
@@ -1312,12 +1311,11 @@ class Dmgcpu {
                                 break;
                         }
                     } else {
-
                         int mask;
-                        int bitNumber = (b2 & 0x38) >> 3;
+                        int bitNumber = (operand.intValue() & 0x38) >> 3;
 
                         // BIT n, r
-                        if ((b2 & 0xC0) == 0x40) {
+                        if ((operand.intValue() & 0xC0) == 0x40) {
                             mask = (short) (0x01 << bitNumber);
                             f.nf(ZERO);
                             f.hf(ONE);
@@ -1329,14 +1327,14 @@ class Dmgcpu {
                         }
 
                         // RES n, r
-                        if ((b2 & 0xC0) == 0x80) {
+                        if ((operand.intValue() & 0xC0) == 0x80) {
                             mask = (short) (0xFF - (0x01 << bitNumber));
                             data = (short) (data & mask);
                             registerWrite(regNum, data);
                         }
 
                         // SET n, r
-                        if ((b2 & 0xC0) == 0xC0) {
+                        if ((operand.intValue() & 0xC0) == 0xC0) {
                             mask = (short) (0x01 << bitNumber);
                             data = (short) (data | mask);
                             registerWrite(regNum, data);
@@ -1472,10 +1470,11 @@ class Dmgcpu {
                     break;
 
                 // LDH (n), A
-                case 0xE0:
-                    pc.inc();
-                    addressWrite(0xFF00 + b2, a.intValue());
+                case 0xE0: {
+                    Byte data = loadImmediateByte(pc);
+                    write(new Short(0xFF00 | data.intValue()), a);
                     break;
+                }
 
                 // POP HL
                 case 0xE1: {
@@ -1495,10 +1494,11 @@ class Dmgcpu {
                     break;
 
                 // AND n
-                case 0xE6:
-                    pc.inc();
-                    and(a, new Byte(b2));
+                case 0xE6: {
+                    Byte data = loadImmediateByte(pc);
+                    and(a, data);
                     break;
+                }
 
                 // RST 20
                 case 0xE7:
@@ -1581,10 +1581,11 @@ class Dmgcpu {
                     break;
 
                 // OR A, n
-                case 0xF6:
-                    pc.inc();
-                    or(a, new Byte(b2));
+                case 0xF6: {
+                    Byte data = loadImmediateByte(pc);
+                    or(a, data);
                     break;
+                }
 
                 // RST 30
                 case 0xF7:
@@ -1593,8 +1594,11 @@ class Dmgcpu {
 
                 // LD HL, SP + n  ** HALFCARRY FLAG NOT SET ***
                 case 0xF8: {
-                    pc.inc();
-                    int result = sp.intValue() + offset;
+                    Byte offset = loadImmediateByte(pc);
+                    int result = sp.intValue() + offset.intValue();
+
+                    add(hl, new Short(result));
+
                     f.setValue(0);
                     if ((result & 0x10000) != 0) {
                         f.cf(ONE);
