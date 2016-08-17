@@ -1704,7 +1704,6 @@ class Dmgcpu {
 
             }
 
-
             if (interruptsEnabled) {
                 checkInterrupts();
             }
