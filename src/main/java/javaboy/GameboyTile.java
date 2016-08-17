@@ -74,7 +74,7 @@ class GameboyTile {
      * Create the image of a tile in the tile cache by reading the relevant data from video
      * memory
      */
-    void updateImage(byte[] videoRam, int offset, int attribs) {
+    private void updateImage(byte[] videoRam, int offset, int attribs) {
         int px, py;
         int rgbValue;
 
