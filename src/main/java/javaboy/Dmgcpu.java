@@ -291,7 +291,7 @@ class Dmgcpu {
                 l.setValue(data);
                 break;
             case 6:
-                addressWrite(hl.intValue(), data);
+                write(hl, new Byte(data));
                 break;
             case 7:
                 a.setValue(data);
@@ -341,8 +341,7 @@ class Dmgcpu {
         if ((intFlags & ieReg) != 0) {
             sp.dec();
             sp.dec();
-            addressWrite(sp.intValue() + 1, pc.getUpperByte().intValue());  // Push current program counter onto stack
-            addressWrite(sp.intValue(), pc.getLowerByte().intValue());
+            write(sp, pc);// Push current program counter onto stack
             interruptsEnabled = false;
 
             if ((intFlags & ieReg & INT_VBLANK) != 0) {
@@ -609,7 +608,7 @@ class Dmgcpu {
                  LD (DE), A
                  */
                 case 0x12:
-                    addressWrite(de.intValue(), a.intValue());
+                    write(de, a);
                     break;
 
                 /*
@@ -735,7 +734,7 @@ class Dmgcpu {
                  LDH (HL), A
                  */
                 case 0x22:
-                    addressWrite(hl.intValue(), a.intValue());
+                    write(hl, a);
                     hl.inc();
                     break;
 
@@ -955,7 +954,7 @@ class Dmgcpu {
                  LD (HL-), A
                  */
                 case 0x32:
-                    addressWrite(hl.intValue(), a.intValue());
+                    write(hl, a);
                     hl.dec();
                     break;
 
@@ -1484,9 +1483,11 @@ class Dmgcpu {
                 }
 
                 // LDH (FF00 + C), A
-                case 0xE2:
-                    addressWrite(0xFF00 + c.intValue(), a.intValue());
+                case 0xE2: {
+                    Short address = new Short(new Byte(0xFF), c);
+                    write(address, a);
                     break;
+                }
 
                 // PUSH HL
                 case 0xE5:
@@ -1789,11 +1790,10 @@ class Dmgcpu {
 
     private void rst(int address) {
         sp.dec();
-        addressWrite(sp.intValue(), pc.getUpperByte().intValue());
+        write(sp, pc.getUpperByte());
         sp.dec();
-        addressWrite(sp.intValue(), pc.getLowerByte().intValue());
-        pc.setValue(address);
-
+        write(sp, pc.getLowerByte());
+        load(pc, new Short(address));
     }
 
 
