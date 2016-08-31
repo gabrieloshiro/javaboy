@@ -1,10 +1,6 @@
 package javaboy.lang;
 
-/**
- * Created by gabrieloshiro on 2016-08-10.
- */
 public enum BitValue {
-
     ZERO,
     ONE;
 

@@ -125,7 +125,6 @@ class Dmgcpu {
             Logger.debug("Error opening ROM image");
         }
 
-
         graphicsChip = new GraphicsChip(a, this);
         ioHandler = new IoHandler(this);
         applet = a;
@@ -892,10 +891,12 @@ class Dmgcpu {
                 /*
                  LDI A, (HL)
                  */
-                case 0x2A:
-                    a.setValue(JavaBoy.unsign(addressRead(hl.intValue())));
+                case 0x2A: {
+                    Byte data = read(hl);
+                    load(a, data);
                     hl.inc();
                     break;
+                }
 
                 /*
                  DEC HL
