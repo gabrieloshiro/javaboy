@@ -184,7 +184,9 @@ class IoHandler {
                     if (dmaLen > 2048) dmaLen = 2048;
 
                     for (int r = 0; r < dmaLen; r++) {
-                        dmgcpu.write(new Short(dmaDst + r), dmgcpu.read(new Short(dmaSrc + r)));
+                        Short destination = new Short(dmaDst + r);
+                        Short source = new Short(dmaSrc + r);
+                        dmgcpu.write(destination, dmgcpu.read(source));
                     }
                 }
 

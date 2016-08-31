@@ -15,7 +15,7 @@ import java.io.InputStream;
 import static javaboy.lang.BitValue.ONE;
 import static javaboy.lang.BitValue.ZERO;
 
-class Dmgcpu {
+class Dmgcpu implements Readable, Writable {
 
     private final Byte a = new Byte();
     private final FlagRegister f = new FlagRegister();
@@ -130,9 +130,8 @@ class Dmgcpu {
         applet = a;
     }
 
-    final Byte read(Short addr) {
-
-        //addr = addr & 0xFFFF;
+    @Override
+    public Byte read(Short addr) {
 
         switch ((addr.intValue() & 0xF000)) {
             case 0x0000:
@@ -178,12 +177,13 @@ class Dmgcpu {
 
     }
 
-    private void write(Short addr, Short data) {
+    public void write(Short addr, Short data) {
         write(addr, data.getLowerByte());
         write(new Short(addr.intValue() + 1), data.getUpperByte());
     }
 
-    final void write(Short addr, Byte data) {
+    @Override
+    public void write(Short addr, Byte data) {
 
         switch (addr.intValue() & 0xF000) {
             case 0x0000:
@@ -2084,4 +2084,5 @@ class Dmgcpu {
     private void load(Short destination, Short source) {
         destination.setValue(source.intValue());
     }
+
 }
