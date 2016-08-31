@@ -1025,12 +1025,16 @@ class Dmgcpu {
                 /*
                  LD A, (HL-)
                  */
-                case 0x3A:
-                    a.setValue(JavaBoy.unsign(addressRead(hl.intValue())));
+                case 0x3A: {
+                    Byte data = read(hl);
+                    load(a, data);
                     hl.dec();
                     break;
+                }
 
-                // DEC SP
+                /*
+                 DEC SP
+                 */
                 case 0x3B:
                     sp.dec();
                     break;
