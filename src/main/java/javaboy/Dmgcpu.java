@@ -1567,9 +1567,12 @@ class Dmgcpu {
                     break;
 
                 // LD A, (FF00 + C)
-                case 0xF2:
-                    a.setValue(JavaBoy.unsign(addressRead(0xFF00 + c.intValue())));
+                case 0xF2: {
+                    Short address = new Short(new Byte(0xFF), c);
+                    Byte data = read(address);
+                    load(a, data);
                     break;
+                }
 
                 // DI
                 case 0xF3:
