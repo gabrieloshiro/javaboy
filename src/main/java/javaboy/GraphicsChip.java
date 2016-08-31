@@ -1,7 +1,8 @@
 package javaboy;
 
-import java.awt.*;
+import javaboy.lang.Short;
 
+import java.awt.*;
 class GraphicsChip {
 
     /**
@@ -181,10 +182,10 @@ class GraphicsChip {
 
         // Draw sprites
         for (int i = 0; i < 40; i++) {
-            int spriteX = dmgcpu.addressRead(0xFE01 + (i * 4)) - 8;
-            int spriteY = dmgcpu.addressRead(0xFE00 + (i * 4)) - 16;
-            int tileNum = dmgcpu.addressRead(0xFE02 + (i * 4));
-            int attributes = dmgcpu.addressRead(0xFE03 + (i * 4));
+            int spriteX = dmgcpu.read(new Short(0xFE01 + (i * 4))).intValue() - 8;
+            int spriteY = dmgcpu.read(new Short(0xFE00 + (i * 4))).intValue() - 16;
+            int tileNum = dmgcpu.read(new Short(0xFE02 + (i * 4))).intValue();
+            int attributes = dmgcpu.read(new Short(0xFE03 + (i * 4))).intValue();
 
             if ((attributes & 0x80) >> 7 == priority) {
 

@@ -130,15 +130,11 @@ class Dmgcpu {
         applet = a;
     }
 
-    private Byte read(Short addr) {
-        return new Byte(addressRead(addr.intValue()));
-    }
+    final Byte read(Short addr) {
 
-    final short addressRead(int addr) {
+        //addr = addr & 0xFFFF;
 
-        addr = addr & 0xFFFF;
-
-        switch ((addr & 0xF000)) {
+        switch ((addr.intValue() & 0xF000)) {
             case 0x0000:
             case 0x1000:
             case 0x2000:
@@ -147,37 +143,37 @@ class Dmgcpu {
             case 0x5000:
             case 0x6000:
             case 0x7000:
-                return rom[addr];
+                return new Byte(rom[addr.intValue()]);
 
             case 0x8000:
             case 0x9000:
-                return graphicsChip.addressRead(addr - 0x8000);
+                return new Byte(graphicsChip.addressRead(addr.intValue() - 0x8000));
 
             case 0xA000:
             case 0xB000:
-                return rom[addr];
+                return new Byte(rom[addr.intValue()]);
 
             case 0xC000:
-                return (mainRam[addr - 0xC000]);
+                return new Byte((mainRam[addr.intValue() - 0xC000]));
 
             case 0xD000:
-                return (mainRam[addr - 0xD000]);
+                return new Byte((mainRam[addr.intValue() - 0xD000]));
 
             case 0xE000:
-                return mainRam[addr - 0xE000];
+                return new Byte(mainRam[addr.intValue() - 0xE000]);
 
             case 0xF000:
-                if (addr < 0xFE00) {
-                    return mainRam[addr - 0xE000];
-                } else if (addr < 0xFF00) {
-                    return (short) (oam[addr - 0xFE00] & 0x00FF);
+                if (addr.intValue() < 0xFE00) {
+                    return new Byte(mainRam[addr.intValue() - 0xE000]);
+                } else if (addr.intValue() < 0xFF00) {
+                    return new Byte((oam[addr.intValue() - 0xFE00] & 0x00FF));
                 } else {
-                    return ioHandler.ioRead(addr - 0xFF00);
+                    return new Byte(ioHandler.ioRead(addr.intValue() - 0xFF00));
                 }
 
             default:
                 Logger.debug("Tried to read address " + addr + ".  pc = " + String.format("%04X", pc.intValue()));
-                return 0xFF;
+                throw new IllegalStateException("");
         }
 
     }
@@ -263,7 +259,7 @@ class Dmgcpu {
             case 5:
                 return l.intValue();
             case 6:
-                return JavaBoy.unsign(addressRead(hl.intValue()));
+                return read(hl).intValue();
             case 7:
                 return a.intValue();
             default:

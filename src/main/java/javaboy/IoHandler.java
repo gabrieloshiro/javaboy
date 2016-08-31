@@ -1,6 +1,7 @@
 package javaboy;
 
 import org.pmw.tinylog.Logger;
+import javaboy.lang.Short;
 
 /**
  * This class handles all the memory mapped IO in the range
@@ -143,7 +144,7 @@ class IoHandler {
 
                 // This could be sped up using System.arrayCopy, but hey.
                 for (int i = 0x00; i < 0xA0; i++) {
-                    dmgcpu.addressWrite(0xFE00 + i, dmgcpu.addressRead(sourceAddress + i));
+                    dmgcpu.addressWrite(0xFE00 + i, dmgcpu.read(new Short(sourceAddress + i)).intValue());
                 }
                 // This is meant to be run at the same time as the CPU is executing
                 // instructions, but I don't think it's crucial.
@@ -183,7 +184,7 @@ class IoHandler {
                     if (dmaLen > 2048) dmaLen = 2048;
 
                     for (int r = 0; r < dmaLen; r++) {
-                        dmgcpu.addressWrite(dmaDst + r, dmgcpu.addressRead(dmaSrc + r));
+                        dmgcpu.addressWrite(dmaDst + r, dmgcpu.read(new Short(dmaSrc + r)).intValue());
                     }
                 }
 
