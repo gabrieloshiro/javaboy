@@ -144,7 +144,7 @@ class IoHandler {
 
                 // This could be sped up using System.arrayCopy, but hey.
                 for (int i = 0x00; i < 0xA0; i++) {
-                    dmgcpu.addressWrite(0xFE00 + i, dmgcpu.read(new Short(sourceAddress + i)).intValue());
+                    dmgcpu.write(new Short(0xFE00 + i), dmgcpu.read(new Short(sourceAddress + i)));
                 }
                 // This is meant to be run at the same time as the CPU is executing
                 // instructions, but I don't think it's crucial.
@@ -184,7 +184,7 @@ class IoHandler {
                     if (dmaLen > 2048) dmaLen = 2048;
 
                     for (int r = 0; r < dmaLen; r++) {
-                        dmgcpu.addressWrite(dmaDst + r, dmgcpu.read(new Short(dmaSrc + r)).intValue());
+                        dmgcpu.write(new Short(dmaDst + r), dmgcpu.read(new Short(dmaSrc + r)));
                     }
                 }
 

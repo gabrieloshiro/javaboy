@@ -178,20 +178,14 @@ class Dmgcpu {
 
     }
 
-    private void write(Short addr, Byte data) {
-        addressWrite(addr.intValue(), data.intValue());
-    }
-
     private void write(Short addr, Short data) {
-        addressWrite(addr.intValue(), data.getLowerByte().intValue());
-        addressWrite(addr.intValue() + 1, data.getUpperByte().intValue());
+        write(addr, data.getLowerByte());
+        write(new Short(addr.intValue() + 1), data.getUpperByte());
     }
 
-    final void addressWrite(int addr, int data) {
+    final void write(Short addr, Byte data) {
 
-        addr = addr & 0xFFFF;
-
-        switch (addr & 0xF000) {
+        switch (addr.intValue() & 0xF000) {
             case 0x0000:
             case 0x1000:
             case 0x2000:
@@ -204,7 +198,7 @@ class Dmgcpu {
 
             case 0x8000:
             case 0x9000:
-                graphicsChip.addressWrite(addr - 0x8000, (byte) data);
+                graphicsChip.addressWrite(addr.intValue() - 0x8000, (byte) data.intValue());
                 break;
 
             case 0xA000:
@@ -212,28 +206,28 @@ class Dmgcpu {
                 break;
 
             case 0xC000:
-                mainRam[addr - 0xC000] = (byte) data;
+                mainRam[addr.intValue() - 0xC000] = (byte) data.intValue();
                 break;
 
             case 0xD000:
-                mainRam[addr - 0xD000] = (byte) data;
+                mainRam[addr.intValue() - 0xD000] = (byte) data.intValue();
                 break;
 
             case 0xE000:
-                mainRam[addr - 0xE000] = (byte) data;
+                mainRam[addr.intValue() - 0xE000] = (byte) data.intValue();
                 break;
 
             case 0xF000:
-                if (addr < 0xFE00) {
+                if (addr.intValue() < 0xFE00) {
                     try {
-                        mainRam[addr - 0xE000] = (byte) data;
+                        mainRam[addr.intValue() - 0xE000] = (byte) data.intValue();
                     } catch (ArrayIndexOutOfBoundsException e) {
                         Logger.debug("Address error: " + addr + " pc = " + String.format("%04X", pc.intValue()));
                     }
-                } else if (addr < 0xFF00) {
-                    oam[addr - 0xFE00] = (byte) data;
+                } else if (addr.intValue() < 0xFF00) {
+                    oam[addr.intValue() - 0xFE00] = (byte) data.intValue();
                 } else {
-                    ioHandler.ioWrite(addr - 0xFF00, (short) data);
+                    ioHandler.ioWrite(addr.intValue() - 0xFF00, (short) data.intValue());
                 }
                 break;
         }
