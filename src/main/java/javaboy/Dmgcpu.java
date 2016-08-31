@@ -1802,19 +1802,16 @@ class Dmgcpu {
 
 
     private Byte loadImmediateByte(Short address) {
-        Byte immediate = new Byte();
-        immediate.setValue(addressRead(address.intValue()));
+        Byte immediate = read(address);
         address.inc();
         return immediate;
     }
 
     private Short loadImmediateShort(Short address) {
-        Short immediate = new Short();
         Byte lowerByte = loadImmediateByte(address);
-        immediate.getLowerByte().setValue(lowerByte.intValue());
         Byte upperByte = loadImmediateByte(address);
-        immediate.getUpperByte().setValue(upperByte.intValue());
 
+        Short immediate = new Short(upperByte, lowerByte);
         return immediate;
     }
 
