@@ -23,10 +23,31 @@ public class Memory implements Readable, Writable {
 
         this.firstAddress = firstAddress;
         this.size = size;
-        
+
         for (int i = firstAddress; i < size; i++) {
             Byte data = new Byte();
             memory.add(data);
+        }
+    }
+
+    public Memory(int firstAddress, byte[] data) {
+        if (firstAddress < 0) {
+            throw new IllegalArgumentException();
+        }
+
+        if (data == null) {
+            throw new IllegalArgumentException();
+        }
+
+        if (data.length < 1) {
+            throw new IllegalArgumentException();
+        }
+
+        this.firstAddress = firstAddress;
+        this.size = data.length;
+
+        for (int i = 0; i < size; i++) {
+            memory.add(new Byte(data[i]));
         }
     }
 

@@ -122,11 +122,8 @@ class Dmgcpu implements Readable, Writable {
             is.read(rom);
             is.close();
 
-            newRom = new Memory(0x0000, ROM_SIZE);
-            for (int i = 0; i < ROM_SIZE; i++) {
-                newRom.write(new Short(i), new Byte(rom[i]));
-            }
-
+            newRom = new Memory(0x0000, rom);
+            
             Logger.debug("Loaded ROM 'bgblogo.gb'.  2 ROM banks, 32Kb.  0 RAM banks. Type: ROM Only");
 
         } catch (IOException e) {

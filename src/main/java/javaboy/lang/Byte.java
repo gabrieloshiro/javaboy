@@ -13,6 +13,10 @@ public class Byte {
         setValue(i);
     }
 
+    public Byte(byte value) {
+        setValue(value);
+    }
+
     public int intValue() {
         return value;
     }
