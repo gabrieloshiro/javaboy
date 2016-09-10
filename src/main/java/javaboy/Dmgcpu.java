@@ -37,7 +37,7 @@ class Dmgcpu implements Readable, Writable {
     private final Short pc = new Short();
     private final Short sp = new Short();
 
-    private Memory newRom;
+    private Memory rom;
 
     /**
      * The number of instructions that have been executed since the
@@ -102,6 +102,8 @@ class Dmgcpu implements Readable, Writable {
     // 32Kb for GBC
     private byte[] mainRam = new byte[0x8000];
 
+
+
     // 256 bytes at top of RAM are used mainly for registers
     private byte[] oam = new byte[0x100];
 
@@ -115,15 +117,13 @@ class Dmgcpu implements Readable, Writable {
         try {
             is = new FileInputStream(new File("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/bgblogo.gb"));
 
+            byte[] data = new byte[ROM_SIZE];   // Recreate the ROM array with the correct size
 
-
-            byte[] rom = new byte[ROM_SIZE];   // Recreate the ROM array with the correct size
-
-            is.read(rom);
+            is.read(data);
             is.close();
 
-            newRom = new Memory(0x0000, rom);
-            
+            this.rom = new Memory(0x0000, data);
+
             Logger.debug("Loaded ROM 'bgblogo.gb'.  2 ROM banks, 32Kb.  0 RAM banks. Type: ROM Only");
 
         } catch (IOException e) {
@@ -147,7 +147,7 @@ class Dmgcpu implements Readable, Writable {
             case 0x5000:
             case 0x6000:
             case 0x7000:
-                return newRom.read(addr);
+                return rom.read(addr);
 
             case 0x8000:
             case 0x9000:
@@ -155,7 +155,7 @@ class Dmgcpu implements Readable, Writable {
 
             case 0xA000:
             case 0xB000:
-                return newRom.read(addr);
+                return rom.read(addr);
 
             case 0xC000:
                 return new Byte((mainRam[addr.intValue() - 0xC000]));
