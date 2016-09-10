@@ -8,8 +8,7 @@ import java.util.ArrayList;
 public class MemoryBank implements Readable, Writable {
 
     private final int numberOfBanks;
-    private final int firstAddress;
-    private final int memorySize;
+    private int currentBank;
 
     private ArrayList<Memory> memoryBank = new ArrayList<>();
 
@@ -18,8 +17,6 @@ public class MemoryBank implements Readable, Writable {
             throw new IllegalArgumentException();
         }
 
-        this.firstAddress = firstAddress;
-        this.memorySize = memorySize;
         this.numberOfBanks = numberOfBanks;
 
         for (int i = 0; i < numberOfBanks; i++) {
@@ -28,24 +25,25 @@ public class MemoryBank implements Readable, Writable {
         }
     }
 
-    public int getFirstAddress() {
-        return firstAddress;
+    public int getCurrentBank() {
+        return currentBank;
     }
 
-    public int getMemorySize() {
-        return memorySize;
-    }
+    public void setCurrentBank(int currentBank) {
+        if (currentBank > numberOfBanks || currentBank < 0) {
+            throw new IllegalArgumentException("");
+        }
 
-    public int getNumberOfBanks() {
-        return numberOfBanks;
+        this.currentBank = currentBank;
     }
 
     @Override
     public Byte read(Short address) {
-        return null;
+        return memoryBank.get(currentBank).read(address);
     }
 
     @Override
     public void write(Short address, Byte data) {
+        memoryBank.get(currentBank).write(address, data);
     }
 }
