@@ -23,9 +23,8 @@ public class Memory implements Readable, Writable {
 
         this.firstAddress = firstAddress;
         this.size = size;
-
-        int lastAddress = getLastAddress();
-        for (int i = firstAddress; i < lastAddress; i++) {
+        
+        for (int i = firstAddress; i < size; i++) {
             Byte data = new Byte();
             memory.add(data);
         }

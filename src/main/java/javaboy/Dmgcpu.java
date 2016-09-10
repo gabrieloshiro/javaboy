@@ -17,6 +17,7 @@ import static javaboy.lang.BitValue.ZERO;
 
 class Dmgcpu implements Readable, Writable {
 
+    private static final int ROM_SIZE = 0x8000;
     private final Byte a = new Byte();
     private final FlagRegister f = new FlagRegister();
     private final Short af = new Short(a, f);
@@ -36,7 +37,7 @@ class Dmgcpu implements Readable, Writable {
     private final Short pc = new Short();
     private final Short sp = new Short();
 
-    private byte[] rom;
+    private Memory newRom;
 
     /**
      * The number of instructions that have been executed since the
@@ -114,10 +115,17 @@ class Dmgcpu implements Readable, Writable {
         try {
             is = new FileInputStream(new File("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/bgblogo.gb"));
 
-            rom = new byte[0x08000];   // Recreate the ROM array with the correct size
+
+
+            byte[] rom = new byte[ROM_SIZE];   // Recreate the ROM array with the correct size
 
             is.read(rom);
             is.close();
+
+            newRom = new Memory(0x0000, ROM_SIZE);
+            for (int i = 0; i < ROM_SIZE; i++) {
+                newRom.write(new Short(i), new Byte(rom[i]));
+            }
 
             Logger.debug("Loaded ROM 'bgblogo.gb'.  2 ROM banks, 32Kb.  0 RAM banks. Type: ROM Only");
 
@@ -142,7 +150,7 @@ class Dmgcpu implements Readable, Writable {
             case 0x5000:
             case 0x6000:
             case 0x7000:
-                return new Byte(rom[addr.intValue()]);
+                return newRom.read(addr);
 
             case 0x8000:
             case 0x9000:
@@ -150,7 +158,7 @@ class Dmgcpu implements Readable, Writable {
 
             case 0xA000:
             case 0xB000:
-                return new Byte(rom[addr.intValue()]);
+                return newRom.read(addr);
 
             case 0xC000:
                 return new Byte((mainRam[addr.intValue() - 0xC000]));
