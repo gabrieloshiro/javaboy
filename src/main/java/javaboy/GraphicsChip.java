@@ -337,7 +337,7 @@ class GraphicsChip {
     /**
      * Draw the current graphics frame into the given graphics context
      */
-    boolean draw(Graphics g, int startX, int startY) {
+    boolean draw(Graphics graphics, int startX, int startY) {
         int tileNum;
 
         calculateFPS();
@@ -396,7 +396,7 @@ class GraphicsChip {
         // Draw sprites if the flag was on at any time during this frame
         drawSprites(back, 0);
 
-        g.drawImage(backBuffer, startX, startY, null);
+        graphics.drawImage(backBuffer, startX, startY, null);
 
         frameDone = true;
         return true;

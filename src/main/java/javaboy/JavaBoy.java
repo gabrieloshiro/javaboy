@@ -33,15 +33,15 @@ public class JavaBoy extends Frame {
     /**
      * When running as an applet, updates the screen when necessary
      */
-    public void paint(Graphics g) {
+    public void paint(Graphics graphics) {
         if (cpu == null) return;
 
-           cpu.graphicsChip.draw(g, 0, 0);
+        cpu.graphicsChip.draw(graphics, 0, 0);
     }
 
     @Override
-    public void update(Graphics g) {
-        paint(g);
+    public void update(Graphics graphics) {
+        paint(graphics);
     }
 
     /**
@@ -56,7 +56,7 @@ public class JavaBoy extends Frame {
         requestFocus();
 
         cpu = new Cpu(this);
-        Logger.debug("- CPU Reset");
+        Logger.debug("CPU Reset");
         cpu.reset();
         cpu.execute();
     }

@@ -57,8 +57,8 @@ class IoHandler {
                     output |= 4;
                 }
 
-                int cyclePos = instructionCounter.getCount() % cpu.INSTRS_PER_HBLANK;
-                int sectionLength = cpu.INSTRS_PER_HBLANK / 6;
+                int cyclePos = instructionCounter.getCount() % GraphicsConstants.INSTRS_PER_HBLANK;
+                int sectionLength = GraphicsConstants.INSTRS_PER_HBLANK / 6;
 
                 if (JavaBoy.unsign(registers[0x44]) > 144) {
                     output |= 1;
@@ -95,7 +95,7 @@ class IoHandler {
             case 0x07:
                 cpu.timaEnabled = (data & 0x04) != 0;
 
-                int instrsPerSecond = cpu.INSTRS_PER_VBLANK * 60;
+                int instrsPerSecond = GraphicsConstants.INSTRS_PER_VBLANK * 60;
                 int clockFrequency = (data & 0x03);
 
                 switch (clockFrequency) {

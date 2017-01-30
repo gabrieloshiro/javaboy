@@ -51,54 +51,10 @@ class Cpu implements Readable, Writable {
     boolean timaEnabled = false;
     int instrsPerTima = 6000;
 
-    final short INSTRS_PER_VBLANK = 9000; /* 10000  */
-
-    /**
-     * Used to set the speed of the emulator.  This controls how
-     * many instructions are executed for each horizontal line scanned
-     * on the screen.  Multiply by 154 to find out how many instructions
-     * per frame.
-     */
-    private final short BASE_INSTRS_PER_HBLANK = 60;    /* 60    */
-    short INSTRS_PER_HBLANK = BASE_INSTRS_PER_HBLANK;
-
-    /**
-     * Used to set the speed of DIV increments
-     */
-    private final short BASE_INSTRS_PER_DIV = 33;    /* 33    */
-
-    // Constants for interrupts
-
-    /**
-     * Vertical blank interrupt
-     */
-    private final short INT_VBLANK = 0x01;
-
-    /**
-     * LCD Coincidence interrupt
-     */
-    private final short INT_LCDC = 0x02;
-
-    /**
-     * TIMA (programmable timer) interrupt
-     */
-    private final short INT_TIMA = 0x04;
-
-    /**
-     * Serial interrupt
-     */
-    private final short INT_SER = 0x08;
-
-    /**
-     * P10 - P13 (Joypad) interrupt
-     */
-    private final short INT_P10 = 0x10;
 
     // 8Kb main system RAM appears at 0xC000 in address space
     // 32Kb for GBC
     private byte[] mainRam = new byte[0x8000];
-
-
 
     // 256 bytes at top of RAM are used mainly for registers
     private byte[] oam = new byte[0x100];
@@ -338,21 +294,21 @@ class Cpu implements Readable, Writable {
             write(sp, pc);// Push current program counter onto stack
             interruptsEnabled = false;
 
-            if ((intFlags & ieReg & INT_VBLANK) != 0) {
+            if ((intFlags & ieReg & Interrupts.INT_VBLANK) != 0) {
                 pc.setValue(0x40);                      // Jump to Vblank interrupt address
-                intFlags -= INT_VBLANK;
-            } else if ((intFlags & ieReg & INT_LCDC) != 0) {
+                intFlags -= Interrupts.INT_VBLANK;
+            } else if ((intFlags & ieReg & Interrupts.INT_LCDC) != 0) {
                 pc.setValue(0x48);
-                intFlags -= INT_LCDC;
-            } else if ((intFlags & ieReg & INT_TIMA) != 0) {
+                intFlags -= Interrupts.INT_LCDC;
+            } else if ((intFlags & ieReg & Interrupts.INT_TIMA) != 0) {
                 pc.setValue(0x50);
-                intFlags -= INT_TIMA;
-            } else if ((intFlags & ieReg & INT_SER) != 0) {
+                intFlags -= Interrupts.INT_TIMA;
+            } else if ((intFlags & ieReg & Interrupts.INT_SER) != 0) {
                 pc.setValue(0x58);
-                intFlags -= INT_SER;
-            } else if ((intFlags & ieReg & INT_P10) != 0) {    // Joypad interrupt
+                intFlags -= Interrupts.INT_SER;
+            } else if ((intFlags & ieReg & Interrupts.INT_P10) != 0) {    // Joypad interrupt
                 pc.setValue(0x60);
-                intFlags -= INT_P10;
+                intFlags -= Interrupts.INT_P10;
             }
 
             ioHandler.registers[0x0F] = (byte) intFlags;
@@ -373,45 +329,44 @@ class Cpu implements Readable, Writable {
         if (timaEnabled && ((instructionCounter.getCount() % instrsPerTima) == 0)) {
             if (JavaBoy.unsign(ioHandler.registers[0x05]) == 0) {
                 ioHandler.registers[0x05] = ioHandler.registers[0x06]; // Set TIMA modulo
-                if ((ioHandler.registers[0xFF] & INT_TIMA) != 0)
-                    triggerInterrupt(INT_TIMA);
+                if ((ioHandler.registers[0xFF] & Interrupts.INT_TIMA) != 0)
+                    triggerInterrupt(Interrupts.INT_TIMA);
             }
             ioHandler.registers[0x05]++;
         }
 
-        short INSTRS_PER_DIV = BASE_INSTRS_PER_DIV;
+        short INSTRS_PER_DIV = GraphicsConstants.BASE_INSTRS_PER_DIV;
         if ((instructionCounter.getCount() % INSTRS_PER_DIV) == 0) {
             ioHandler.registers[0x04]++;
         }
 
-        if ((instructionCounter.getCount() % INSTRS_PER_HBLANK) == 0) {
-
+        if ((instructionCounter.getCount() % GraphicsConstants.INSTRS_PER_HBLANK) == 0) {
 
             // LCY Coincidence
             // The +1 is due to the LCY register being just about to be incremented
             int cline = JavaBoy.unsign(ioHandler.registers[0x44]) + 1;
             if (cline == 152) cline = 0;
 
-            if (((ioHandler.registers[0xFF] & INT_LCDC) != 0) &&
+            if (((ioHandler.registers[0xFF] & Interrupts.INT_LCDC) != 0) &&
                     ((ioHandler.registers[0x41] & 64) != 0) &&
                     (JavaBoy.unsign(ioHandler.registers[0x45]) == cline) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90)) {
-                triggerInterrupt(INT_LCDC);
+                triggerInterrupt(Interrupts.INT_LCDC);
             }
 
             // Trigger on every line
-            if (((ioHandler.registers[0xFF] & INT_LCDC) != 0) &&
+            if (((ioHandler.registers[0xFF] & Interrupts.INT_LCDC) != 0) &&
                     ((ioHandler.registers[0x41] & 0x8) != 0) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90)) {
-                triggerInterrupt(INT_LCDC);
+                triggerInterrupt(Interrupts.INT_LCDC);
             }
 
             if (JavaBoy.unsign(ioHandler.registers[0x44]) == 143) {
                 for (int r = 144; r < 170; r++) {
                     graphicsChip.notifyScanline(r);
                 }
-                if (((ioHandler.registers[0x40] & 0x80) != 0) && ((ioHandler.registers[0xFF] & INT_VBLANK) != 0)) {
-                    triggerInterrupt(INT_VBLANK);
-                    if (((ioHandler.registers[0x41] & 16) != 0) && ((ioHandler.registers[0xFF] & INT_LCDC) != 0)) {
-                        triggerInterrupt(INT_LCDC);
+                if (((ioHandler.registers[0x40] & 0x80) != 0) && ((ioHandler.registers[0xFF] & Interrupts.INT_VBLANK) != 0)) {
+                    triggerInterrupt(Interrupts.INT_VBLANK);
+                    if (((ioHandler.registers[0x41] & 16) != 0) && ((ioHandler.registers[0xFF] & Interrupts.INT_LCDC) != 0)) {
+                        triggerInterrupt(Interrupts.INT_LCDC);
                     }
                 }
 
