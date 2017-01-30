@@ -15,7 +15,7 @@ import java.io.InputStream;
 import static javaboy.lang.Bit.ONE;
 import static javaboy.lang.Bit.ZERO;
 
-class Dmgcpu implements Readable, Writable {
+class Cpu implements Readable, Writable {
 
     private static final int ROM_SIZE = 0x8000;
     private final Byte a = new Byte();
@@ -39,11 +39,7 @@ class Dmgcpu implements Readable, Writable {
 
     private Memory rom;
 
-    /**
-     * The number of instructions that have been executed since the
-     * last reset
-     */
-    int instrCount = 0;
+    private InstructionCounter instructionCounter = new InstructionCounter();
 
     private boolean interruptsEnabled = false;
 
@@ -111,7 +107,7 @@ class Dmgcpu implements Readable, Writable {
     IoHandler ioHandler;
     private Component applet;
 
-    Dmgcpu(Component a) {
+    Cpu(Component a) {
 
         InputStream is;
         try {
@@ -132,7 +128,7 @@ class Dmgcpu implements Readable, Writable {
         }
 
         graphicsChip = new GraphicsChip(a, this);
-        ioHandler = new IoHandler(this);
+        ioHandler = new IoHandler(this, instructionCounter);
         applet = a;
     }
 
@@ -316,8 +312,6 @@ class Dmgcpu implements Readable, Writable {
         f.hf(ONE);
         f.cf(ONE);
 
-        instrCount = 0;
-
         a.setValue(0x01);
 
         for (int r = 0; r < 0x8000; r++) {
@@ -376,7 +370,7 @@ class Dmgcpu implements Readable, Writable {
      * Check for interrupts that need to be initiated
      */
     private void initiateInterrupts() {
-        if (timaEnabled && ((instrCount % instrsPerTima) == 0)) {
+        if (timaEnabled && ((instructionCounter.getCount() % instrsPerTima) == 0)) {
             if (JavaBoy.unsign(ioHandler.registers[0x05]) == 0) {
                 ioHandler.registers[0x05] = ioHandler.registers[0x06]; // Set TIMA modulo
                 if ((ioHandler.registers[0xFF] & INT_TIMA) != 0)
@@ -386,11 +380,11 @@ class Dmgcpu implements Readable, Writable {
         }
 
         short INSTRS_PER_DIV = BASE_INSTRS_PER_DIV;
-        if ((instrCount % INSTRS_PER_DIV) == 0) {
+        if ((instructionCounter.getCount() % INSTRS_PER_DIV) == 0) {
             ioHandler.registers[0x04]++;
         }
 
-        if ((instrCount % INSTRS_PER_HBLANK) == 0) {
+        if ((instructionCounter.getCount() % INSTRS_PER_HBLANK) == 0) {
 
 
             // LCY Coincidence
@@ -460,7 +454,7 @@ class Dmgcpu implements Readable, Writable {
         graphicsChip.startTime = System.currentTimeMillis();
 
         while (true) {
-            instrCount++;
+            instructionCounter.inc();
 
             Byte opcode = loadImmediateByte(pc);
 
@@ -1076,7 +1070,7 @@ class Dmgcpu implements Readable, Writable {
                     interruptsEnabled = true;
                     while (ioHandler.registers[0x0F] == 0) {
                         initiateInterrupts();
-                        instrCount++;
+                        instructionCounter.inc();
                     }
                     break;
 

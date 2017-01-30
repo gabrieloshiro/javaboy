@@ -83,7 +83,7 @@ class GraphicsChip {
      * Selection of one of two address for the BG tile map.
      */
     boolean hiBgTileMapAddress = false;
-    private Dmgcpu dmgcpu;
+    private Cpu cpu;
     private int vidRamStart = 0;
 
     /**
@@ -97,8 +97,8 @@ class GraphicsChip {
     private boolean windowEnableThisLine = false;
     private int windowStopLine = 144;
 
-    GraphicsChip(Component a, Dmgcpu d) {
-        dmgcpu = d;
+    GraphicsChip(Component a, Cpu d) {
+        cpu = d;
 
         backgroundPalette = new GameboyPalette(0, 1, 2, 3);
         obj1Palette = new GameboyPalette(0, 1, 2, 3);
@@ -182,10 +182,10 @@ class GraphicsChip {
 
         // Draw sprites
         for (int i = 0; i < 40; i++) {
-            int spriteX = dmgcpu.read(new Short(0xFE01 + (i * 4))).intValue() - 8;
-            int spriteY = dmgcpu.read(new Short(0xFE00 + (i * 4))).intValue() - 16;
-            int tileNum = dmgcpu.read(new Short(0xFE02 + (i * 4))).intValue();
-            int attributes = dmgcpu.read(new Short(0xFE03 + (i * 4))).intValue();
+            int spriteX = cpu.read(new Short(0xFE01 + (i * 4))).intValue() - 8;
+            int spriteY = cpu.read(new Short(0xFE00 + (i * 4))).intValue() - 16;
+            int tileNum = cpu.read(new Short(0xFE02 + (i * 4))).intValue();
+            int attributes = cpu.read(new Short(0xFE03 + (i * 4))).intValue();
 
             if ((attributes & 0x80) >> 7 == priority) {
 
@@ -272,12 +272,12 @@ class GraphicsChip {
         // first line the window is to be displayed.  Will work unless this is changed
         // after window is started
         // NOTE: Still no real support for hblank effects on window/sprites
-        if (line == JavaBoy.unsign(dmgcpu.ioHandler.registers[0x4A]) + 1) {        // Compare against WY reg
+        if (line == JavaBoy.unsign(cpu.ioHandler.registers[0x4A]) + 1) {        // Compare against WY reg
             savedWindowDataSelect = bgWindowDataSelect;
         }
 
-        int xPixelOfs = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x43]) % 8;
-        int yPixelOfs = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x42]) % 8;
+        int xPixelOfs = JavaBoy.unsign(cpu.ioHandler.registers[0x43]) % 8;
+        int yPixelOfs = JavaBoy.unsign(cpu.ioHandler.registers[0x42]) % 8;
 
         if (((yPixelOfs + line) % 8 == 4) || (line == 0)) {
 
@@ -285,8 +285,8 @@ class GraphicsChip {
 
             Graphics back = backBuffer.getGraphics();
 
-            int xTileOfs = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x43]) / 8;
-            int yTileOfs = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x42]) / 8;
+            int xTileOfs = JavaBoy.unsign(cpu.ioHandler.registers[0x43]) / 8;
+            int yTileOfs = JavaBoy.unsign(cpu.ioHandler.registers[0x42]) / 8;
             int bgStartAddress, tileNum;
 
             int y = ((line + yPixelOfs) / 8);
@@ -355,13 +355,13 @@ class GraphicsChip {
             int wx, wy;
             int windowStartAddress;
 
-            if ((dmgcpu.ioHandler.registers[0x40] & 0x40) != 0) {
+            if ((cpu.ioHandler.registers[0x40] & 0x40) != 0) {
                 windowStartAddress = 0x1C00;
             } else {
                 windowStartAddress = 0x1800;
             }
-            wx = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x4B]) - 7;
-            wy = JavaBoy.unsign(dmgcpu.ioHandler.registers[0x4A]);
+            wx = JavaBoy.unsign(cpu.ioHandler.registers[0x4B]) - 7;
+            wy = JavaBoy.unsign(cpu.ioHandler.registers[0x4A]);
 
             back.setColor(new Color(backgroundPalette.getRgbEntry(0)));
             back.fillRect(wx, wy, 160, 144);

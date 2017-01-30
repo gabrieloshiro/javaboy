@@ -6,7 +6,7 @@ import java.awt.*;
 
 public class JavaBoy extends Frame {
 
-    private Dmgcpu dmgcpu;
+    private Cpu cpu;
 
     /**
      * Returns the unsigned value (0 - 255) of a signed byte
@@ -34,9 +34,9 @@ public class JavaBoy extends Frame {
      * When running as an applet, updates the screen when necessary
      */
     public void paint(Graphics g) {
-        if (dmgcpu == null) return;
+        if (cpu == null) return;
 
-           dmgcpu.graphicsChip.draw(g, 0, 0);
+           cpu.graphicsChip.draw(g, 0, 0);
     }
 
     @Override
@@ -55,10 +55,10 @@ public class JavaBoy extends Frame {
         setVisible(true);
         requestFocus();
 
-        dmgcpu = new Dmgcpu(this);
+        cpu = new Cpu(this);
         Logger.debug("- CPU Reset");
-        dmgcpu.reset();
-        dmgcpu.execute();
+        cpu.reset();
+        cpu.execute();
     }
 
     public static void main(String[] args) {

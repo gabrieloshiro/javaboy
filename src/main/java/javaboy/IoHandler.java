@@ -19,13 +19,16 @@ class IoHandler {
     /**
      * Reference to the current CPU object
      */
-    private Dmgcpu dmgcpu;
+    private Cpu cpu;
+    
+    private InstructionCounter instructionCounter;
 
     /**
      * Create an IoHandler for the specified CPU
      */
-    IoHandler(Dmgcpu d) {
-        dmgcpu = d;
+    IoHandler(Cpu cpu, InstructionCounter instructionCounter) {
+        this.cpu = cpu;
+        this.instructionCounter = instructionCounter;
         reset();
     }
 
@@ -54,8 +57,8 @@ class IoHandler {
                     output |= 4;
                 }
 
-                int cyclePos = dmgcpu.instrCount % dmgcpu.INSTRS_PER_HBLANK;
-                int sectionLength = dmgcpu.INSTRS_PER_HBLANK / 6;
+                int cyclePos = instructionCounter.getCount() % cpu.INSTRS_PER_HBLANK;
+                int sectionLength = cpu.INSTRS_PER_HBLANK / 6;
 
                 if (JavaBoy.unsign(registers[0x44]) > 144) {
                     output |= 1;
@@ -90,23 +93,23 @@ class IoHandler {
 
             // TAC
             case 0x07:
-                dmgcpu.timaEnabled = (data & 0x04) != 0;
+                cpu.timaEnabled = (data & 0x04) != 0;
 
-                int instrsPerSecond = dmgcpu.INSTRS_PER_VBLANK * 60;
+                int instrsPerSecond = cpu.INSTRS_PER_VBLANK * 60;
                 int clockFrequency = (data & 0x03);
 
                 switch (clockFrequency) {
                     case 0:
-                        dmgcpu.instrsPerTima = (instrsPerSecond / 4096);
+                        cpu.instrsPerTima = (instrsPerSecond / 4096);
                         break;
                     case 1:
-                        dmgcpu.instrsPerTima = (instrsPerSecond / 262144);
+                        cpu.instrsPerTima = (instrsPerSecond / 262144);
                         break;
                     case 2:
-                        dmgcpu.instrsPerTima = (instrsPerSecond / 65536);
+                        cpu.instrsPerTima = (instrsPerSecond / 65536);
                         break;
                     case 3:
-                        dmgcpu.instrsPerTima = (instrsPerSecond / 16384);
+                        cpu.instrsPerTima = (instrsPerSecond / 16384);
                         break;
                 }
                 break;
@@ -114,25 +117,25 @@ class IoHandler {
 
             case 0x40:
                 // LCDC
-                dmgcpu.graphicsChip.bgEnabled = true;
+                cpu.graphicsChip.bgEnabled = true;
 
                 // BIT 5
-                dmgcpu.graphicsChip.winEnabled = (data & 0x20) == 0x20;
+                cpu.graphicsChip.winEnabled = (data & 0x20) == 0x20;
 
                 // BIT 4
-                dmgcpu.graphicsChip.bgWindowDataSelect = (data & 0x10) == 0x10;
+                cpu.graphicsChip.bgWindowDataSelect = (data & 0x10) == 0x10;
 
-                dmgcpu.graphicsChip.hiBgTileMapAddress = (data & 0x08) == 0x08;
+                cpu.graphicsChip.hiBgTileMapAddress = (data & 0x08) == 0x08;
 
                 // BIT 2
-                dmgcpu.graphicsChip.doubledSprites = (data & 0x04) == 0x04;
+                cpu.graphicsChip.doubledSprites = (data & 0x04) == 0x04;
 
                 // BIT 1
-                dmgcpu.graphicsChip.spritesEnabled = (data & 0x02) == 0x02;
+                cpu.graphicsChip.spritesEnabled = (data & 0x02) == 0x02;
 
                 if ((data & 0x01) == 0x00) {     // BIT 0
-                    dmgcpu.graphicsChip.bgEnabled = false;
-                    dmgcpu.graphicsChip.winEnabled = false;
+                    cpu.graphicsChip.bgEnabled = false;
+                    cpu.graphicsChip.winEnabled = false;
                 }
 
                 registers[0x40] = (byte) data;
@@ -144,7 +147,7 @@ class IoHandler {
 
                 // This could be sped up using System.arrayCopy, but hey.
                 for (int i = 0x00; i < 0xA0; i++) {
-                    dmgcpu.write(new Short(0xFE00 + i), dmgcpu.read(new Short(sourceAddress + i)));
+                    cpu.write(new Short(0xFE00 + i), cpu.read(new Short(sourceAddress + i)));
                 }
                 // This is meant to be run at the same time as the CPU is executing
                 // instructions, but I don't think it's crucial.
@@ -152,24 +155,24 @@ class IoHandler {
 
             case 0x47:           // FF47 - BKG and WIN palette
                 //    Logger.debug("Palette created!");
-                dmgcpu.graphicsChip.backgroundPalette.decodePalette(data);
+                cpu.graphicsChip.backgroundPalette.decodePalette(data);
                 if (registers[num] != (byte) data) {
                     registers[num] = (byte) data;
-                    dmgcpu.graphicsChip.invalidateAll(GraphicsChip.TILE_BKG);
+                    cpu.graphicsChip.invalidateAll(GraphicsChip.TILE_BKG);
                 }
                 break;
             case 0x48:           // FF48 - OBJ1 palette
-                dmgcpu.graphicsChip.obj1Palette.decodePalette(data);
+                cpu.graphicsChip.obj1Palette.decodePalette(data);
                 if (registers[num] != (byte) data) {
                     registers[num] = (byte) data;
-                    dmgcpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ_1);
+                    cpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ_1);
                 }
                 break;
             case 0x49:           // FF49 - OBJ2 palette
-                dmgcpu.graphicsChip.obj2Palette.decodePalette(data);
+                cpu.graphicsChip.obj2Palette.decodePalette(data);
                 if (registers[num] != (byte) data) {
                     registers[num] = (byte) data;
-                    dmgcpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ_2);
+                    cpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ_2);
                 }
                 break;
 
@@ -186,7 +189,7 @@ class IoHandler {
                     for (int r = 0; r < dmaLen; r++) {
                         Short destination = new Short(dmaDst + r);
                         Short source = new Short(dmaSrc + r);
-                        dmgcpu.write(destination, dmgcpu.read(source));
+                        cpu.write(destination, cpu.read(source));
                     }
                 }
 
