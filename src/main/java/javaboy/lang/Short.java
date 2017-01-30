@@ -1,6 +1,6 @@
 package javaboy.lang;
 
-import static javaboy.lang.BitValue.ONE;
+import static javaboy.lang.Bit.ONE;
 
 public class Short {
 

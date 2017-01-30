@@ -2,15 +2,17 @@ package javaboy;
 
 import javaboy.lang.Byte;
 import javaboy.lang.Short;
+import org.pmw.tinylog.Logger;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
-public class Memory implements Readable, Writable {
+public class Memory implements Readable, Writable, Iterable<Byte> {
 
     private final int firstAddress;
     private final int size;
 
-    private ArrayList<Byte> memory = new ArrayList<>();
+    private final ArrayList<Byte> memory = new ArrayList<>();
 
     public Memory(int firstAddress, int size) {
         if (firstAddress < 0) {
@@ -24,9 +26,10 @@ public class Memory implements Readable, Writable {
         this.firstAddress = firstAddress;
         this.size = size;
 
-        for (int i = firstAddress; i < size; i++) {
-            Byte data = new Byte();
+        for (int i = firstAddress; i <= lastAddress(); i++) {
+            final Byte data = new Byte();
             memory.add(data);
+            Logger.debug("Creating empty memory position [" + i + "]");
         }
     }
 
@@ -51,15 +54,15 @@ public class Memory implements Readable, Writable {
         }
     }
 
-    public int getFirstAddress() {
+    public int firstAddress() {
         return firstAddress;
     }
 
-    public int getSize() {
+    public int size() {
         return size;
     }
 
-    public int getLastAddress() {
+    public int lastAddress() {
         return firstAddress + size - 1;
     }
 
@@ -83,5 +86,32 @@ public class Memory implements Readable, Writable {
         }
 
         return normalizedAddress;
+    }
+
+    @Override
+    public Iterator<Byte> iterator() {
+        return new MemoryIterator();
+    }
+
+
+    private class MemoryIterator implements Iterator<Byte> {
+
+        private Short address;
+
+        public MemoryIterator() {
+            address = new Short(firstAddress);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return address.intValue() <= lastAddress();
+        }
+
+        @Override
+        public Byte next() {
+            Byte next = read(address);
+            address.inc();
+            return next;
+        }
     }
 }

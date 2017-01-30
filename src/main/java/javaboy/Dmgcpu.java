@@ -1,6 +1,6 @@
 package javaboy;
 
-import javaboy.lang.BitValue;
+import javaboy.lang.Bit;
 import javaboy.lang.Byte;
 import javaboy.lang.FlagRegister;
 import javaboy.lang.Short;
@@ -12,8 +12,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static javaboy.lang.BitValue.ONE;
-import static javaboy.lang.BitValue.ZERO;
+import static javaboy.lang.Bit.ONE;
+import static javaboy.lang.Bit.ZERO;
 
 class Dmgcpu implements Readable, Writable {
 
@@ -115,7 +115,7 @@ class Dmgcpu implements Readable, Writable {
 
         InputStream is;
         try {
-            is = new FileInputStream(new File("/Users/gabrieloshiro/Developer/GitHub Deprecated Projects/javaboy/bgblogo.gb"));
+            is = new FileInputStream(new File("bgblogo.gb"));
 
             byte[] data = new byte[ROM_SIZE];   // Recreate the ROM array with the correct size
 
@@ -128,6 +128,7 @@ class Dmgcpu implements Readable, Writable {
 
         } catch (IOException e) {
             Logger.debug("Error opening ROM image");
+            throw new IllegalArgumentException();
         }
 
         graphicsChip = new GraphicsChip(a, this);
@@ -771,8 +772,8 @@ class Dmgcpu implements Readable, Writable {
                  DAA
                  */
                 case 0x27:
-                    int upperNibble = a.getUpperNibble();
-                    int lowerNibble = a.getLowerNibble();
+                    int upperNibble = a.upperNibble();
+                    int lowerNibble = a.lowerNibble();
 
                     newf.setValue(0);
                     newf.nf(f.nf());
@@ -1810,11 +1811,11 @@ class Dmgcpu implements Readable, Writable {
         return immediate;
     }
 
-    public void adc(Byte left, Byte right, BitValue carry) {
+    public void adc(Byte left, Byte right, Bit carry) {
 
         f.nf(ZERO);
 
-        int lowerResult = left.getLowerNibble() + right.getLowerNibble() + carry.intValue();
+        int lowerResult = left.lowerNibble() + right.lowerNibble() + carry.intValue();
 
         if ((lowerResult & 0x10) == 0x10) {
             f.hf(ONE);
@@ -1847,10 +1848,10 @@ class Dmgcpu implements Readable, Writable {
         add(left, new Byte(1));
     }
 
-    public void sbc(Byte left, Byte right, BitValue carry) {
+    public void sbc(Byte left, Byte right, Bit carry) {
         f.nf(ONE);
 
-        int lowerResult = left.getLowerNibble() - right.getLowerNibble() - carry.intValue();
+        int lowerResult = left.lowerNibble() - right.lowerNibble() - carry.intValue();
 
         if ((lowerResult & 0x10) == 0x10) {
             f.hf(ONE);
@@ -1937,7 +1938,7 @@ class Dmgcpu implements Readable, Writable {
      * ╚══│ CF │<═══│ 7 │ <═════ │ 0 │<══╝
      *    └────┘    └───┴────────┴───┘
      */
-    private void rl(Byte operand, BitValue carry) {
+    private void rl(Byte operand, Bit carry) {
         int result = ((operand.intValue() << 1) | carry.intValue()) & 0xFF;
 
         f.nf(ZERO);
@@ -1979,7 +1980,7 @@ class Dmgcpu implements Readable, Writable {
      * ╚═>│ CF │═══>│ 7 │ ═════> │ 0 │══╝
      *    └────┘    └───┴────────┴───┘
      */
-    private void rr(Byte operand, BitValue carry) {
+    private void rr(Byte operand, Bit carry) {
         int result = (carry.intValue() << 7) | (operand.intValue() >> 1);
 
         f.nf(ZERO);
@@ -1990,7 +1991,7 @@ class Dmgcpu implements Readable, Writable {
         operand.setValue(result);
     }
 
-    private void rra(Byte operand, BitValue carry) {
+    private void rra(Byte operand, Bit carry) {
         rr(operand, carry);
         f.zf(ZERO);
     }
@@ -2037,7 +2038,7 @@ class Dmgcpu implements Readable, Writable {
      * ╚═>│ 7 │ ═════> │ 0 │═══>│ CF │
      *    └───┴────────┴───┘    └────┘
      */
-    private void sra(Byte operand, BitValue sign) {
+    private void sra(Byte operand, Bit sign) {
         int result = (sign.intValue() << 7) | (operand.intValue() >> 1);
 
         f.nf(ZERO);

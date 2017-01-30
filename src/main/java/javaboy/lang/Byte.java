@@ -1,6 +1,6 @@
 package javaboy.lang;
 
-import static javaboy.lang.BitValue.ONE;
+import static javaboy.lang.Bit.ONE;
 
 public class Byte {
 
@@ -9,8 +9,8 @@ public class Byte {
     public Byte() {
     }
 
-    public Byte(int i) {
-        setValue(i);
+    public Byte(int value) {
+        setValue(value);
     }
 
     public Byte(byte value) {
@@ -29,39 +29,39 @@ public class Byte {
         this.setValue(b.intValue());
     }
 
-    public int getLowerNibble() {
+    public int lowerNibble() {
         return value & 0xF;
     }
 
-    public void setLowerNibble(int i) {
-        this.value = (this.value & 0xF0) | (i & 0xF);
+    public void lowerNibble(int value) {
+        this.value = (this.value & 0xF0) | (value & 0xF);
     }
 
-    public int getUpperNibble() {
+    public int upperNibble() {
         return value >> 4;
     }
 
-    public void setUpperNibble(int i) {
+    public void upperNibble(int i) {
         this.value = (this.value & 0x0F) | ((i & 0xF) << 4);
     }
 
     public void swap() {
-        value = (getUpperNibble() << 4) | getLowerNibble();
+        value = (lowerNibble() << 4) | upperNibble();
     }
 
-    public BitValue getBit(int index) {
-        if (index > 7 || index < 0) {
+    public Bit getBit(int index) {
+        if ((index & 0xFFFFFFF8) != 0) {
             throw new IllegalArgumentException("Bit index on a byte should be in the range 0..7. Index passed: " + index);
         }
         if (((value >> index) & 1) == 1) {
             return ONE;
         } else {
-            return BitValue.ZERO;
+            return Bit.ZERO;
         }
     }
 
-    public void setBit(int index, BitValue value) {
-        if (index > 7 || index < 0) {
+    public void setBit(int index, Bit value) {
+        if ((index & 0xFFFFFFF8) != 0) {
             throw new IllegalArgumentException("Bit index on a byte should be in the range 0..7. Index passed: " + index);
         }
 

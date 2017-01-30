@@ -13,21 +13,24 @@ import java.awt.image.MemoryImageSource;
  */
 class GameboyTile {
 
+    private static final int IMAGE_COUNT = 64;
+
+
     private GraphicsChip graphicsChip;
-    Image[] image = new Image[64];
+    Image[] image = new Image[IMAGE_COUNT];
 
     /**
      * True, if the tile's image in the image[] array is a valid representation of the tile as it
      * appears in video memory.
      */
-    boolean[] valid = new boolean[64];
+    boolean[] valid = new boolean[IMAGE_COUNT];
 
-    MemoryImageSource[] source = new MemoryImageSource[64];
+    MemoryImageSource[] source = new MemoryImageSource[IMAGE_COUNT];
 
     /**
      * Current magnification value of Gameboy screen
      */
-    int[] imageData = new int[64];
+    int[] imageData = new int[IMAGE_COUNT];
     Component a;
 
     /**
@@ -54,7 +57,7 @@ class GameboyTile {
      * Free memory used by this tile
      */
     void dispose() {
-        for (int r = 0; r < 64; r++) {
+        for (int r = 0; r < IMAGE_COUNT; r++) {
             if (image[r] != null) {
                 image[r].flush();
                 valid[r] = false;
@@ -163,7 +166,7 @@ class GameboyTile {
      * Invalidate this tile
      */
     void invalidate() {
-        for (int r = 0; r < 64; r++) {
+        for (int r = 0; r < IMAGE_COUNT; r++) {
             valid[r] = false;
             if (image[r] != null) image[r].flush();
             image[r] = null;
