@@ -54,7 +54,7 @@ class Cpu implements Readable, Writable {
 
     // 8Kb main system RAM appears at 0xC000 in address space
     // 32Kb for GBC
-    private byte[] mainRam = new byte[0x8000];
+    private byte[] mainRam = new byte[ROM_SIZE];
 
     // 256 bytes at top of RAM are used mainly for registers
     private byte[] oam = new byte[0x100];
@@ -64,25 +64,7 @@ class Cpu implements Readable, Writable {
     private Component applet;
 
     Cpu(Component a) {
-
-        InputStream is;
-        try {
-            is = new FileInputStream(new File("bgblogo.gb"));
-
-            byte[] data = new byte[ROM_SIZE];   // Recreate the ROM array with the correct size
-
-            is.read(data);
-            is.close();
-
-            this.rom = new Memory(0x0000, data);
-
-            Logger.debug("Loaded ROM 'bgblogo.gb'.  2 ROM banks, 32Kb.  0 RAM banks. Type: ROM Only");
-
-        } catch (IOException e) {
-            Logger.debug("Error opening ROM image");
-            throw new IllegalArgumentException();
-        }
-
+        rom = RomLoader.loadRom("bgblogo.gb", ROM_SIZE);
         graphicsChip = new GraphicsChip(a, this);
         ioHandler = new IoHandler(this, instructionCounter);
         applet = a;
