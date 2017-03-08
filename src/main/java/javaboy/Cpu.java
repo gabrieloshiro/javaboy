@@ -18,24 +18,8 @@ import static javaboy.lang.Bit.ZERO;
 class Cpu implements Readable, Writable {
 
     private static final int ROM_SIZE = 0x8000;
-    private final Byte a = new Byte();
-    private final FlagRegister f = new FlagRegister();
-    private final Short af = new Short(a, f);
-
-    private final Byte b = new Byte();
-    private final Byte c = new Byte();
-    private final Short bc = new Short(b, c);
-
-    private final Byte d = new Byte();
-    private final Byte e = new Byte();
-    private final Short de = new Short(d, e);
-
-    private final Byte h = new Byte();
-    private final Byte l = new Byte();
-    private final Short hl = new Short(h, l);
-
-    private final Short pc = new Short();
-    private final Short sp = new Short();
+    
+    private Registers registers = new Registers();
 
     private Memory rom;
 
@@ -111,7 +95,7 @@ class Cpu implements Readable, Writable {
                 }
 
             default:
-                Logger.debug("Tried to read address " + addr + ".  pc = " + String.format("%04X", pc.intValue()));
+                Logger.debug("Tried to read address " + addr + ".  pc = " + String.format("%04X", registers.pc.intValue()));
                 throw new IllegalStateException("");
         }
 
@@ -162,7 +146,7 @@ class Cpu implements Readable, Writable {
                     try {
                         mainRam[addr.intValue() - 0xE000] = (byte) data.intValue();
                     } catch (ArrayIndexOutOfBoundsException e) {
-                        Logger.debug("Address error: " + addr + " pc = " + String.format("%04X", pc.intValue()));
+                        Logger.debug("Address error: " + addr + " pc = " + String.format("%04X", registers.pc.intValue()));
                     }
                 } else if (addr.intValue() < 0xFF00) {
                     oam[addr.intValue() - 0xFE00] = (byte) data.intValue();
@@ -181,21 +165,21 @@ class Cpu implements Readable, Writable {
     private int registerRead(int regNum) {
         switch (regNum) {
             case 0:
-                return b.intValue();
+                return registers.b.intValue();
             case 1:
-                return c.intValue();
+                return registers.c.intValue();
             case 2:
-                return d.intValue();
+                return registers.d.intValue();
             case 3:
-                return e.intValue();
+                return registers.e.intValue();
             case 4:
-                return h.intValue();
+                return registers.h.intValue();
             case 5:
-                return l.intValue();
+                return registers.l.intValue();
             case 6:
-                return read(hl).intValue();
+                return read(registers.hl).intValue();
             case 7:
-                return a.intValue();
+                return registers.a.intValue();
             default:
                 return -1;
         }
@@ -207,28 +191,28 @@ class Cpu implements Readable, Writable {
     private void registerWrite(int regNum, int data) {
         switch (regNum) {
             case 0:
-                b.setValue(data);
+                registers.b.setValue(data);
                 break;
             case 1:
-                c.setValue(data);
+                registers.c.setValue(data);
                 break;
             case 2:
-                d.setValue(data);
+                registers.d.setValue(data);
                 break;
             case 3:
-                e.setValue(data);
+                registers.e.setValue(data);
                 break;
             case 4:
-                h.setValue(data);
+                registers.h.setValue(data);
                 break;
             case 5:
-                l.setValue(data);
+                registers.l.setValue(data);
                 break;
             case 6:
-                write(hl, new Byte(data));
+                write(registers.hl, new Byte(data));
                 break;
             case 7:
-                a.setValue(data);
+                registers.a.setValue(data);
                 break;
             default:
                 break;
@@ -242,23 +226,23 @@ class Cpu implements Readable, Writable {
         graphicsChip.dispose();
         interruptsEnabled = false;
         ieDelay = -1;
-        pc.setValue(0x0100);
-        sp.setValue(0xFFFE);
+registers.pc.setValue(0x0100);
+registers.sp.setValue(0xFFFE);
 
-        f.zf(ONE);
-        f.nf(ZERO);
-        f.hf(ONE);
-        f.cf(ONE);
+        registers.f.zf(ONE);
+        registers.f.nf(ZERO);
+        registers.f.hf(ONE);
+        registers.f.cf(ONE);
 
-        a.setValue(0x01);
+        registers.a.setValue(0x01);
 
         for (int r = 0; r < 0x8000; r++) {
             mainRam[r] = 0;
         }
 
-        bc.setValue(0x0013);
-        de.setValue(0x00D8);
-        hl.setValue(0x014D);
+        registers.bc.setValue(0x0013);
+        registers.de.setValue(0x00D8);
+        registers.hl.setValue(0x014D);
         Logger.debug("CPU reset");
         ioHandler.reset();
     }
@@ -271,25 +255,25 @@ class Cpu implements Readable, Writable {
         int intFlags = ioHandler.registers[0x0F];
         int ieReg = ioHandler.registers[0xFF];
         if ((intFlags & ieReg) != 0) {
-            sp.dec();
-            sp.dec();
-            write(sp, pc);// Push current program counter onto stack
+registers.sp.dec();
+registers.sp.dec();
+            write(registers.sp, registers.pc);// Push current program counter onto stack
             interruptsEnabled = false;
 
             if ((intFlags & ieReg & Interrupts.INT_VBLANK) != 0) {
-                pc.setValue(0x40);                      // Jump to Vblank interrupt address
+registers.pc.setValue(0x40);                      // Jump to Vblank interrupt address
                 intFlags -= Interrupts.INT_VBLANK;
             } else if ((intFlags & ieReg & Interrupts.INT_LCDC) != 0) {
-                pc.setValue(0x48);
+registers.pc.setValue(0x48);
                 intFlags -= Interrupts.INT_LCDC;
             } else if ((intFlags & ieReg & Interrupts.INT_TIMA) != 0) {
-                pc.setValue(0x50);
+registers.pc.setValue(0x50);
                 intFlags -= Interrupts.INT_TIMA;
             } else if ((intFlags & ieReg & Interrupts.INT_SER) != 0) {
-                pc.setValue(0x58);
+registers.pc.setValue(0x58);
                 intFlags -= Interrupts.INT_SER;
             } else if ((intFlags & ieReg & Interrupts.INT_P10) != 0) {    // Joypad interrupt
-                pc.setValue(0x60);
+registers.pc.setValue(0x60);
                 intFlags -= Interrupts.INT_P10;
             }
 
@@ -393,7 +377,7 @@ class Cpu implements Readable, Writable {
         while (true) {
             instructionCounter.inc();
 
-            Byte opcode = loadImmediateByte(pc);
+            Byte opcode = loadImmediateByte(registers.pc);
 
             switch (opcode.intValue()) {
 
@@ -407,8 +391,8 @@ class Cpu implements Readable, Writable {
                   LD BC, nn
                  */
                 case 0x01: {
-                    Short data = loadImmediateShort(pc);
-                    load(bc, data);
+                    Short data = loadImmediateShort(registers.pc);
+                    load(registers.bc, data);
                     break;
                 }
 
@@ -416,36 +400,36 @@ class Cpu implements Readable, Writable {
                   LD (BC), A
                  */
                 case 0x02:
-                    write(bc, a);
+                    write(registers.bc, registers.a);
                     break;
 
                 /*
                   INC BC
                  */
                 case 0x03:
-                    bc.inc();
+                    registers.bc.inc();
                     break;
 
                 /*
                   INC B
                 */
                 case 0x04:
-                    inc(b);
+                    inc(registers.b);
                     break;
 
                 /*
                   DEC B
                  */
                 case 0x05:
-                    dec(b);
+                    dec(registers.b);
                     break;
 
                 /*
                   LD B, n
                  */
                 case 0x06: {
-                    Byte data = loadImmediateByte(pc);
-                    load(b, data);
+                    Byte data = loadImmediateByte(registers.pc);
+                    load(registers.b, data);
                     break;
                 }
 
@@ -453,15 +437,15 @@ class Cpu implements Readable, Writable {
                   RLCA
                  */
                 case 0x07:
-                    rlca(a);
+                    rlca(registers.a);
                     break;
 
                 /*
                   LD (nn), SP
                 */
                 case 0x08: {
-                    Short address = loadImmediateShort(pc);
-                    write(address, sp);
+                    Short address = loadImmediateShort(registers.pc);
+                    write(address, registers.sp);
                     break;
                 }
 
@@ -469,7 +453,7 @@ class Cpu implements Readable, Writable {
                   ADD HL, BC
                  */
                 case 0x09: {
-                    add(hl, bc);
+                    add(registers.hl, registers.bc);
                     break;
                 }
 
@@ -477,8 +461,8 @@ class Cpu implements Readable, Writable {
                   LD A, (BC)
                  */
                 case 0x0A: {
-                    Byte data = read(bc);
-                    a.setValue(data);
+                    Byte data = read(registers.bc);
+                    registers.a.setValue(data);
                     break;
                 }
 
@@ -486,29 +470,29 @@ class Cpu implements Readable, Writable {
                   DEC BC
                  */
                 case 0x0B:
-                    bc.dec();
+                    registers.bc.dec();
                     break;
 
                 /*
                   INC C
                  */
                 case 0x0C:
-                    inc(c);
+                    inc(registers.c);
                     break;
 
                 /*
                   DEC C
                  */
                 case 0x0D:
-                    dec(c);
+                    dec(registers.c);
                     break;
 
                 /*
                   LD C, n
                  */
                 case 0x0E: {
-                    Byte data = loadImmediateByte(pc);
-                    load(c, data);
+                    Byte data = loadImmediateByte(registers.pc);
+                    load(registers.c, data);
                     break;
                 }
 
@@ -516,22 +500,22 @@ class Cpu implements Readable, Writable {
                  RRCA
                  */
                 case 0x0F:
-                    rrca(a);
+                    rrca(registers.a);
                     break;
 
                 /*
                  STOP
                  */
                 case 0x10:
-                    pc.inc();
+registers.pc.inc();
                     break;
 
                 /*
                  LD DE, nn
                  */
                 case 0x11: {
-                    Short data = loadImmediateShort(pc);
-                    de.setValue(data.intValue());
+                    Short data = loadImmediateShort(registers.pc);
+                    registers.de.setValue(data.intValue());
                     break;
                 }
 
@@ -539,36 +523,36 @@ class Cpu implements Readable, Writable {
                  LD (DE), A
                  */
                 case 0x12:
-                    write(de, a);
+                    write(registers.de, registers.a);
                     break;
 
                 /*
                  INC DE
                  */
                 case 0x13:
-                    de.inc();
+                    registers.de.inc();
                     break;
 
                 /*
                  INC D
                  */
                 case 0x14:
-                    inc(d);
+                    inc(registers.d);
                     break;
 
                 /*
                  DEC D
                  */
                 case 0x15:
-                    dec(d);
+                    dec(registers.d);
                     break;
 
                 /*
                  LD D, n
                  */
                 case 0x16: {
-                    Byte data = loadImmediateByte(pc);
-                    load(d, data);
+                    Byte data = loadImmediateByte(registers.pc);
+                    load(registers.d, data);
                     break;
                 }
 
@@ -576,14 +560,14 @@ class Cpu implements Readable, Writable {
                  RL A
                  */
                 case 0x17:
-                    rl(a, f.cf());
+                    rl(registers.a, registers.f.cf());
                     break;
 
                 /*
                  JR n
                  */
                 case 0x18: {
-                    Byte offset = loadImmediateByte(pc);
+                    Byte offset = loadImmediateByte(registers.pc);
                     jr(true, offset);
                     break;
                 }
@@ -592,7 +576,7 @@ class Cpu implements Readable, Writable {
                  ADD HL, DE
                  */
                 case 0x19: {
-                    add(hl, de);
+                    add(registers.hl, registers.de);
                     break;
                 }
 
@@ -600,8 +584,8 @@ class Cpu implements Readable, Writable {
                  LD A, (DE)
                  */
                 case 0x1A: {
-                    Byte data = read(de);
-                    load(a, data);
+                    Byte data = read(registers.de);
+                    load(registers.a, data);
                     break;
                 }
 
@@ -609,29 +593,29 @@ class Cpu implements Readable, Writable {
                  DEC DE
                  */
                 case 0x1B:
-                    de.inc();
+                    registers.de.inc();
                     break;
 
                 /*
                  INC E
                  */
                 case 0x1C:
-                    inc(e);
+                    inc(registers.e);
                     break;
 
                 /*
                  DEC E
                  */
                 case 0x1D:
-                    dec(e);
+                    dec(registers.e);
                     break;
 
                 /*
                 LD E, n
                 */
                 case 0x1E: {
-                    Byte data = loadImmediateByte(pc);
-                    load(e, data);
+                    Byte data = loadImmediateByte(registers.pc);
+                    load(registers.e, data);
                     break;
                 }
 
@@ -639,7 +623,7 @@ class Cpu implements Readable, Writable {
                  RR A
                  */
                 case 0x1F: {
-                    rra(a, f.cf());
+                    rra(registers.a, registers.f.cf());
                     break;
                 }
 
@@ -647,8 +631,8 @@ class Cpu implements Readable, Writable {
                  JR NZ, n
                   */
                 case 0x20: {
-                    Byte address = loadImmediateByte(pc);
-                    jr(f.zf() == ZERO, address);
+                    Byte address = loadImmediateByte(registers.pc);
+                    jr(registers.f.zf() == ZERO, address);
                 }
                 break;
 
@@ -656,8 +640,8 @@ class Cpu implements Readable, Writable {
                  LD HL, nn
                  */
                 case 0x21: {
-                    Short address = loadImmediateShort(pc);
-                    load(hl, address);
+                    Short address = loadImmediateShort(registers.pc);
+                    load(registers.hl, address);
                     break;
                 }
 
@@ -665,37 +649,37 @@ class Cpu implements Readable, Writable {
                  LDH (HL), A
                  */
                 case 0x22:
-                    write(hl, a);
-                    hl.inc();
+                    write(registers.hl, registers.a);
+                    registers.hl.inc();
                     break;
 
                 /*
                  INC HL
                  */
                 case 0x23:
-                    hl.inc();
+                    registers.hl.inc();
                     break;
 
                 /*
                  INC H
                  */
                 case 0x24:
-                    inc(h);
+                    inc(registers.h);
                     break;
 
                 /*
                  DEC H
                  */
                 case 0x25:
-                    dec(h);
+                    dec(registers.h);
                     break;
 
                 /*
                  LD H, n
                  */
                 case 0x26: {
-                    Byte data = loadImmediateByte(pc);
-                    load(h, data);
+                    Byte data = loadImmediateByte(registers.pc);
+                    load(registers.h, data);
                     break;
                 }
 
@@ -703,60 +687,60 @@ class Cpu implements Readable, Writable {
                  DAA
                  */
                 case 0x27:
-                    int upperNibble = a.upperNibble();
-                    int lowerNibble = a.lowerNibble();
+                    int upperNibble = registers.a.upperNibble();
+                    int lowerNibble = registers.a.lowerNibble();
 
                     newf.setValue(0);
-                    newf.nf(f.nf());
+                    newf.nf(registers.f.nf());
 
-                    if (f.nf().intValue() == 0) {
+                    if (registers.f.nf().intValue() == 0) {
 
-                        if (f.cf().intValue() == 0) {
+                        if (registers.f.cf().intValue() == 0) {
                             if ((upperNibble <= 8) && (lowerNibble >= 0xA) &&
-                                    (f.hf().intValue() == 0)) {
-                                a.setValue(a.intValue() + 0x06);
+                                    (registers.f.hf().intValue() == 0)) {
+                                registers.a.setValue(registers.a.intValue() + 0x06);
                             }
 
                             if ((upperNibble <= 9) && (lowerNibble <= 0x3) &&
-                                    (f.hf().intValue() == 1)) {
-                                a.setValue(a.intValue() + 0x06);
+                                    (registers.f.hf().intValue() == 1)) {
+                                registers.a.setValue(registers.a.intValue() + 0x06);
                             }
 
                             if ((upperNibble >= 0xA) && (lowerNibble <= 0x9) &&
-                                    (f.hf().intValue() == 0)) {
-                                a.setValue(a.intValue() + 0x60);
+                                    (registers.f.hf().intValue() == 0)) {
+                                registers.a.setValue(registers.a.intValue() + 0x60);
                                 newf.cf(ONE);
                             }
 
                             if ((upperNibble >= 0x9) && (lowerNibble >= 0xA) &&
-                                    (f.hf().intValue() == 0)) {
-                                a.setValue(a.intValue() + 0x66);
+                                    (registers.f.hf().intValue() == 0)) {
+                                registers.a.setValue(registers.a.intValue() + 0x66);
                                 newf.cf(ONE);
                             }
 
                             if ((upperNibble >= 0xA) && (lowerNibble <= 0x3) &&
-                                    (f.hf().intValue() == 1)) {
-                                a.setValue(a.intValue() + 0x66);
+                                    (registers.f.hf().intValue() == 1)) {
+                                registers.a.setValue(registers.a.intValue() + 0x66);
                                 newf.cf(ONE);
                             }
 
                         } else {  // If carry set
 
                             if ((upperNibble <= 0x2) && (lowerNibble <= 0x9) &&
-                                    (f.hf().intValue() == 0)) {
-                                a.setValue(a.intValue() + 0x60);
+                                    (registers.f.hf().intValue() == 0)) {
+                                registers.a.setValue(registers.a.intValue() + 0x60);
                                 newf.cf(ONE);
                             }
 
                             if ((upperNibble <= 0x2) && (lowerNibble >= 0xA) &&
-                                    (f.hf().intValue() == 0)) {
-                                a.setValue(a.intValue() + 0x66);
+                                    (registers.f.hf().intValue() == 0)) {
+                                registers.a.setValue(registers.a.intValue() + 0x66);
                                 newf.cf(ONE);
                             }
 
                             if ((upperNibble <= 0x3) && (lowerNibble <= 0x3) &&
-                                    (f.hf().intValue() == 1)) {
-                                a.setValue(a.intValue() + 0x66);
+                                    (registers.f.hf().intValue() == 1)) {
+                                registers.a.setValue(registers.a.intValue() + 0x66);
                                 newf.cf(ONE);
                             }
 
@@ -764,24 +748,24 @@ class Cpu implements Readable, Writable {
 
                     } else { // Subtract is set
 
-                        if (f.cf().intValue() == 0) {
+                        if (registers.f.cf().intValue() == 0) {
 
                             if ((upperNibble <= 0x8) && (lowerNibble >= 0x6) &&
-                                    (f.hf().intValue() == 1)) {
-                                a.setValue(a.intValue() + 0xFA);
+                                    (registers.f.hf().intValue() == 1)) {
+                                registers.a.setValue(registers.a.intValue() + 0xFA);
                             }
 
                         } else { // Carry is set
 
                             if ((upperNibble >= 0x7) && (lowerNibble <= 0x9) &&
-                                    (f.hf().intValue() == 0)) {
-                                a.setValue(a.intValue() + 0xA0);
+                                    (registers.f.hf().intValue() == 0)) {
+                                registers.a.setValue(registers.a.intValue() + 0xA0);
                                 newf.cf(ONE);
                             }
 
                             if ((upperNibble >= 0x6) && (lowerNibble >= 0x6) &&
-                                    (f.hf().intValue() == 1)) {
-                                a.setValue(a.intValue() + 0x9A);
+                                    (registers.f.hf().intValue() == 1)) {
+                                registers.a.setValue(registers.a.intValue() + 0x9A);
                                 newf.cf(ONE);
                             }
 
@@ -789,11 +773,11 @@ class Cpu implements Readable, Writable {
 
                     }
 
-                    if (a.intValue() == 0) {
+                    if (registers.a.intValue() == 0) {
                         newf.zf(ONE);
                     }
 
-                    f.setValue(newf.intValue());
+                    registers.f.setValue(newf.intValue());
 
                     break;
 
@@ -801,8 +785,8 @@ class Cpu implements Readable, Writable {
                  JR Z, n
                  */
                 case 0x28: {
-                    Byte address = loadImmediateByte(pc);
-                    jr(f.zf() == ONE, address);
+                    Byte address = loadImmediateByte(registers.pc);
+                    jr(registers.f.zf() == ONE, address);
                     break;
                 }
 
@@ -810,7 +794,7 @@ class Cpu implements Readable, Writable {
                  ADD HL, HL
                  */
                 case 0x29: {
-                    add(hl, hl);
+                    add(registers.hl, registers.hl);
                     break;
                 }
 
@@ -818,9 +802,9 @@ class Cpu implements Readable, Writable {
                  LDI A, (HL)
                  */
                 case 0x2A: {
-                    Byte data = read(hl);
-                    load(a, data);
-                    hl.inc();
+                    Byte data = read(registers.hl);
+                    load(registers.a, data);
+                    registers.hl.inc();
                     break;
                 }
 
@@ -828,29 +812,29 @@ class Cpu implements Readable, Writable {
                  DEC HL
                  */
                 case 0x2B:
-                    hl.dec();
+                    registers.hl.dec();
                     break;
 
                 /*
                  INC L
                  */
                 case 0x2C:
-                    inc(l);
+                    inc(registers.l);
                     break;
 
                 /*
                  DEC L
                  */
                 case 0x2D:
-                    dec(l);
+                    dec(registers.l);
                     break;
 
                 /*
                  LD L, n
                  */
                 case 0x2E: {
-                    Byte address = loadImmediateByte(pc);
-                    load(l, address);
+                    Byte address = loadImmediateByte(registers.pc);
+                    load(registers.l, address);
                     break;
                 }
 
@@ -858,17 +842,17 @@ class Cpu implements Readable, Writable {
                  CPL A
                  */
                 case 0x2F:
-                    a.setValue((~a.intValue()));
-                    f.nf(ONE);
-                    f.hf(ONE);
+                    registers.a.setValue((~registers.a.intValue()));
+                    registers.f.nf(ONE);
+                    registers.f.hf(ONE);
                     break;
 
                 /*
                  JR NC, n
                  */
                 case 0x30: {
-                    Byte address = loadImmediateByte(pc);
-                    jr(f.cf() == ZERO, address);
+                    Byte address = loadImmediateByte(registers.pc);
+                    jr(registers.f.cf() == ZERO, address);
                     break;
                 }
 
@@ -876,8 +860,8 @@ class Cpu implements Readable, Writable {
                  LD SP, nn
                  */
                 case 0x31: {
-                    Short address = loadImmediateShort(pc);
-                    load(sp, address);
+                    Short address = loadImmediateShort(registers.pc);
+                    load(registers.sp, address);
                     break;
                 }
 
@@ -885,24 +869,24 @@ class Cpu implements Readable, Writable {
                  LD (HL-), A
                  */
                 case 0x32:
-                    write(hl, a);
-                    hl.dec();
+                    write(registers.hl, registers.a);
+                    registers.hl.dec();
                     break;
 
                 /*
                  INC SP
                  */
                 case 0x33:
-                    sp.inc();
+registers.sp.inc();
                     break;
 
                 /*
                  INC (HL)
                   */
                 case 0x34: {
-                    Byte data = read(hl);
+                    Byte data = read(registers.hl);
                     inc(data);
-                    write(hl, data);
+                    write(registers.hl, data);
                     break;
                 }
 
@@ -910,15 +894,15 @@ class Cpu implements Readable, Writable {
                  DEC (HL)
                  */
                 case 0x35:
-                    hl.dec();
+                    registers.hl.dec();
                     break;
 
                 /*
                  LD (HL), n
                  */
                 case 0x36: {
-                    Byte address = loadImmediateByte(pc);
-                    write(hl, address);
+                    Byte address = loadImmediateByte(registers.pc);
+                    write(registers.hl, address);
                     break;
                 }
 
@@ -926,17 +910,17 @@ class Cpu implements Readable, Writable {
                  SCF
                  */
                 case 0x37:
-                    f.nf(ZERO);
-                    f.hf(ZERO);
-                    f.cf(ONE);
+                    registers.f.nf(ZERO);
+                    registers.f.hf(ZERO);
+                    registers.f.cf(ONE);
                     break;
 
                 /*
                  JR C, n
                  */
                 case 0x38: {
-                    Byte address = loadImmediateByte(pc);
-                    jr(f.cf() == ONE, address);
+                    Byte address = loadImmediateByte(registers.pc);
+                    jr(registers.f.cf() == ONE, address);
                     break;
                 }
 
@@ -944,7 +928,7 @@ class Cpu implements Readable, Writable {
                  ADD HL, SP
                  */
                 case 0x39: {
-                    add(hl, sp);
+                    add(registers.hl, registers.sp);
                     break;
                 }
 
@@ -952,9 +936,9 @@ class Cpu implements Readable, Writable {
                  LD A, (HL-)
                  */
                 case 0x3A: {
-                    Byte data = read(hl);
-                    load(a, data);
-                    hl.dec();
+                    Byte data = read(registers.hl);
+                    load(registers.a, data);
+                    registers.hl.dec();
                     break;
                 }
 
@@ -962,29 +946,29 @@ class Cpu implements Readable, Writable {
                  DEC SP
                  */
                 case 0x3B:
-                    sp.dec();
+registers.sp.dec();
                     break;
 
                 /*
                  INC A
                  */
                 case 0x3C:
-                    inc(a);
+                    inc(registers.a);
                     break;
 
                 /*
                  DEC A
                  */
                 case 0x3D:
-                    dec(a);
+                    dec(registers.a);
                     break;
 
                 /*
                  LD A, n
                  */
                 case 0x3E: {
-                    Byte data = loadImmediateByte(pc);
-                    load(a, data);
+                    Byte data = loadImmediateByte(registers.pc);
+                    load(registers.a, data);
                     break;
                 }
 
@@ -992,9 +976,9 @@ class Cpu implements Readable, Writable {
                  CCF
                  */
                 case 0x3F:
-                    f.nf(ZERO);
-                    f.hf(ZERO);
-                    f.cf(f.cf().toggle());
+                    registers.f.nf(ZERO);
+                    registers.f.hf(ZERO);
+                    registers.f.cf(registers.f.cf().toggle());
                     break;
 
                 case 0x52:
@@ -1015,26 +999,26 @@ class Cpu implements Readable, Writable {
                  XOR A, A
                  */
                 case 0xAF:
-                    xor(a, a);
+                    xor(registers.a, registers.a);
                     break;
 
                 /*
                  RET NZ
                  */
                 case 0xC0:
-                    ret(f.zf() == ZERO, sp);
+                    ret(registers.f.zf() == ZERO, registers.sp);
                     break;
 
                 // POP BC
                 case 0xC1: {
-                    load(bc, popShort(sp));
+                    load(registers.bc, popShort(registers.sp));
                     break;
                 }
 
                 // JP NZ, n
                 case 0xC2: {
-                    Short address = loadImmediateShort(pc);
-                    jp(f.zf() == ZERO, address);
+                    Short address = loadImmediateShort(registers.pc);
+                    jp(registers.f.zf() == ZERO, address);
                     break;
                 }
 
@@ -1042,7 +1026,7 @@ class Cpu implements Readable, Writable {
                  JP nn
                  */
                 case 0xC3: {
-                    Short address =loadImmediateShort(pc);
+                    Short address =loadImmediateShort(registers.pc);
                     jp(address);
                     break;
                 }
@@ -1051,22 +1035,22 @@ class Cpu implements Readable, Writable {
                  CALL NZ, nn
                  */
                 case 0xC4:
-                    call(f.zf() == ZERO);
+                    call(registers.f.zf() == ZERO);
                     break;
 
                 /*
                  PUSH BC
                  */
                 case 0xC5:
-                    pushShort(sp, bc);
+                    pushShort(registers.sp, registers.bc);
                     break;
 
                 /*
                  ADD A, n
                  */
                 case 0xC6: {
-                    Byte data = loadImmediateByte(pc);
-                    add(a, data);
+                    Byte data = loadImmediateByte(registers.pc);
+                    add(registers.a, data);
                     break;
                 }
 
@@ -1077,7 +1061,7 @@ class Cpu implements Readable, Writable {
 
                 // RET Z
                 case 0xC8: {
-                    ret(f.zf() == ONE, sp);
+                    ret(registers.f.zf() == ONE, registers.sp);
                     break;
                 }
 
@@ -1085,21 +1069,21 @@ class Cpu implements Readable, Writable {
                  RET
                  */
                 case 0xC9:
-                    ret(sp);
+                    ret(registers.sp);
                     break;
 
                 /*
                  JP Z, nn
                  */
                 case 0xCA: {
-                    Short address = loadImmediateShort(pc);
-                    jp(f.zf() == ONE, address);
+                    Short address = loadImmediateShort(registers.pc);
+                    jp(registers.f.zf() == ONE, address);
                     break;
                 }
 
                 // Shift/bit test
                 case 0xCB: {
-                    Byte operand = loadImmediateByte(pc);
+                    Byte operand = loadImmediateByte(registers.pc);
                     int regNum = operand.intValue() & 0x07;
                     int data = registerRead(regNum);
                     if ((operand.intValue() & 0xC0) == 0) {
@@ -1107,34 +1091,34 @@ class Cpu implements Readable, Writable {
 
                             // RLC A
                             case 0x00:
-                                f.setValue(0);
+                                registers.f.setValue(0);
                                 if ((data & 0x80) == 0x80) {
-                                    f.cf(ONE);
+                                    registers.f.cf(ONE);
                                 }
                                 data <<= 1;
-                                if (f.cf().intValue() == 1) {
+                                if (registers.f.cf().intValue() == 1) {
                                     data |= 1;
                                 }
 
                                 data &= 0xFF;
                                 if (data == 0) {
-                                    f.zf(ONE);
+                                    registers.f.zf(ONE);
                                 }
                                 registerWrite(regNum, data);
                                 break;
 
                             // RRC A
                             case 0x08:
-                                f.setValue(0);
+                                registers.f.setValue(0);
                                 if ((data & 0x01) == 0x01) {
-                                    f.cf(ONE);
+                                    registers.f.cf(ONE);
                                 }
                                 data >>= 1;
-                                if (f.cf().intValue() == 1) {
+                                if (registers.f.cf().intValue() == 1) {
                                     data |= 0x80;
                                 }
                                 if (data == 0) {
-                                    f.zf(ONE);
+                                    registers.f.zf(ONE);
                                 }
                                 registerWrite(regNum, data);
                                 break;
@@ -1147,7 +1131,7 @@ class Cpu implements Readable, Writable {
                                 }
                                 data <<= 1;
 
-                                if (f.cf().intValue() == 1) {
+                                if (registers.f.cf().intValue() == 1) {
                                     data |= 1;
                                 }
 
@@ -1155,7 +1139,7 @@ class Cpu implements Readable, Writable {
                                 if (data == 0) {
                                     newf.zf(ONE);
                                 }
-                                f.setValue(newf.intValue());
+                                registers.f.setValue(newf.intValue());
                                 registerWrite(regNum, data);
                                 break;
 
@@ -1168,29 +1152,29 @@ class Cpu implements Readable, Writable {
                                 }
                                 data >>= 1;
 
-                                if (f.cf().intValue() == 1) {
+                                if (registers.f.cf().intValue() == 1) {
                                     data |= 0x80;
                                 }
 
                                 if (data == 0) {
                                     newf.zf(ONE);
                                 }
-                                f.setValue(newf.intValue());
+                                registers.f.setValue(newf.intValue());
                                 registerWrite(regNum, data);
                                 break;
 
                             // SLA r
                             case 0x20:
-                                f.setValue(0);
+                                registers.f.setValue(0);
                                 if ((data & 0x80) == 0x80) {
-                                    f.cf(ONE);
+                                    registers.f.cf(ONE);
                                 }
 
                                 data <<= 1;
 
                                 data &= 0xFF;
                                 if (data == 0) {
-                                    f.zf(ONE);
+                                    registers.f.zf(ONE);
                                 }
                                 registerWrite(regNum, data);
                                 break;
@@ -1200,16 +1184,16 @@ class Cpu implements Readable, Writable {
                                 short topBit;
 
                                 topBit = (short) (data & 0x80);
-                                f.setValue(0);
+                                registers.f.setValue(0);
                                 if ((data & 0x01) == 0x01) {
-                                    f.cf(ONE);
+                                    registers.f.cf(ONE);
                                 }
 
                                 data >>= 1;
                                 data |= topBit;
 
                                 if (data == 0) {
-                                    f.zf(ONE);
+                                    registers.f.zf(ONE);
                                 }
                                 registerWrite(regNum, data);
                                 break;
@@ -1218,24 +1202,24 @@ class Cpu implements Readable, Writable {
                             case 0x30:
 
                                 data = (short) (((data & 0x0F) << 4) | ((data & 0xF0) >> 4));
-                                f.setValue(0);
+                                registers.f.setValue(0);
                                 if (data == 0) {
-                                    f.zf(ONE);
+                                    registers.f.zf(ONE);
                                 }
                                 registerWrite(regNum, data);
                                 break;
 
                             // SRL r
                             case 0x38:
-                                f.setValue(0);
+                                registers.f.setValue(0);
                                 if ((data & 0x01) == 0x01) {
-                                    f.cf(ONE);
+                                    registers.f.cf(ONE);
                                 }
 
                                 data >>= 1;
 
                                 if (data == 0) {
-                                    f.zf(ONE);
+                                    registers.f.zf(ONE);
                                 }
                                 registerWrite(regNum, data);
                                 break;
@@ -1247,12 +1231,12 @@ class Cpu implements Readable, Writable {
                         // BIT n, r
                         if ((operand.intValue() & 0xC0) == 0x40) {
                             mask = (short) (0x01 << bitNumber);
-                            f.nf(ZERO);
-                            f.hf(ONE);
+                            registers.f.nf(ZERO);
+                            registers.f.hf(ONE);
                             if ((data & mask) != 0) {
-                                f.zf(ZERO);
+                                registers.f.zf(ZERO);
                             } else {
-                                f.zf(ONE);
+                                registers.f.zf(ONE);
                             }
                         }
 
@@ -1276,7 +1260,7 @@ class Cpu implements Readable, Writable {
 
                 // CALL Z, nn
                 case 0xCC:
-                    call(f.zf() == ONE);
+                    call(registers.f.zf() == ONE);
                     break;
 
                 // CALL nn
@@ -1289,8 +1273,8 @@ class Cpu implements Readable, Writable {
                 *  ADC A, n
                 */
                 case 0xCE: {
-                    Byte data = loadImmediateByte(pc);
-                    adc(a, data, f.cf());
+                    Byte data = loadImmediateByte(registers.pc);
+                    adc(registers.a, data, registers.f.cf());
                     break;
                 }
 
@@ -1305,15 +1289,15 @@ class Cpu implements Readable, Writable {
                  RET NC
                   */
                 case 0xD0:
-                    ret(f.cf() == ZERO, sp);
+                    ret(registers.f.cf() == ZERO, registers.sp);
                     break;
 
                 /*
                  POP DE
                   */
                 case 0xD1: {
-                    Short data = popShort(sp);
-                    de.setValue(data.intValue());
+                    Short data = popShort(registers.sp);
+                    registers.de.setValue(data.intValue());
                     break;
                 }
 
@@ -1321,8 +1305,8 @@ class Cpu implements Readable, Writable {
                  JP NC, nn
                  */
                 case 0xD2: {
-                    Short address = loadImmediateShort(pc);
-                    jp(f.cf() == ZERO, address);
+                    Short address = loadImmediateShort(registers.pc);
+                    jp(registers.f.cf() == ZERO, address);
                     break;
                 }
 
@@ -1330,22 +1314,22 @@ class Cpu implements Readable, Writable {
                  CALL NC, nn
                  */
                 case 0xD4:
-                    call(f.cf() == ZERO);
+                    call(registers.f.cf() == ZERO);
                     break;
 
                 /*
                  PUSH DE
                  */
                 case 0xD5:
-                    pushShort(sp, de);
+                    pushShort(registers.sp, registers.de);
                     break;
 
                 /*
                  SUB A, n
                  */
                 case 0xD6: {
-                    Byte data = loadImmediateByte(pc);
-                    sub(a, data);
+                    Byte data = loadImmediateByte(registers.pc);
+                    sub(registers.a, data);
                     break;
                 }
 
@@ -1360,7 +1344,7 @@ class Cpu implements Readable, Writable {
                  RET C
                   */
                 case 0xD8:
-                    ret(f.cf() == ONE, sp);
+                    ret(registers.f.cf() == ONE, registers.sp);
                     break;
 
                 /*
@@ -1368,15 +1352,15 @@ class Cpu implements Readable, Writable {
                   */
                 case 0xD9:
                     interruptsEnabled = true;
-                    ret(sp);
+                    ret(registers.sp);
                     break;
 
                 /*
                  JP C, nn
                  */
                 case 0xDA: {
-                    Short address = loadImmediateShort(pc);
-                    jp(f.cf() == ONE, address);
+                    Short address = loadImmediateShort(registers.pc);
+                    jp(registers.f.cf() == ONE, address);
                     break;
                 }
 
@@ -1384,13 +1368,13 @@ class Cpu implements Readable, Writable {
                  CALL C, nn
                  */
                 case 0xDC:
-                    call(f.cf() == ONE);
+                    call(registers.f.cf() == ONE);
                     break;
 
                 // SBC A, n
                 case 0xDE: {
-                    Byte data = loadImmediateByte(pc);
-                    sbc(a, data, f.cf());
+                    Byte data = loadImmediateByte(registers.pc);
+                    sbc(registers.a, data, registers.f.cf());
                     break;
                 }
 
@@ -1401,34 +1385,34 @@ class Cpu implements Readable, Writable {
 
                 // LDH (n), A
                 case 0xE0: {
-                    Byte data = loadImmediateByte(pc);
-                    write(new Short(0xFF00 | data.intValue()), a);
+                    Byte data = loadImmediateByte(registers.pc);
+                    write(new Short(0xFF00 | data.intValue()), registers.a);
                     break;
                 }
 
                 // POP HL
                 case 0xE1: {
-                    Short data = popShort(sp);
-                    load(hl, data);
+                    Short data = popShort(registers.sp);
+                    load(registers.hl, data);
                     break;
                 }
 
                 // LDH (FF00 + C), A
                 case 0xE2: {
-                    Short address = new Short(new Byte(0xFF), c);
-                    write(address, a);
+                    Short address = new Short(new Byte(0xFF), registers.c);
+                    write(address, registers.a);
                     break;
                 }
 
                 // PUSH HL
                 case 0xE5:
-                    pushShort(sp, hl);
+                    pushShort(registers.sp, registers.hl);
                     break;
 
                 // AND n
                 case 0xE6: {
-                    Byte data = loadImmediateByte(pc);
-                    and(a, data);
+                    Byte data = loadImmediateByte(registers.pc);
+                    and(registers.a, data);
                     break;
                 }
 
@@ -1439,8 +1423,8 @@ class Cpu implements Readable, Writable {
 
                 // ADD SP, nn
                 case 0xE8: {
-                    Short data = loadImmediateShort(pc);
-                    add(sp, data);
+                    Short data = loadImmediateShort(registers.pc);
+                    add(registers.sp, data);
                     break;
                 }
 
@@ -1448,7 +1432,7 @@ class Cpu implements Readable, Writable {
                  JP HL
                  */
                 case 0xE9: {
-                    jp(hl);
+                    jp(registers.hl);
                     break;
                 }
 
@@ -1456,15 +1440,15 @@ class Cpu implements Readable, Writable {
                  LD (nn), A
                  */
                 case 0xEA: {
-                    Short address = loadImmediateShort(pc);
-                    write(address, a);
+                    Short address = loadImmediateShort(registers.pc);
+                    write(address, registers.a);
                     break;
                 }
 
                 // XOR A, n
                 case 0xEE: {
-                    Byte data = loadImmediateByte(pc);
-                    xor(a, data);
+                    Byte data = loadImmediateByte(registers.pc);
+                    xor(registers.a, data);
                     break;
                 }
 
@@ -1479,11 +1463,11 @@ class Cpu implements Readable, Writable {
                  LDH A, (n)
                  */
                 case 0xF0: {
-                    Byte addressOffset = loadImmediateByte(pc);
+                    Byte addressOffset = loadImmediateByte(registers.pc);
                     Byte ff = new Byte(0xFF);
 
                     Short address = new Short(ff, addressOffset);
-                    load(a, read(address));
+                    load(registers.a, read(address));
                     break;
                 }
 
@@ -1491,14 +1475,14 @@ class Cpu implements Readable, Writable {
                  POP AF
                  */
                 case 0xF1:
-                    load(af, popShort(sp));
+                    load(registers.af, popShort(registers.sp));
                     break;
 
                 // LD A, (FF00 + C)
                 case 0xF2: {
-                    Short address = new Short(new Byte(0xFF), c);
+                    Short address = new Short(new Byte(0xFF), registers.c);
                     Byte data = read(address);
-                    load(a, data);
+                    load(registers.a, data);
                     break;
                 }
 
@@ -1509,13 +1493,13 @@ class Cpu implements Readable, Writable {
 
                 // PUSH AF
                 case 0xF5:
-                    pushShort(sp, af);
+                    pushShort(registers.sp, registers.af);
                     break;
 
                 // OR A, n
                 case 0xF6: {
-                    Byte data = loadImmediateByte(pc);
-                    or(a, data);
+                    Byte data = loadImmediateByte(registers.pc);
+                    or(registers.a, data);
                     break;
                 }
 
@@ -1526,24 +1510,24 @@ class Cpu implements Readable, Writable {
 
                 // LD HL, SP + n  ** HALFCARRY FLAG NOT SET ***
                 case 0xF8: {
-                    Byte offset = loadImmediateByte(pc);
-                    int result = sp.intValue() + offset.intValue();
-                    add(hl, new Short(result));
+                    Byte offset = loadImmediateByte(registers.pc);
+                    int result = registers.sp.intValue() + offset.intValue();
+                    add(registers.hl, new Short(result));
                     break;
                 }
 
                 // LD SP, HL
                 case 0xF9:
-                    sp.setValue(hl.intValue());
+registers.sp.setValue(registers.hl.intValue());
                     break;
 
                 /*
                  LD A, (nn)
                  */
                 case 0xFA: {
-                    Short address = loadImmediateShort(pc);
+                    Short address = loadImmediateShort(registers.pc);
                     Byte data = read(address);
-                    load(a, data);
+                    load(registers.a, data);
                     break;
                 }
 
@@ -1558,8 +1542,8 @@ class Cpu implements Readable, Writable {
                  CP n
                  */
                 case 0xFE: {
-                    Byte data = loadImmediateByte(pc);
-                    cp(a, data);
+                    Byte data = loadImmediateByte(registers.pc);
+                    cp(registers.a, data);
                     break;
                 }
 
@@ -1579,44 +1563,44 @@ class Cpu implements Readable, Writable {
 
                             // ADC A, r
                             case 1:
-                                adc(a, new Byte(operand), f.cf());
+                                adc(registers.a, new Byte(operand), registers.f.cf());
                                 break;
 
                             // ADD A, r
                             case 0: {
-                                add(a, new Byte(operand));
+                                add(registers.a, new Byte(operand));
                                 break;
                             }
 
                             // SBC A, r
                             case 3:
-                                sbc(a, new Byte(operand), f.cf());
+                                sbc(registers.a, new Byte(operand), registers.f.cf());
                                 break;
 
                             // SUB A, r
                             case 2: {
-                                sub(a, new Byte(operand));
+                                sub(registers.a, new Byte(operand));
                                 break;
                             }
 
                             // AND A, r
                             case 4:
-                                and(a, new Byte(operand));
+                                and(registers.a, new Byte(operand));
                                 break;
 
                             // XOR A, r
                             case 5:
-                                xor(a, new Byte(operand));
+                                xor(registers.a, new Byte(operand));
                                 break;
 
                             // OR A, r
                             case 6:
-                                or(a, new Byte(operand));
+                                or(registers.a, new Byte(operand));
                                 break;
 
                             // CP A, r (compare)
                             case 7:
-                                cp(a, new Byte(operand));
+                                cp(registers.a, new Byte(operand));
                                 break;
                         }
 
@@ -1653,14 +1637,14 @@ class Cpu implements Readable, Writable {
     }
 
     private void call(boolean condition) {
-        Short address = loadImmediateShort(pc);
+        Short address = loadImmediateShort(registers.pc);
         if (condition) {
             call(address);
         }
     }
 
     private void call(Short address) {
-        pushShort(sp, pc);
+        pushShort(registers.sp, registers.pc);
         jp(address);
     }
 
@@ -1671,12 +1655,12 @@ class Cpu implements Readable, Writable {
     }
 
     private void jp(Short address) {
-        pc.setValue(address.intValue());
+registers.pc.setValue(address.intValue());
     }
 
     private void ret(Short stackAddress) {
         Short address = popShort(stackAddress);
-        pc.setValue(address.intValue());
+registers.pc.setValue(address.intValue());
     }
 
     private void ret(boolean condition, Short stackAddress) {
@@ -1710,7 +1694,7 @@ class Cpu implements Readable, Writable {
 
     private void jr(boolean condition, Byte addr) {
         if (condition) {
-            add(pc, addr);
+            add(registers.pc, addr);
         }
     }
 
@@ -1720,11 +1704,11 @@ class Cpu implements Readable, Writable {
     }
 
     private void rst(int address) {
-        sp.dec();
-        write(sp, pc.getUpperByte());
-        sp.dec();
-        write(sp, pc.getLowerByte());
-        load(pc, new Short(address));
+registers.sp.dec();
+        write(registers.sp, registers.pc.getUpperByte());
+registers.sp.dec();
+        write(registers.sp, registers.pc.getLowerByte());
+        load(registers.pc, new Short(address));
     }
 
 
@@ -1738,34 +1722,33 @@ class Cpu implements Readable, Writable {
         Byte lowerByte = loadImmediateByte(address);
         Byte upperByte = loadImmediateByte(address);
 
-        Short immediate = new Short(upperByte, lowerByte);
-        return immediate;
+        return new Short(upperByte, lowerByte);
     }
 
     public void adc(Byte left, Byte right, Bit carry) {
 
-        f.nf(ZERO);
+        registers.f.nf(ZERO);
 
         int lowerResult = left.lowerNibble() + right.lowerNibble() + carry.intValue();
 
         if ((lowerResult & 0x10) == 0x10) {
-            f.hf(ONE);
+            registers.f.hf(ONE);
         } else {
-            f.hf(ZERO);
+            registers.f.hf(ZERO);
         }
 
         int result = left.intValue() + right.intValue() + carry.intValue();
 
         if ((result & 0x100) == 0x100) {
-            f.cf(ONE);
+            registers.f.cf(ONE);
         } else {
-            f.cf(ZERO);
+            registers.f.cf(ZERO);
         }
 
         if ((result & 0xFF) == 0) {
-            f.zf(ONE);
+            registers.f.zf(ONE);
         } else {
-            f.zf(ZERO);
+            registers.f.zf(ZERO);
         }
 
         left.setValue(result);
@@ -1780,28 +1763,28 @@ class Cpu implements Readable, Writable {
     }
 
     public void sbc(Byte left, Byte right, Bit carry) {
-        f.nf(ONE);
+        registers.f.nf(ONE);
 
         int lowerResult = left.lowerNibble() - right.lowerNibble() - carry.intValue();
 
         if ((lowerResult & 0x10) == 0x10) {
-            f.hf(ONE);
+            registers.f.hf(ONE);
         } else {
-            f.hf(ZERO);
+            registers.f.hf(ZERO);
         }
 
         int result = left.intValue() - right.intValue() - carry.intValue();
 
         if ((result & 0x100) == 0x100) {
-            f.cf(ONE);
+            registers.f.cf(ONE);
         } else {
-            f.cf(ZERO);
+            registers.f.cf(ZERO);
         }
 
         if ((result & 0xFF) == 0) {
-            f.zf(ONE);
+            registers.f.zf(ONE);
         } else {
-            f.zf(ZERO);
+            registers.f.zf(ZERO);
         }
 
         left.setValue(result);
@@ -1824,10 +1807,10 @@ class Cpu implements Readable, Writable {
     public void or(Byte left, Byte right) {
         int result = left.intValue() | right.intValue();
 
-        f.setValue(0);
+        registers.f.setValue(0);
 
         if (result == 0) {
-            f.zf(ONE);
+            registers.f.zf(ONE);
         }
 
         left.setValue(result);
@@ -1836,10 +1819,10 @@ class Cpu implements Readable, Writable {
     private void xor(Byte left, Byte right) {
         int result = left.intValue() ^ right.intValue();
 
-        f.setValue(0);
+        registers.f.setValue(0);
 
         if (result == 0) {
-            f.zf(ONE);
+            registers.f.zf(ONE);
         }
 
         left.setValue(result);
@@ -1848,14 +1831,14 @@ class Cpu implements Readable, Writable {
     private void and(Byte left, Byte right) {
         int result = left.intValue() & right.intValue();
 
-        f.nf(ZERO);
-        f.hf(ONE);
-        f.cf(ZERO);
+        registers.f.nf(ZERO);
+        registers.f.hf(ONE);
+        registers.f.cf(ZERO);
 
         if (result == 0) {
-            f.zf(ONE);
+            registers.f.zf(ONE);
         } else {
-            f.zf(ZERO);
+            registers.f.zf(ZERO);
         }
 
         left.setValue(result);
@@ -1872,17 +1855,17 @@ class Cpu implements Readable, Writable {
     private void rl(Byte operand, Bit carry) {
         int result = ((operand.intValue() << 1) | carry.intValue()) & 0xFF;
 
-        f.nf(ZERO);
-        f.hf(ZERO);
-        f.cf(operand.getBit(7));
-        f.setZeroFlagForResult(result);
+        registers.f.nf(ZERO);
+        registers.f.hf(ZERO);
+        registers.f.cf(operand.getBit(7));
+        registers.f.setZeroFlagForResult(result);
 
         operand.setValue(result);
     }
 
     private void rla(Byte operand) {
         rl(operand, operand.getBit(7));
-        f.zf(ZERO);
+        registers.f.zf(ZERO);
     }
 
 
@@ -1900,7 +1883,7 @@ class Cpu implements Readable, Writable {
 
     private void rlca(Byte operand) {
         rlc(operand);
-        f.zf(ZERO);
+        registers.f.zf(ZERO);
     }
 
     /**
@@ -1914,17 +1897,17 @@ class Cpu implements Readable, Writable {
     private void rr(Byte operand, Bit carry) {
         int result = (carry.intValue() << 7) | (operand.intValue() >> 1);
 
-        f.nf(ZERO);
-        f.hf(ZERO);
-        f.cf(operand.getBit(0));
-        f.setZeroFlagForResult(result);
+        registers.f.nf(ZERO);
+        registers.f.hf(ZERO);
+        registers.f.cf(operand.getBit(0));
+        registers.f.setZeroFlagForResult(result);
 
         operand.setValue(result);
     }
 
     private void rra(Byte operand, Bit carry) {
         rr(operand, carry);
-        f.zf(ZERO);
+        registers.f.zf(ZERO);
     }
 
     /**
@@ -1940,7 +1923,7 @@ class Cpu implements Readable, Writable {
     }
     private void rrca(Byte operand) {
         rrc(operand);
-        f.zf(ZERO);
+        registers.f.zf(ZERO);
     }
 
     /**
@@ -1953,10 +1936,10 @@ class Cpu implements Readable, Writable {
     private void sla(Byte operand) {
         int result = operand.intValue() << 1;
 
-        f.nf(ZERO);
-        f.hf(ZERO);
-        f.cf(operand.getBit(7));
-        f.setZeroFlagForResult(result);
+        registers.f.nf(ZERO);
+        registers.f.hf(ZERO);
+        registers.f.cf(operand.getBit(7));
+        registers.f.setZeroFlagForResult(result);
 
         operand.setValue(result);
     }
@@ -1972,10 +1955,10 @@ class Cpu implements Readable, Writable {
     private void sra(Byte operand, Bit sign) {
         int result = (sign.intValue() << 7) | (operand.intValue() >> 1);
 
-        f.nf(ZERO);
-        f.hf(ZERO);
-        f.cf(operand.getBit(0));
-        f.setZeroFlagForResult(result);
+        registers.f.nf(ZERO);
+        registers.f.hf(ZERO);
+        registers.f.cf(operand.getBit(0));
+        registers.f.setZeroFlagForResult(result);
 
         operand.setValue(result);
     }
@@ -1993,22 +1976,22 @@ class Cpu implements Readable, Writable {
 
     public void add(Short left, Short right) {
 
-        f.nf(ZERO);
+        registers.f.nf(ZERO);
 
         int lowerResult = (left.intValue() & 0x0FFF) + (right.intValue() & 0x0FFF);
 
         if ((lowerResult & 0x1000) == 0x1000) {
-            f.hf(ONE);
+            registers.f.hf(ONE);
         } else {
-            f.hf(ZERO);
+            registers.f.hf(ZERO);
         }
 
         int result = left.intValue() + right.intValue();
 
         if ((result & 0x10000) == 0x10000) {
-            f.cf(ONE);
+            registers.f.cf(ONE);
         } else {
-            f.cf(ZERO);
+            registers.f.cf(ZERO);
         }
 
         left.setValue(result);
