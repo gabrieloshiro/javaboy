@@ -7,10 +7,6 @@ import javaboy.lang.Short;
 import org.pmw.tinylog.Logger;
 
 import java.awt.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
 import static javaboy.lang.Bit.ONE;
 import static javaboy.lang.Bit.ZERO;
@@ -18,7 +14,7 @@ import static javaboy.lang.Bit.ZERO;
 class Cpu implements Readable, Writable {
 
     private static final int ROM_SIZE = 0x8000;
-    
+
     private Registers registers = new Registers();
 
     private Memory rom;
@@ -226,8 +222,8 @@ class Cpu implements Readable, Writable {
         graphicsChip.dispose();
         interruptsEnabled = false;
         ieDelay = -1;
-registers.pc.setValue(0x0100);
-registers.sp.setValue(0xFFFE);
+        registers.pc.setValue(0x0100);
+        registers.sp.setValue(0xFFFE);
 
         registers.f.zf(ONE);
         registers.f.nf(ZERO);
@@ -255,25 +251,25 @@ registers.sp.setValue(0xFFFE);
         int intFlags = ioHandler.registers[0x0F];
         int ieReg = ioHandler.registers[0xFF];
         if ((intFlags & ieReg) != 0) {
-registers.sp.dec();
-registers.sp.dec();
+            registers.sp.dec();
+            registers.sp.dec();
             write(registers.sp, registers.pc);// Push current program counter onto stack
             interruptsEnabled = false;
 
             if ((intFlags & ieReg & Interrupts.INT_VBLANK) != 0) {
-registers.pc.setValue(0x40);                      // Jump to Vblank interrupt address
+                registers.pc.setValue(0x40);                      // Jump to Vblank interrupt address
                 intFlags -= Interrupts.INT_VBLANK;
             } else if ((intFlags & ieReg & Interrupts.INT_LCDC) != 0) {
-registers.pc.setValue(0x48);
+                registers.pc.setValue(0x48);
                 intFlags -= Interrupts.INT_LCDC;
             } else if ((intFlags & ieReg & Interrupts.INT_TIMA) != 0) {
-registers.pc.setValue(0x50);
+                registers.pc.setValue(0x50);
                 intFlags -= Interrupts.INT_TIMA;
             } else if ((intFlags & ieReg & Interrupts.INT_SER) != 0) {
-registers.pc.setValue(0x58);
+                registers.pc.setValue(0x58);
                 intFlags -= Interrupts.INT_SER;
             } else if ((intFlags & ieReg & Interrupts.INT_P10) != 0) {    // Joypad interrupt
-registers.pc.setValue(0x60);
+                registers.pc.setValue(0x60);
                 intFlags -= Interrupts.INT_P10;
             }
 
@@ -507,7 +503,7 @@ registers.pc.setValue(0x60);
                  STOP
                  */
                 case 0x10:
-registers.pc.inc();
+                    registers.pc.inc();
                     break;
 
                 /*
@@ -877,7 +873,7 @@ registers.pc.inc();
                  INC SP
                  */
                 case 0x33:
-registers.sp.inc();
+                    registers.sp.inc();
                     break;
 
                 /*
@@ -946,7 +942,7 @@ registers.sp.inc();
                  DEC SP
                  */
                 case 0x3B:
-registers.sp.dec();
+                    registers.sp.dec();
                     break;
 
                 /*
@@ -1026,7 +1022,7 @@ registers.sp.dec();
                  JP nn
                  */
                 case 0xC3: {
-                    Short address =loadImmediateShort(registers.pc);
+                    Short address = loadImmediateShort(registers.pc);
                     jp(address);
                     break;
                 }
@@ -1518,7 +1514,7 @@ registers.sp.dec();
 
                 // LD SP, HL
                 case 0xF9:
-registers.sp.setValue(registers.hl.intValue());
+                    registers.sp.setValue(registers.hl.intValue());
                     break;
 
                 /*
@@ -1655,12 +1651,12 @@ registers.sp.setValue(registers.hl.intValue());
     }
 
     private void jp(Short address) {
-registers.pc.setValue(address.intValue());
+        registers.pc.setValue(address.intValue());
     }
 
     private void ret(Short stackAddress) {
         Short address = popShort(stackAddress);
-registers.pc.setValue(address.intValue());
+        registers.pc.setValue(address.intValue());
     }
 
     private void ret(boolean condition, Short stackAddress) {
@@ -1704,9 +1700,9 @@ registers.pc.setValue(address.intValue());
     }
 
     private void rst(int address) {
-registers.sp.dec();
+        registers.sp.dec();
         write(registers.sp, registers.pc.getUpperByte());
-registers.sp.dec();
+        registers.sp.dec();
         write(registers.sp, registers.pc.getLowerByte());
         load(registers.pc, new Short(address));
     }
@@ -1727,28 +1723,22 @@ registers.sp.dec();
 
     public void adc(Byte left, Byte right, Bit carry) {
 
-        registers.f.nf(ZERO);
+        registers.f.setValue(0);
 
         int lowerResult = left.lowerNibble() + right.lowerNibble() + carry.intValue();
 
         if ((lowerResult & 0x10) == 0x10) {
             registers.f.hf(ONE);
-        } else {
-            registers.f.hf(ZERO);
         }
 
         int result = left.intValue() + right.intValue() + carry.intValue();
 
         if ((result & 0x100) == 0x100) {
             registers.f.cf(ONE);
-        } else {
-            registers.f.cf(ZERO);
         }
 
         if ((result & 0xFF) == 0) {
             registers.f.zf(ONE);
-        } else {
-            registers.f.zf(ZERO);
         }
 
         left.setValue(result);
@@ -1850,7 +1840,7 @@ registers.sp.dec();
      * ╔═════════════════════════════════╗
      * ║  ┌────┐    ┌───┬────────┬───┐   ║
      * ╚══│ CF │<═══│ 7 │ <═════ │ 0 │<══╝
-     *    └────┘    └───┴────────┴───┘
+     * └────┘    └───┴────────┴───┘
      */
     private void rl(Byte operand, Bit carry) {
         int result = ((operand.intValue() << 1) | carry.intValue()) & 0xFF;
@@ -1921,6 +1911,7 @@ registers.sp.dec();
     private void rrc(Byte operand) {
         rr(operand, operand.getBit(0));
     }
+
     private void rrca(Byte operand) {
         rrc(operand);
         registers.f.zf(ZERO);
