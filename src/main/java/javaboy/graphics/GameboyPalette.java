@@ -1,4 +1,4 @@
-package javaboy;
+package javaboy.graphics;
 
 import javaboy.lang.Byte;
 
@@ -10,7 +10,7 @@ import java.util.ArrayList;
  * for sprites.
  */
 
-class GameboyPalette {
+public class GameboyPalette {
 
     /**
      * Data for which colour maps to which RGB value
@@ -35,7 +35,7 @@ class GameboyPalette {
     /**
      * Set the palette from the internal Gameboy format
      */
-    void decodePalette(int palette) {
+    public void decodePalette(int palette) {
         data.add(0, new Byte((palette & 0x03) >> 0));
         data.add(1, new Byte((palette & 0x0C) >> 2));
         data.add(2, new Byte((palette & 0x30) >> 4));

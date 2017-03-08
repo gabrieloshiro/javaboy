@@ -1,4 +1,4 @@
-import javaboy.Memory;
+import javaboy.memory.Memory;
 import javaboy.lang.Byte;
 import javaboy.lang.Short;
 import org.junit.Test;

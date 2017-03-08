@@ -11,7 +11,7 @@ public class JavaBoy extends Frame {
     /**
      * Returns the unsigned value (0 - 255) of a signed byte
      */
-    static short unsign(byte b) {
+    public static short unsign(byte b) {
         if (b < 0) {
             return (short) (256 + b);
         } else {

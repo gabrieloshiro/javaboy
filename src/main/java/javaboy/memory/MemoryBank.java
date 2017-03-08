@@ -1,5 +1,7 @@
-package javaboy;
+package javaboy.memory;
 
+import javaboy.Readable;
+import javaboy.Writable;
 import javaboy.lang.Byte;
 import javaboy.lang.Short;
 

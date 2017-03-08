@@ -1,9 +1,12 @@
 package javaboy;
 
+import javaboy.graphics.GraphicsChip;
 import javaboy.lang.Bit;
 import javaboy.lang.Byte;
 import javaboy.lang.FlagRegister;
 import javaboy.lang.Short;
+import javaboy.memory.Memory;
+import javaboy.rom.loader.RomLoader;
 import org.pmw.tinylog.Logger;
 
 import java.awt.*;
@@ -11,7 +14,7 @@ import java.awt.*;
 import static javaboy.lang.Bit.ONE;
 import static javaboy.lang.Bit.ZERO;
 
-class Cpu implements Readable, Writable {
+public class Cpu implements Readable, Writable {
 
     private static final int ROM_SIZE = 0x8000;
 
@@ -40,7 +43,7 @@ class Cpu implements Readable, Writable {
     private byte[] oam = new byte[0x100];
 
     GraphicsChip graphicsChip;
-    IoHandler ioHandler;
+    public IoHandler ioHandler;
     private Component applet;
 
     Cpu(Component a) {

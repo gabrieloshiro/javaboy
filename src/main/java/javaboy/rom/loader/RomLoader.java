@@ -1,5 +1,6 @@
-package javaboy;
+package javaboy.rom.loader;
 
+import javaboy.memory.Memory;
 import org.pmw.tinylog.Logger;
 
 import java.io.File;

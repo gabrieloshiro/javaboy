@@ -2,6 +2,7 @@ package javaboy;
 
 import javaboy.lang.Byte;
 import javaboy.lang.Short;
+import javaboy.memory.MemoryBank;
 import org.junit.Test;
 
 import static org.hamcrest.core.Is.is;

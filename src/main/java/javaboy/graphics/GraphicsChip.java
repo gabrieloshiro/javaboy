@@ -1,24 +1,26 @@
-package javaboy;
+package javaboy.graphics;
 
+import javaboy.Cpu;
+import javaboy.JavaBoy;
 import javaboy.lang.Short;
 
 import java.awt.*;
-class GraphicsChip {
+public class GraphicsChip {
 
     /**
      * Tile uses the background palette
      */
-    static final int TILE_BKG = 0;
+    public static final int TILE_BKG = 0;
 
     /**
      * Tile uses the first sprite palette
      */
-    static final int TILE_OBJ_1 = 4;
+    public static final int TILE_OBJ_1 = 4;
 
     /**
      * Tile uses the second sprite palette
      */
-    static final int TILE_OBJ_2 = 8;
+    public static final int TILE_OBJ_2 = 8;
 
     /**
      * Tile is flipped horizontally
@@ -35,13 +37,13 @@ class GraphicsChip {
      */
     private byte[] videoRam = new byte[0x8000];
 
-    GameboyPalette backgroundPalette;
-    GameboyPalette obj1Palette;
-    GameboyPalette obj2Palette;
+    public GameboyPalette backgroundPalette;
+    public GameboyPalette obj1Palette;
+    public GameboyPalette obj2Palette;
 
-    boolean spritesEnabled = true;
-    boolean bgEnabled = true;
-    boolean winEnabled = true;
+    public boolean spritesEnabled = true;
+    public boolean bgEnabled = true;
+    public boolean winEnabled = true;
 
     /**
      * The image containing the Gameboy screen
@@ -61,28 +63,28 @@ class GraphicsChip {
     /**
      * Amount of time to wait between frames (ms)
      */
-    int frameWaitTime = 0;
+    public int frameWaitTime = 0;
 
     /**
      * The current frame has finished drawing
      */
-    boolean frameDone = false;
-    long startTime = 0;
+    public boolean frameDone = false;
+    public long startTime = 0;
 
     /**
      * Selection of one of two addresses for the BG and Window tile data areas
      */
-    boolean bgWindowDataSelect = true;
+    public boolean bgWindowDataSelect = true;
 
     /**
      * If true, 8x16 sprites are being used.  Otherwise, 8x8.
      */
-    boolean doubledSprites = false;
+    public boolean doubledSprites = false;
 
     /**
      * Selection of one of two address for the BG tile map.
      */
-    boolean hiBgTileMapAddress = false;
+    public boolean hiBgTileMapAddress = false;
     private Cpu cpu;
     private int vidRamStart = 0;
 
@@ -97,7 +99,7 @@ class GraphicsChip {
     private boolean windowEnableThisLine = false;
     private int windowStopLine = 144;
 
-    GraphicsChip(Component a, Cpu d) {
+    public GraphicsChip(Component a, Cpu d) {
         cpu = d;
 
         backgroundPalette = new GameboyPalette(0, 1, 2, 3);
@@ -137,7 +139,7 @@ class GraphicsChip {
     /**
      * Flush the tile cache
      */
-    void dispose() {
+    public void dispose() {
         for (int r = 0; r < 384 * 2; r++) {
             if (tiles[r] != null) tiles[r].dispose();
         }
@@ -146,14 +148,14 @@ class GraphicsChip {
     /**
      * Reads data from the specified video RAM address
      */
-    short addressRead(int addr) {
+    public short addressRead(int addr) {
         return videoRam[addr + vidRamStart];
     }
 
     /**
      * Writes data to the specified video RAM address
      */
-    void addressWrite(int addr, byte data) {
+    public void addressWrite(int addr, byte data) {
         if (addr < 0x1800) {   // Bkg Tile data area
             int tileStart = 0;
             tiles[(addr >> 4) + tileStart].invalidate();
@@ -167,7 +169,7 @@ class GraphicsChip {
      * Invalidates all tiles in the tile cache that have the given attributes.
      * These will be regenerated next time they are drawn.
      */
-    void invalidateAll(int attribs) {
+    public void invalidateAll(int attribs) {
         for (int r = 0; r < 384 * 2; r++) {
             tiles[r].invalidate(attribs);
         }
@@ -244,7 +246,7 @@ class GraphicsChip {
      * This must be called by the CPU for each scanline drawn by the display hardware.  It
      * handles drawing of the background layer
      */
-    void notifyScanline(int line) {
+    public void notifyScanline(int line) {
 
         if ((framesDrawn % frameSkip) != 0) {
             return;
@@ -337,7 +339,7 @@ class GraphicsChip {
     /**
      * Draw the current graphics frame into the given graphics context
      */
-    boolean draw(Graphics graphics, int startX, int startY) {
+    public boolean draw(Graphics graphics, int startX, int startY) {
         int tileNum;
 
         calculateFPS();

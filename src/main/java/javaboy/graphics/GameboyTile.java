@@ -1,4 +1,4 @@
-package javaboy;
+package javaboy.graphics;
 
 import java.awt.*;
 import java.awt.image.DirectColorModel;

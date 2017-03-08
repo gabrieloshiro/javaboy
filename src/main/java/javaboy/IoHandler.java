@@ -1,5 +1,6 @@
 package javaboy;
 
+import javaboy.graphics.GraphicsChip;
 import org.pmw.tinylog.Logger;
 import javaboy.lang.Short;
 
@@ -9,12 +10,12 @@ import javaboy.lang.Short;
  * LDH instruction which is located at 0xFF50 - 0xFFFF.
  */
 
-class IoHandler {
+public class IoHandler {
 
     /**
      * Data contained in the handled memory area
      */
-    byte[] registers = new byte[0x100];
+    public byte[] registers = new byte[0x100];
 
     /**
      * Reference to the current CPU object
