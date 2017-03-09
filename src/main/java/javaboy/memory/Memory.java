@@ -1,7 +1,6 @@
 package javaboy.memory;
 
-import javaboy.Readable;
-import javaboy.Writable;
+import javaboy.ReadableWritable;
 import javaboy.lang.Byte;
 import javaboy.lang.Short;
 import org.pmw.tinylog.Logger;
@@ -9,7 +8,7 @@ import org.pmw.tinylog.Logger;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class Memory implements Readable, Writable, Iterable<Byte> {
+public class Memory implements ReadableWritable, Iterable<Byte> {
 
     private final int firstAddress;
     private final int size;

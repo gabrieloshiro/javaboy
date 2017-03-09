@@ -25,4 +25,71 @@ public class Registers {
     public final Short pc = new Short();
     public final Short sp = new Short();
 
+    public ReadableWritable memory;
+
+    public Registers(ReadableWritable memory) {
+        this.memory = memory;
+    }
+
+    /**
+     * Performs a read of a register by internal register number
+     */
+    public int registerRead(int regNum) {
+        switch (regNum) {
+            case 0:
+                return b.intValue();
+            case 1:
+                return c.intValue();
+            case 2:
+                return d.intValue();
+            case 3:
+                return e.intValue();
+            case 4:
+                return h.intValue();
+            case 5:
+                return l.intValue();
+            case 6:
+                return memory.read(hl).intValue();
+            case 7:
+                return a.intValue();
+            default:
+                return -1;
+        }
+    }
+
+    /**
+     * Performs a write of a register by internal register number
+     */
+    public void registerWrite(int regNum, int data) {
+        switch (regNum) {
+            case 0:
+                b.setValue(data);
+                break;
+            case 1:
+                c.setValue(data);
+                break;
+            case 2:
+                d.setValue(data);
+                break;
+            case 3:
+                e.setValue(data);
+                break;
+            case 4:
+                h.setValue(data);
+                break;
+            case 5:
+                l.setValue(data);
+                break;
+            case 6:
+                memory.write(hl, new Byte(data));
+                break;
+            case 7:
+                a.setValue(data);
+                break;
+            default:
+                break;
+        }
+    }
+
+
 }

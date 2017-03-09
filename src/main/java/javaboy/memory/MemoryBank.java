@@ -1,13 +1,12 @@
 package javaboy.memory;
 
-import javaboy.Readable;
-import javaboy.Writable;
+import javaboy.ReadableWritable;
 import javaboy.lang.Byte;
 import javaboy.lang.Short;
 
 import java.util.ArrayList;
 
-public class MemoryBank implements Readable, Writable {
+public class MemoryBank implements ReadableWritable {
 
     private final int numberOfBanks;
     private int currentBank;

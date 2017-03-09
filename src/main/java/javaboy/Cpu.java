@@ -14,11 +14,11 @@ import java.awt.*;
 import static javaboy.lang.Bit.ONE;
 import static javaboy.lang.Bit.ZERO;
 
-public class Cpu implements Readable, Writable {
+public class Cpu implements ReadableWritable {
 
     private static final int ROM_SIZE = 0x8000;
 
-    private Registers registers = new Registers();
+    private final Registers registers;
 
     private Memory rom;
 
@@ -48,6 +48,7 @@ public class Cpu implements Readable, Writable {
 
     Cpu(Component a) {
         rom = RomLoader.loadRom("bgblogo.gb", ROM_SIZE);
+        registers = new Registers(this);
         graphicsChip = new GraphicsChip(a, this);
         ioHandler = new IoHandler(this, instructionCounter);
         applet = a;
@@ -159,66 +160,6 @@ public class Cpu implements Readable, Writable {
     }
 
     /**
-     * Performs a read of a register by internal register number
-     */
-    private int registerRead(int regNum) {
-        switch (regNum) {
-            case 0:
-                return registers.b.intValue();
-            case 1:
-                return registers.c.intValue();
-            case 2:
-                return registers.d.intValue();
-            case 3:
-                return registers.e.intValue();
-            case 4:
-                return registers.h.intValue();
-            case 5:
-                return registers.l.intValue();
-            case 6:
-                return read(registers.hl).intValue();
-            case 7:
-                return registers.a.intValue();
-            default:
-                return -1;
-        }
-    }
-
-    /**
-     * Performs a write of a register by internal register number
-     */
-    private void registerWrite(int regNum, int data) {
-        switch (regNum) {
-            case 0:
-                registers.b.setValue(data);
-                break;
-            case 1:
-                registers.c.setValue(data);
-                break;
-            case 2:
-                registers.d.setValue(data);
-                break;
-            case 3:
-                registers.e.setValue(data);
-                break;
-            case 4:
-                registers.h.setValue(data);
-                break;
-            case 5:
-                registers.l.setValue(data);
-                break;
-            case 6:
-                write(registers.hl, new Byte(data));
-                break;
-            case 7:
-                registers.a.setValue(data);
-                break;
-            default:
-                break;
-        }
-    }
-
-    /**
      * Resets the CPU to it's power on state.  Memory contents are not cleared.
      */
     void reset() {
@@ -292,7 +233,7 @@ public class Cpu implements Readable, Writable {
      */
     private void initiateInterrupts() {
         if (timaEnabled && ((instructionCounter.getCount() % instrsPerTima) == 0)) {
-            if (JavaBoy.unsign(ioHandler.registers[0x05]) == 0) {
+            if (Shorts.unsign(ioHandler.registers[0x05]) == 0) {
                 ioHandler.registers[0x05] = ioHandler.registers[0x06]; // Set TIMA modulo
                 if ((ioHandler.registers[0xFF] & Interrupts.INT_TIMA) != 0)
                     triggerInterrupt(Interrupts.INT_TIMA);
@@ -309,12 +250,12 @@ public class Cpu implements Readable, Writable {
 
             // LCY Coincidence
             // The +1 is due to the LCY register being just about to be incremented
-            int cline = JavaBoy.unsign(ioHandler.registers[0x44]) + 1;
+            int cline = Shorts.unsign(ioHandler.registers[0x44]) + 1;
             if (cline == 152) cline = 0;
 
             if (((ioHandler.registers[0xFF] & Interrupts.INT_LCDC) != 0) &&
                     ((ioHandler.registers[0x41] & 64) != 0) &&
-                    (JavaBoy.unsign(ioHandler.registers[0x45]) == cline) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90)) {
+                    (Shorts.unsign(ioHandler.registers[0x45]) == cline) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90)) {
                 triggerInterrupt(Interrupts.INT_LCDC);
             }
 
@@ -324,7 +265,7 @@ public class Cpu implements Readable, Writable {
                 triggerInterrupt(Interrupts.INT_LCDC);
             }
 
-            if (JavaBoy.unsign(ioHandler.registers[0x44]) == 143) {
+            if (Shorts.unsign(ioHandler.registers[0x44]) == 143) {
                 for (int r = 144; r < 170; r++) {
                     graphicsChip.notifyScanline(r);
                 }
@@ -348,10 +289,10 @@ public class Cpu implements Readable, Writable {
             }
 
 
-            graphicsChip.notifyScanline(JavaBoy.unsign(ioHandler.registers[0x44]));
-            ioHandler.registers[0x44] = (byte) (JavaBoy.unsign(ioHandler.registers[0x44]) + 1);
+            graphicsChip.notifyScanline(Shorts.unsign(ioHandler.registers[0x44]));
+            ioHandler.registers[0x44] = (byte) (Shorts.unsign(ioHandler.registers[0x44]) + 1);
 
-            if (JavaBoy.unsign(ioHandler.registers[0x44]) >= 153) {
+            if (Shorts.unsign(ioHandler.registers[0x44]) >= 153) {
                 //     Logger.debug("VBlank");
 
                 ioHandler.registers[0x44] = 0;
@@ -1084,7 +1025,7 @@ public class Cpu implements Readable, Writable {
                 case 0xCB: {
                     Byte operand = loadImmediateByte(registers.pc);
                     int regNum = operand.intValue() & 0x07;
-                    int data = registerRead(regNum);
+                    int data = registers.registerRead(regNum);
                     if ((operand.intValue() & 0xC0) == 0) {
                         switch ((operand.intValue() & 0xF8)) {
 
@@ -1103,7 +1044,7 @@ public class Cpu implements Readable, Writable {
                                 if (data == 0) {
                                     registers.f.zf(ONE);
                                 }
-                                registerWrite(regNum, data);
+                                registers.registerWrite(regNum, data);
                                 break;
 
                             // RRC A
@@ -1119,7 +1060,7 @@ public class Cpu implements Readable, Writable {
                                 if (data == 0) {
                                     registers.f.zf(ONE);
                                 }
-                                registerWrite(regNum, data);
+                                registers.registerWrite(regNum, data);
                                 break;
 
                             // RL r
@@ -1139,7 +1080,7 @@ public class Cpu implements Readable, Writable {
                                     newf.zf(ONE);
                                 }
                                 registers.f.setValue(newf.intValue());
-                                registerWrite(regNum, data);
+                                registers.registerWrite(regNum, data);
                                 break;
 
                             // RR r
@@ -1159,7 +1100,7 @@ public class Cpu implements Readable, Writable {
                                     newf.zf(ONE);
                                 }
                                 registers.f.setValue(newf.intValue());
-                                registerWrite(regNum, data);
+                                registers.registerWrite(regNum, data);
                                 break;
 
                             // SLA r
@@ -1175,7 +1116,7 @@ public class Cpu implements Readable, Writable {
                                 if (data == 0) {
                                     registers.f.zf(ONE);
                                 }
-                                registerWrite(regNum, data);
+                                registers.registerWrite(regNum, data);
                                 break;
 
                             // SRA r
@@ -1194,7 +1135,7 @@ public class Cpu implements Readable, Writable {
                                 if (data == 0) {
                                     registers.f.zf(ONE);
                                 }
-                                registerWrite(regNum, data);
+                                registers.registerWrite(regNum, data);
                                 break;
 
                             // SWAP r
@@ -1205,7 +1146,7 @@ public class Cpu implements Readable, Writable {
                                 if (data == 0) {
                                     registers.f.zf(ONE);
                                 }
-                                registerWrite(regNum, data);
+                                registers.registerWrite(regNum, data);
                                 break;
 
                             // SRL r
@@ -1220,7 +1161,7 @@ public class Cpu implements Readable, Writable {
                                 if (data == 0) {
                                     registers.f.zf(ONE);
                                 }
-                                registerWrite(regNum, data);
+                                registers.registerWrite(regNum, data);
                                 break;
                         }
                     } else {
@@ -1243,14 +1184,14 @@ public class Cpu implements Readable, Writable {
                         if ((operand.intValue() & 0xC0) == 0x80) {
                             mask = (short) (0xFF - (0x01 << bitNumber));
                             data = (short) (data & mask);
-                            registerWrite(regNum, data);
+                            registers.registerWrite(regNum, data);
                         }
 
                         // SET n, r
                         if ((operand.intValue() & 0xC0) == 0xC0) {
                             mask = (short) (0x01 << bitNumber);
                             data = (short) (data | mask);
-                            registerWrite(regNum, data);
+                            registers.registerWrite(regNum, data);
                         }
                     }
 
@@ -1557,7 +1498,7 @@ public class Cpu implements Readable, Writable {
 
                     // ALU Operations
                     if ((opcode.intValue() & 0xC0) == 0x80) {
-                        int operand = registerRead(opcode.intValue() & 0x07);
+                        int operand = registers.registerRead(opcode.intValue() & 0x07);
                         switch ((opcode.intValue() & 0x38) >> 3) {
 
                             // ADC A, r
@@ -1604,7 +1545,7 @@ public class Cpu implements Readable, Writable {
                         }
 
                     } else if ((opcode.intValue() & 0xC0) == 0x40) {   // Byte 0x01xxxxxxx indicates 8-bit ld
-                        registerWrite((opcode.intValue() & 0x38) >> 3, registerRead(opcode.intValue() & 0x07));
+                        registers.registerWrite((opcode.intValue() & 0x38) >> 3, registers.registerRead(opcode.intValue() & 0x07));
                     } else {
                         Logger.debug("Unrecognized opcode (" + String.format("%02X", opcode.intValue()) + ")");
                         break;

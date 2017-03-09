@@ -61,7 +61,7 @@ public class IoHandler {
                 int cyclePos = instructionCounter.getCount() % GraphicsConstants.INSTRS_PER_HBLANK;
                 int sectionLength = GraphicsConstants.INSTRS_PER_HBLANK / 6;
 
-                if (JavaBoy.unsign(registers[0x44]) > 144) {
+                if (Shorts.unsign(registers[0x44]) > 144) {
                     output |= 1;
                 } else {
                     if (cyclePos <= sectionLength * 3) {
@@ -179,11 +179,11 @@ public class IoHandler {
 
             case 0x55:
                 if (((registers[0x55] & 0x80) == 0) && ((data & 0x80) == 0)) {
-                    int dmaSrc = (JavaBoy.unsign(registers[0x51]) << 8) +
-                            (JavaBoy.unsign(registers[0x52]) & 0xF0);
-                    int dmaDst = ((JavaBoy.unsign(registers[0x53]) & 0x1F) << 8) +
-                            (JavaBoy.unsign(registers[0x54]) & 0xF0) + 0x8000;
-                    int dmaLen = ((JavaBoy.unsign(data) & 0x7F) * 16) + 16;
+                    int dmaSrc = (Shorts.unsign(registers[0x51]) << 8) +
+                            (Shorts.unsign(registers[0x52]) & 0xF0);
+                    int dmaDst = ((Shorts.unsign(registers[0x53]) & 0x1F) << 8) +
+                            (Shorts.unsign(registers[0x54]) & 0xF0) + 0x8000;
+                    int dmaLen = ((Shorts.unsign(data) & 0x7F) * 16) + 16;
 
                     if (dmaLen > 2048) dmaLen = 2048;
 
