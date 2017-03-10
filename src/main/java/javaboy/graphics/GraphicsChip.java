@@ -8,6 +8,9 @@ import javaboy.lang.Short;
 import java.awt.*;
 public class GraphicsChip {
 
+    public static final int WIDTH = 160;
+    public static final int HEIGHT = 144;
+
     /**
      * Tile uses the background palette
      */
@@ -98,7 +101,7 @@ public class GraphicsChip {
     private boolean savedWindowDataSelect = false;
 
     private boolean windowEnableThisLine = false;
-    private int windowStopLine = 144;
+    private int windowStopLine = GraphicsChip.HEIGHT;
 
     public GraphicsChip(Component a, Cpu d) {
         cpu = d;
@@ -107,7 +110,7 @@ public class GraphicsChip {
         obj1Palette = new GameboyPalette(0, 1, 2, 3);
         obj2Palette = new GameboyPalette(0, 1, 2, 3);
 
-        backBuffer = a.createImage(160, 144);
+        backBuffer = a.createImage(GraphicsChip.WIDTH, GraphicsChip.HEIGHT);
 
         for (int r = 0; r < 384 * 2; r++) {
             tiles[r] = new GameboyTile(this, a);
@@ -149,20 +152,20 @@ public class GraphicsChip {
     /**
      * Reads data from the specified video RAM address
      */
-    public short addressRead(int addr) {
-        return videoRam[addr + vidRamStart];
+    public short addressRead(int address) {
+        return videoRam[address + vidRamStart];
     }
 
     /**
      * Writes data to the specified video RAM address
      */
-    public void addressWrite(int addr, byte data) {
-        if (addr < 0x1800) {   // Bkg Tile data area
+    public void addressWrite(int address, byte data) {
+        if (address < 0x1800) {   // Bkg Tile data area
             int tileStart = 0;
-            tiles[(addr >> 4) + tileStart].invalidate();
-            videoRam[addr + vidRamStart] = data;
+            tiles[(address >> 4) + tileStart].invalidate();
+            videoRam[address + vidRamStart] = data;
         } else {
-            videoRam[addr + vidRamStart] = data;
+            videoRam[address + vidRamStart] = data;
         }
     }
 
@@ -257,7 +260,7 @@ public class GraphicsChip {
             clearFrameBuffer();
             drawSprites(backBuffer.getGraphics(), 1);
             //spritesEnabledThisFrame = spritesEnabled;
-            windowStopLine = 144;
+            windowStopLine = GraphicsChip.HEIGHT;
             windowEnableThisLine = winEnabled;
         }
 
@@ -284,7 +287,7 @@ public class GraphicsChip {
 
         if (((yPixelOfs + line) % 8 == 4) || (line == 0)) {
 
-            if ((line >= 144) && (line < 152)) notifyScanline(line + 8);
+            if ((line >= GraphicsChip.HEIGHT) && (line < 152)) notifyScanline(line + 8);
 
             Graphics back = backBuffer.getGraphics();
 
@@ -334,7 +337,7 @@ public class GraphicsChip {
     private void clearFrameBuffer() {
         Graphics back = backBuffer.getGraphics();
         back.setColor(new Color(backgroundPalette.getRgbEntry(0)));
-        back.fillRect(0, 0, 160, 144);
+        back.fillRect(0, 0, GraphicsChip.WIDTH, GraphicsChip.HEIGHT);
     }
 
     /**
@@ -367,7 +370,7 @@ public class GraphicsChip {
             wy = Shorts.unsign(cpu.ioHandler.registers[0x4A]);
 
             back.setColor(new Color(backgroundPalette.getRgbEntry(0)));
-            back.fillRect(wx, wy, 160, 144);
+            back.fillRect(wx, wy, GraphicsChip.WIDTH, GraphicsChip.HEIGHT);
 
             int tileAddress;
             int attribs, tileDataAddress;

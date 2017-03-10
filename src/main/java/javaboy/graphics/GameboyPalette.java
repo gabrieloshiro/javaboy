@@ -36,7 +36,7 @@ public class GameboyPalette {
      * Set the palette from the internal Gameboy format
      */
     public void decodePalette(int palette) {
-        data.add(0, new Byte((palette & 0x03) >> 0));
+        data.add(0, new Byte((palette & 0x03)));
         data.add(1, new Byte((palette & 0x0C) >> 2));
         data.add(2, new Byte((palette & 0x30) >> 4));
         data.add(3, new Byte((palette & 0xC0) >> 6));

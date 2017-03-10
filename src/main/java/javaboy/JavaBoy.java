@@ -1,5 +1,6 @@
 package javaboy;
 
+import javaboy.graphics.GraphicsChip;
 import org.pmw.tinylog.Logger;
 
 import java.awt.*;
@@ -29,7 +30,7 @@ public class JavaBoy extends Frame {
         Logger.debug("JavaBoy (tm) Version 0.92 (c) 2005 Neil Millstone (application)");
 
         setUndecorated(true);
-        setSize(160, 144);
+        setSize(GraphicsChip.WIDTH, GraphicsChip.HEIGHT);
         setVisible(true);
         requestFocus();
 

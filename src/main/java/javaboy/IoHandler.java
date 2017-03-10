@@ -61,7 +61,7 @@ public class IoHandler {
                 int cyclePos = instructionCounter.getCount() % GraphicsConstants.INSTRS_PER_HBLANK;
                 int sectionLength = GraphicsConstants.INSTRS_PER_HBLANK / 6;
 
-                if (Shorts.unsign(registers[0x44]) > 144) {
+                if (Shorts.unsign(registers[0x44]) > GraphicsChip.HEIGHT) {
                     output |= 1;
                 } else {
                     if (cyclePos <= sectionLength * 3) {

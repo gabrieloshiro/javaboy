@@ -55,9 +55,9 @@ public class Cpu implements ReadableWritable {
     }
 
     @Override
-    public Byte read(Short addr) {
+    public Byte read(Short address) {
 
-        switch ((addr.intValue() & 0xF000)) {
+        switch ((address.intValue() & 0xF000)) {
             case 0x0000:
             case 0x1000:
             case 0x2000:
@@ -66,50 +66,50 @@ public class Cpu implements ReadableWritable {
             case 0x5000:
             case 0x6000:
             case 0x7000:
-                return rom.read(addr);
+                return rom.read(address);
 
             case 0x8000:
             case 0x9000:
-                return new Byte(graphicsChip.addressRead(addr.intValue() - 0x8000));
+                return new Byte(graphicsChip.addressRead(address.intValue() - 0x8000));
 
             case 0xA000:
             case 0xB000:
-                return rom.read(addr);
+                return rom.read(address);
 
             case 0xC000:
-                return new Byte((mainRam[addr.intValue() - 0xC000]));
+                return new Byte((mainRam[address.intValue() - 0xC000]));
 
             case 0xD000:
-                return new Byte((mainRam[addr.intValue() - 0xD000]));
+                return new Byte((mainRam[address.intValue() - 0xD000]));
 
             case 0xE000:
-                return new Byte(mainRam[addr.intValue() - 0xE000]);
+                return new Byte(mainRam[address.intValue() - 0xE000]);
 
             case 0xF000:
-                if (addr.intValue() < 0xFE00) {
-                    return new Byte(mainRam[addr.intValue() - 0xE000]);
-                } else if (addr.intValue() < 0xFF00) {
-                    return new Byte((oam[addr.intValue() - 0xFE00] & 0x00FF));
+                if (address.intValue() < 0xFE00) {
+                    return new Byte(mainRam[address.intValue() - 0xE000]);
+                } else if (address.intValue() < 0xFF00) {
+                    return new Byte((oam[address.intValue() - 0xFE00] & 0x00FF));
                 } else {
-                    return new Byte(ioHandler.ioRead(addr.intValue() - 0xFF00));
+                    return new Byte(ioHandler.ioRead(address.intValue() - 0xFF00));
                 }
 
             default:
-                Logger.debug("Tried to read address " + addr + ".  pc = " + String.format("%04X", registers.pc.intValue()));
+                Logger.debug("Tried to read address " + address + ".  pc = " + String.format("%04X", registers.pc.intValue()));
                 throw new IllegalStateException("");
         }
 
     }
 
-    public void write(Short addr, Short data) {
-        write(addr, data.getLowerByte());
-        write(new Short(addr.intValue() + 1), data.getUpperByte());
+    public void write(Short address, Short data) {
+        write(address, data.getLowerByte());
+        write(new Short(address.intValue() + 1), data.getUpperByte());
     }
 
     @Override
-    public void write(Short addr, Byte data) {
+    public void write(Short address, Byte data) {
 
-        switch (addr.intValue() & 0xF000) {
+        switch (address.intValue() & 0xF000) {
             case 0x0000:
             case 0x1000:
             case 0x2000:
@@ -122,7 +122,7 @@ public class Cpu implements ReadableWritable {
 
             case 0x8000:
             case 0x9000:
-                graphicsChip.addressWrite(addr.intValue() - 0x8000, (byte) data.intValue());
+                graphicsChip.addressWrite(address.intValue() - 0x8000, (byte) data.intValue());
                 break;
 
             case 0xA000:
@@ -130,28 +130,28 @@ public class Cpu implements ReadableWritable {
                 break;
 
             case 0xC000:
-                mainRam[addr.intValue() - 0xC000] = (byte) data.intValue();
+                mainRam[address.intValue() - 0xC000] = (byte) data.intValue();
                 break;
 
             case 0xD000:
-                mainRam[addr.intValue() - 0xD000] = (byte) data.intValue();
+                mainRam[address.intValue() - 0xD000] = (byte) data.intValue();
                 break;
 
             case 0xE000:
-                mainRam[addr.intValue() - 0xE000] = (byte) data.intValue();
+                mainRam[address.intValue() - 0xE000] = (byte) data.intValue();
                 break;
 
             case 0xF000:
-                if (addr.intValue() < 0xFE00) {
+                if (address.intValue() < 0xFE00) {
                     try {
-                        mainRam[addr.intValue() - 0xE000] = (byte) data.intValue();
+                        mainRam[address.intValue() - 0xE000] = (byte) data.intValue();
                     } catch (ArrayIndexOutOfBoundsException e) {
-                        Logger.debug("Address error: " + addr + " pc = " + String.format("%04X", registers.pc.intValue()));
+                        Logger.debug("Address error: " + address + " pc = " + String.format("%04X", registers.pc.intValue()));
                     }
-                } else if (addr.intValue() < 0xFF00) {
-                    oam[addr.intValue() - 0xFE00] = (byte) data.intValue();
+                } else if (address.intValue() < 0xFF00) {
+                    oam[address.intValue() - 0xFE00] = (byte) data.intValue();
                 } else {
-                    ioHandler.ioWrite(addr.intValue() - 0xFF00, (short) data.intValue());
+                    ioHandler.ioWrite(address.intValue() - 0xFF00, (short) data.intValue());
                 }
                 break;
         }
@@ -266,7 +266,7 @@ public class Cpu implements ReadableWritable {
             }
 
             if (Shorts.unsign(ioHandler.registers[0x44]) == 143) {
-                for (int r = 144; r < 170; r++) {
+                for (int r = GraphicsChip.HEIGHT; r < 170; r++) {
                     graphicsChip.notifyScanline(r);
                 }
                 if (((ioHandler.registers[0x40] & 0x80) != 0) && ((ioHandler.registers[0xFF] & Interrupts.INT_VBLANK) != 0)) {
@@ -1632,14 +1632,14 @@ public class Cpu implements ReadableWritable {
         write(address, data);
     }
 
-    private void jr(boolean condition, Byte addr) {
+    private void jr(boolean condition, Byte address) {
         if (condition) {
-            add(registers.pc, addr);
+            add(registers.pc, address);
         }
     }
 
-    private void add(Short pc, Byte addr) {
-        Short addrShort = Short.signedShortFromByte(addr);
+    private void add(Short pc, Byte address) {
+        Short addrShort = Short.signedShortFromByte(address);
         add(pc, addrShort);
     }
 
