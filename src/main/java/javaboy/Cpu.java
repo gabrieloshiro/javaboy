@@ -34,7 +34,6 @@ public class Cpu implements ReadableWritable {
     boolean timaEnabled = false;
     int instructionsPerTima = 6000;
 
-
     // 8Kb main system RAM appears at 0xC000 in address space
     // 32Kb for GBC
     private final byte[] mainRam = new byte[ROM_SIZE];
@@ -175,11 +174,6 @@ public class Cpu implements ReadableWritable {
         registers.f.cf(ONE);
 
         registers.a.setValue(0x01);
-
-        for (int r = 0; r < 0x8000; r++) {
-            mainRam[r] = 0;
-        }
-
         registers.bc.setValue(0x0013);
         registers.de.setValue(0x00D8);
         registers.hl.setValue(0x014D);
@@ -224,8 +218,8 @@ public class Cpu implements ReadableWritable {
     /**
      * Initiate an interrupt of the specified type
      */
-    private void triggerInterrupt(int intr) {
-        ioHandler.registers[0x0F] |= intr;
+    private void triggerInterrupt(int interrupt) {
+        ioHandler.registers[0x0F] |= interrupt;
     }
 
     /**
@@ -284,10 +278,7 @@ public class Cpu implements ReadableWritable {
                         // Nothing.
                     }
                 }
-
-
             }
-
 
             graphicsChip.notifyScanline(Shorts.unsigned(ioHandler.registers[0x44]));
             ioHandler.registers[0x44] = (byte) (Shorts.unsigned(ioHandler.registers[0x44]) + 1);
@@ -303,6 +294,7 @@ public class Cpu implements ReadableWritable {
                         java.lang.Thread.sleep(1);
                     }
                 } catch (InterruptedException ignored) {
+                    Logger.debug("Error while sleeping.");
                 }
             }
         }
