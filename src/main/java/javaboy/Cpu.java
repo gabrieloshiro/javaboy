@@ -40,7 +40,7 @@ public class Cpu implements ReadableWritable {
     private final byte[] mainRam = new byte[ROM_SIZE];
 
     // 256 bytes at top of RAM are used mainly for registers
-    private final byte[] oam = new byte[0x100];
+    private final Memory oam = new Memory(0xFE00, 0x100);
 
     final GraphicsChip graphicsChip;
     public final IoHandler ioHandler;
@@ -89,7 +89,7 @@ public class Cpu implements ReadableWritable {
                 if (address.intValue() < 0xFE00) {
                     return new Byte(mainRam[address.intValue() - 0xE000]);
                 } else if (address.intValue() < 0xFF00) {
-                    return new Byte((oam[address.intValue() - 0xFE00] & 0x00FF));
+                    return oam.read(address);
                 } else {
                     return new Byte(ioHandler.ioRead(address.intValue() - 0xFF00));
                 }
@@ -149,7 +149,7 @@ public class Cpu implements ReadableWritable {
                         Logger.debug("Address error: " + address + " pc = " + String.format("%04X", registers.pc.intValue()));
                     }
                 } else if (address.intValue() < 0xFF00) {
-                    oam[address.intValue() - 0xFE00] = (byte) data.intValue();
+                    oam.write(address, data);
                 } else {
                     ioHandler.ioWrite(address.intValue() - 0xFF00, (short) data.intValue());
                 }

@@ -30,7 +30,7 @@ public class Memory implements ReadableWritable, Iterable<Byte> {
         for (int i = firstAddress; i <= lastAddress(); i++) {
             final Byte data = new Byte();
             memory.add(data);
-            Logger.debug("Creating empty memory position [" + i + "]");
+//            Logger.debug("Creating empty memory position [" + i + "]");
         }
     }
 
