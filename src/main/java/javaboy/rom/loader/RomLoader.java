@@ -3,10 +3,7 @@ package javaboy.rom.loader;
 import javaboy.memory.Memory;
 import org.pmw.tinylog.Logger;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 public class RomLoader {
 
@@ -17,6 +14,7 @@ public class RomLoader {
 
             byte[] data = new byte[size];   // Recreate the ROM array with the correct size
 
+            //noinspection ResultOfMethodCallIgnored
             is.read(data);
             is.close();
 
@@ -26,7 +24,6 @@ public class RomLoader {
             Logger.debug("Error opening ROM image");
             throw new IllegalArgumentException();
         }
-
     }
 
 

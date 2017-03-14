@@ -4,8 +4,8 @@ public enum Bit {
     ZERO(0, false),
     ONE(1, true);
 
-    private int intValue;
-    private boolean booleanValue;
+    private final int intValue;
+    private final boolean booleanValue;
 
     public int intValue() {
         return intValue;

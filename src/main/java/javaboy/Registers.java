@@ -4,7 +4,7 @@ import javaboy.lang.Byte;
 import javaboy.lang.FlagRegister;
 import javaboy.lang.Short;
 
-public class Registers {
+class Registers {
 
     public final Byte a = new Byte();
     public final FlagRegister f = new FlagRegister();
@@ -25,7 +25,7 @@ public class Registers {
     public final Short pc = new Short();
     public final Short sp = new Short();
 
-    public ReadableWritable memory;
+    private final ReadableWritable memory;
 
     public Registers(ReadableWritable memory) {
         this.memory = memory;

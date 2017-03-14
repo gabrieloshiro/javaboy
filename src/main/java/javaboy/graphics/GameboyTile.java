@@ -16,22 +16,22 @@ class GameboyTile {
     private static final int IMAGE_COUNT = 64;
 
 
-    private GraphicsChip graphicsChip;
-    Image[] image = new Image[IMAGE_COUNT];
+    private final GraphicsChip graphicsChip;
+    private final Image[] image = new Image[IMAGE_COUNT];
 
     /**
      * True, if the tile's image in the image[] array is a valid representation of the tile as it
      * appears in video memory.
      */
-    boolean[] valid = new boolean[IMAGE_COUNT];
+    private final boolean[] valid = new boolean[IMAGE_COUNT];
 
-    MemoryImageSource[] source = new MemoryImageSource[IMAGE_COUNT];
+    private final MemoryImageSource[] source = new MemoryImageSource[IMAGE_COUNT];
 
     /**
      * Current magnification value of Gameboy screen
      */
-    int[] imageData = new int[IMAGE_COUNT];
-    Component a;
+    private final int[] imageData = new int[IMAGE_COUNT];
+    private final Component a;
 
     /**
      * Initialize a new Gameboy tile
@@ -45,7 +45,7 @@ class GameboyTile {
     /**
      * Allocate memory for the tile image with the specified attributes
      */
-    void allocateImage(int attributes, Component a) {
+    private void allocateImage(int attributes, Component a) {
         source[attributes] = new MemoryImageSource(8, 8,
                 new DirectColorModel(32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000),
                 imageData, 0, 8);

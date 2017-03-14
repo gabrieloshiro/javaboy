@@ -1,6 +1,6 @@
 package javaboy;
 
-public class GraphicsConstants {
+class GraphicsConstants {
 
     public static final int INSTRS_PER_VBLANK = 9000;
 
@@ -10,7 +10,7 @@ public class GraphicsConstants {
      * on the screen.  Multiply by 154 to find out how many instructions
      * per frame.
      */
-    public static final int BASE_INSTRS_PER_HBLANK = 60;
+    private static final int BASE_INSTRS_PER_HBLANK = 60;
     public static final int INSTRS_PER_HBLANK = BASE_INSTRS_PER_HBLANK;
 
     /**

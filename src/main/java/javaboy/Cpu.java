@@ -20,9 +20,9 @@ public class Cpu implements ReadableWritable {
 
     private final Registers registers;
 
-    private Memory rom;
+    private final Memory rom;
 
-    private InstructionCounter instructionCounter = new InstructionCounter();
+    private final InstructionCounter instructionCounter = new InstructionCounter();
 
     private boolean interruptsEnabled = false;
 
@@ -32,19 +32,19 @@ public class Cpu implements ReadableWritable {
     private int ieDelay = -1;
 
     boolean timaEnabled = false;
-    int instrsPerTima = 6000;
+    int instructionsPerTima = 6000;
 
 
     // 8Kb main system RAM appears at 0xC000 in address space
     // 32Kb for GBC
-    private byte[] mainRam = new byte[ROM_SIZE];
+    private final byte[] mainRam = new byte[ROM_SIZE];
 
     // 256 bytes at top of RAM are used mainly for registers
-    private byte[] oam = new byte[0x100];
+    private final byte[] oam = new byte[0x100];
 
-    GraphicsChip graphicsChip;
-    public IoHandler ioHandler;
-    private Component applet;
+    final GraphicsChip graphicsChip;
+    public final IoHandler ioHandler;
+    private final Component applet;
 
     Cpu(Component a) {
         rom = RomLoader.loadRom("bgblogo.gb", ROM_SIZE);
@@ -101,7 +101,7 @@ public class Cpu implements ReadableWritable {
 
     }
 
-    public void write(Short address, Short data) {
+    private void write(Short address, Short data) {
         write(address, data.getLowerByte());
         write(new Short(address.intValue() + 1), data.getUpperByte());
     }
@@ -188,7 +188,7 @@ public class Cpu implements ReadableWritable {
     }
 
     /**
-     * If an interrupt is enabled an the interrupt register shows that it has occured, jump to
+     * If an interrupt is enabled an the interrupt register shows that it has occurred, jump to
      * the relevant interrupt vector address
      */
     private void checkInterrupts() {
@@ -232,8 +232,8 @@ public class Cpu implements ReadableWritable {
      * Check for interrupts that need to be initiated
      */
     private void initiateInterrupts() {
-        if (timaEnabled && ((instructionCounter.getCount() % instrsPerTima) == 0)) {
-            if (Shorts.unsign(ioHandler.registers[0x05]) == 0) {
+        if (timaEnabled && ((instructionCounter.getCount() % instructionsPerTima) == 0)) {
+            if (Shorts.unsigned(ioHandler.registers[0x05]) == 0) {
                 ioHandler.registers[0x05] = ioHandler.registers[0x06]; // Set TIMA modulo
                 if ((ioHandler.registers[0xFF] & Interrupts.INT_TIMA) != 0)
                     triggerInterrupt(Interrupts.INT_TIMA);
@@ -250,12 +250,12 @@ public class Cpu implements ReadableWritable {
 
             // LCY Coincidence
             // The +1 is due to the LCY register being just about to be incremented
-            int cline = Shorts.unsign(ioHandler.registers[0x44]) + 1;
+            int cline = Shorts.unsigned(ioHandler.registers[0x44]) + 1;
             if (cline == 152) cline = 0;
 
             if (((ioHandler.registers[0xFF] & Interrupts.INT_LCDC) != 0) &&
                     ((ioHandler.registers[0x41] & 64) != 0) &&
-                    (Shorts.unsign(ioHandler.registers[0x45]) == cline) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90)) {
+                    (Shorts.unsigned(ioHandler.registers[0x45]) == cline) && ((ioHandler.registers[0x40] & 0x80) != 0) && (cline < 0x90)) {
                 triggerInterrupt(Interrupts.INT_LCDC);
             }
 
@@ -265,7 +265,7 @@ public class Cpu implements ReadableWritable {
                 triggerInterrupt(Interrupts.INT_LCDC);
             }
 
-            if (Shorts.unsign(ioHandler.registers[0x44]) == 143) {
+            if (Shorts.unsigned(ioHandler.registers[0x44]) == 143) {
                 for (int r = GraphicsChip.HEIGHT; r < 170; r++) {
                     graphicsChip.notifyScanline(r);
                 }
@@ -289,10 +289,10 @@ public class Cpu implements ReadableWritable {
             }
 
 
-            graphicsChip.notifyScanline(Shorts.unsign(ioHandler.registers[0x44]));
-            ioHandler.registers[0x44] = (byte) (Shorts.unsign(ioHandler.registers[0x44]) + 1);
+            graphicsChip.notifyScanline(Shorts.unsigned(ioHandler.registers[0x44]));
+            ioHandler.registers[0x44] = (byte) (Shorts.unsigned(ioHandler.registers[0x44]) + 1);
 
-            if (Shorts.unsign(ioHandler.registers[0x44]) >= 153) {
+            if (Shorts.unsigned(ioHandler.registers[0x44]) >= 153) {
                 //     Logger.debug("VBlank");
 
                 ioHandler.registers[0x44] = 0;
@@ -1639,8 +1639,8 @@ public class Cpu implements ReadableWritable {
     }
 
     private void add(Short pc, Byte address) {
-        Short addrShort = Short.signedShortFromByte(address);
-        add(pc, addrShort);
+        Short addressShort = Short.signedShortFromByte(address);
+        add(pc, addressShort);
     }
 
     private void rst(int address) {
@@ -1665,7 +1665,7 @@ public class Cpu implements ReadableWritable {
         return new Short(upperByte, lowerByte);
     }
 
-    public void adc(Byte left, Byte right, Bit carry) {
+    private void adc(Byte left, Byte right, Bit carry) {
 
         registers.f.setValue(0);
 
@@ -1688,15 +1688,15 @@ public class Cpu implements ReadableWritable {
         left.setValue(result);
     }
 
-    public void add(Byte left, Byte right) {
+    private void add(Byte left, Byte right) {
         adc(left, right, ZERO);
     }
 
-    public void inc(Byte left) {
+    private void inc(Byte left) {
         add(left, new Byte(1));
     }
 
-    public void sbc(Byte left, Byte right, Bit carry) {
+    private void sbc(Byte left, Byte right, Bit carry) {
         registers.f.nf(ONE);
 
         int lowerResult = left.lowerNibble() - right.lowerNibble() - carry.intValue();
@@ -1724,21 +1724,21 @@ public class Cpu implements ReadableWritable {
         left.setValue(result);
     }
 
-    public void sub(Byte left, Byte right) {
+    private void sub(Byte left, Byte right) {
         sbc(left, right, ZERO);
     }
 
-    public void cp(Byte left, Byte right) {
+    private void cp(Byte left, Byte right) {
         int originalValue = left.intValue();
         sub(left, right);
         left.setValue(originalValue);
     }
 
-    public void dec(Byte left) {
+    private void dec(Byte left) {
         sub(left, new Byte(1));
     }
 
-    public void or(Byte left, Byte right) {
+    private void or(Byte left, Byte right) {
         int result = left.intValue() | right.intValue();
 
         registers.f.setValue(0);
@@ -1909,7 +1909,7 @@ public class Cpu implements ReadableWritable {
         sra(operand, ZERO);
     }
 
-    public void add(Short left, Short right) {
+    private void add(Short left, Short right) {
 
         registers.f.nf(ZERO);
 

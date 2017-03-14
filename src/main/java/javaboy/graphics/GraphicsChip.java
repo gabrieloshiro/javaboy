@@ -1,7 +1,6 @@
 package javaboy.graphics;
 
 import javaboy.Cpu;
-import javaboy.JavaBoy;
 import javaboy.Shorts;
 import javaboy.lang.Short;
 
@@ -39,11 +38,11 @@ public class GraphicsChip {
     /**
      * The current contents of the video memory, mapped in at 0x8000 - 0x9FFF
      */
-    private byte[] videoRam = new byte[0x8000];
+    private final byte[] videoRam = new byte[0x8000];
 
-    public GameboyPalette backgroundPalette;
-    public GameboyPalette obj1Palette;
-    public GameboyPalette obj2Palette;
+    public final GameboyPalette backgroundPalette;
+    public final GameboyPalette obj1Palette;
+    public final GameboyPalette obj2Palette;
 
     public boolean spritesEnabled = true;
     public boolean bgEnabled = true;
@@ -52,12 +51,12 @@ public class GraphicsChip {
     /**
      * The image containing the Gameboy screen
      */
-    private Image backBuffer;
+    private final Image backBuffer;
 
     /**
      * The current frame skip value
      */
-    private int frameSkip = 2;
+    private final int frameSkip = 2;
 
     /**
      * The number of frames that have been drawn so far in the current frame sampling period
@@ -89,13 +88,13 @@ public class GraphicsChip {
      * Selection of one of two address for the BG tile map.
      */
     public boolean hiBgTileMapAddress = false;
-    private Cpu cpu;
-    private int vidRamStart = 0;
+    private final Cpu cpu;
+    private final int vidRamStart = 0;
 
     /**
      * Tile cache
      */
-    private GameboyTile[] tiles = new GameboyTile[384 * 2];
+    private final GameboyTile[] tiles = new GameboyTile[384 * 2];
 
     // Hacks to allow some raster effects to work.  Or at least not to break as badly.
     private boolean savedWindowDataSelect = false;
@@ -278,12 +277,12 @@ public class GraphicsChip {
         // first line the window is to be displayed.  Will work unless this is changed
         // after window is started
         // NOTE: Still no real support for hblank effects on window/sprites
-        if (line == Shorts.unsign(cpu.ioHandler.registers[0x4A]) + 1) {        // Compare against WY reg
+        if (line == Shorts.unsigned(cpu.ioHandler.registers[0x4A]) + 1) {        // Compare against WY reg
             savedWindowDataSelect = bgWindowDataSelect;
         }
 
-        int xPixelOfs = Shorts.unsign(cpu.ioHandler.registers[0x43]) % 8;
-        int yPixelOfs = Shorts.unsign(cpu.ioHandler.registers[0x42]) % 8;
+        int xPixelOfs = Shorts.unsigned(cpu.ioHandler.registers[0x43]) % 8;
+        int yPixelOfs = Shorts.unsigned(cpu.ioHandler.registers[0x42]) % 8;
 
         if (((yPixelOfs + line) % 8 == 4) || (line == 0)) {
 
@@ -291,8 +290,8 @@ public class GraphicsChip {
 
             Graphics back = backBuffer.getGraphics();
 
-            int xTileOfs = Shorts.unsign(cpu.ioHandler.registers[0x43]) / 8;
-            int yTileOfs = Shorts.unsign(cpu.ioHandler.registers[0x42]) / 8;
+            int xTileOfs = Shorts.unsigned(cpu.ioHandler.registers[0x43]) / 8;
+            int yTileOfs = Shorts.unsigned(cpu.ioHandler.registers[0x42]) / 8;
             int bgStartAddress, tileNum;
 
             int y = ((line + yPixelOfs) / 8);
@@ -310,7 +309,7 @@ public class GraphicsChip {
                     tileNumAddress = bgStartAddress +
                             (((y + yTileOfs) % 32) * 32) + ((x + xTileOfs) % 32);
 
-                    tileNum = Shorts.unsign(videoRam[tileNumAddress]);
+                    tileNum = Shorts.unsigned(videoRam[tileNumAddress]);
                 } else {
                     tileNumAddress = bgStartAddress +
                             (((y + yTileOfs) % 32) * 32) + ((x + xTileOfs) % 32);
@@ -366,8 +365,8 @@ public class GraphicsChip {
             } else {
                 windowStartAddress = 0x1800;
             }
-            wx = Shorts.unsign(cpu.ioHandler.registers[0x4B]) - 7;
-            wy = Shorts.unsign(cpu.ioHandler.registers[0x4A]);
+            wx = Shorts.unsigned(cpu.ioHandler.registers[0x4B]) - 7;
+            wy = Shorts.unsigned(cpu.ioHandler.registers[0x4A]);
 
             back.setColor(new Color(backgroundPalette.getRgbEntry(0)));
             back.fillRect(wx, wy, GraphicsChip.WIDTH, GraphicsChip.HEIGHT);
@@ -383,7 +382,7 @@ public class GraphicsChip {
                     if (!savedWindowDataSelect) {
                         tileNum = 256 + videoRam[tileAddress];
                     } else {
-                        tileNum = Shorts.unsign(videoRam[tileAddress]);
+                        tileNum = Shorts.unsigned(videoRam[tileAddress]);
                     }
                     tileDataAddress = tileNum << 4;
 

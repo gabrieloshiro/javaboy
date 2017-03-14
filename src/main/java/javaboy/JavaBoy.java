@@ -5,9 +5,9 @@ import org.pmw.tinylog.Logger;
 
 import java.awt.*;
 
-public class JavaBoy extends Frame {
+class JavaBoy extends Frame {
 
-    private Cpu cpu;
+    private final Cpu cpu;
 
     /**
      * When running as an applet, updates the screen when necessary

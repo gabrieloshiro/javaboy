@@ -97,7 +97,7 @@ public class Memory implements ReadableWritable, Iterable<Byte> {
 
     private class MemoryIterator implements Iterator<Byte> {
 
-        private Short address;
+        private final Short address;
 
         public MemoryIterator() {
             address = new Short(firstAddress);

@@ -1,6 +1,6 @@
 package javaboy;
 
-public class Interrupts {
+class Interrupts {
 
     /**
      * Vertical blank interrupt

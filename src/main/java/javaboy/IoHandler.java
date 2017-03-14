@@ -15,14 +15,14 @@ public class IoHandler {
     /**
      * Data contained in the handled memory area
      */
-    public byte[] registers = new byte[0x100];
+    public final byte[] registers = new byte[0x100];
 
     /**
      * Reference to the current CPU object
      */
-    private Cpu cpu;
+    private final Cpu cpu;
     
-    private InstructionCounter instructionCounter;
+    private final InstructionCounter instructionCounter;
 
     /**
      * Create an IoHandler for the specified CPU
@@ -61,7 +61,7 @@ public class IoHandler {
                 int cyclePos = instructionCounter.getCount() % GraphicsConstants.INSTRS_PER_HBLANK;
                 int sectionLength = GraphicsConstants.INSTRS_PER_HBLANK / 6;
 
-                if (Shorts.unsign(registers[0x44]) > GraphicsChip.HEIGHT) {
+                if (Shorts.unsigned(registers[0x44]) > GraphicsChip.HEIGHT) {
                     output |= 1;
                 } else {
                     if (cyclePos <= sectionLength * 3) {
@@ -101,16 +101,16 @@ public class IoHandler {
 
                 switch (clockFrequency) {
                     case 0:
-                        cpu.instrsPerTima = (instrsPerSecond / 4096);
+                        cpu.instructionsPerTima = (instrsPerSecond / 4096);
                         break;
                     case 1:
-                        cpu.instrsPerTima = (instrsPerSecond / 262144);
+                        cpu.instructionsPerTima = (instrsPerSecond / 262144);
                         break;
                     case 2:
-                        cpu.instrsPerTima = (instrsPerSecond / 65536);
+                        cpu.instructionsPerTima = (instrsPerSecond / 65536);
                         break;
                     case 3:
-                        cpu.instrsPerTima = (instrsPerSecond / 16384);
+                        cpu.instructionsPerTima = (instrsPerSecond / 16384);
                         break;
                 }
                 break;
@@ -179,11 +179,11 @@ public class IoHandler {
 
             case 0x55:
                 if (((registers[0x55] & 0x80) == 0) && ((data & 0x80) == 0)) {
-                    int dmaSrc = (Shorts.unsign(registers[0x51]) << 8) +
-                            (Shorts.unsign(registers[0x52]) & 0xF0);
-                    int dmaDst = ((Shorts.unsign(registers[0x53]) & 0x1F) << 8) +
-                            (Shorts.unsign(registers[0x54]) & 0xF0) + 0x8000;
-                    int dmaLen = ((Shorts.unsign(data) & 0x7F) * 16) + 16;
+                    int dmaSrc = (Shorts.unsigned(registers[0x51]) << 8) +
+                            (Shorts.unsigned(registers[0x52]) & 0xF0);
+                    int dmaDst = ((Shorts.unsigned(registers[0x53]) & 0x1F) << 8) +
+                            (Shorts.unsigned(registers[0x54]) & 0xF0) + 0x8000;
+                    int dmaLen = ((Shorts.unsigned(data) & 0x7F) * 16) + 16;
 
                     if (dmaLen > 2048) dmaLen = 2048;
 

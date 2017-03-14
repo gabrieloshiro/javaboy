@@ -20,7 +20,7 @@ public class GameboyPalette {
     /**
      * Default RGB colour values
      */
-    private int[] colours = {0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000};
+    private final int[] colours = {0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000};
 
     /**
      * Create a palette with the specified colour mappings

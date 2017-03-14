@@ -11,7 +11,7 @@ public class MemoryBank implements ReadableWritable {
     private final int numberOfBanks;
     private int currentBank;
 
-    private ArrayList<Memory> memoryBank = new ArrayList<>();
+    private final ArrayList<Memory> memoryBank = new ArrayList<>();
 
     public MemoryBank(int firstAddress, int memorySize, int numberOfBanks) {
         if (numberOfBanks < 1) {

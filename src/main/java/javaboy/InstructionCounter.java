@@ -1,6 +1,6 @@
 package javaboy;
 
-public class InstructionCounter {
+class InstructionCounter {
 
     /**
      * The number of instructions that have been executed since the
