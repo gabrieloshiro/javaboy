@@ -277,12 +277,12 @@ public class GraphicsChip {
         // first line the window is to be displayed.  Will work unless this is changed
         // after window is started
         // NOTE: Still no real support for hblank effects on window/sprites
-        if (line == Shorts.unsigned(cpu.ioHandler.registers[0x4A]) + 1) {        // Compare against WY reg
+        if (line == cpu.ioHandler.read(new Short(0xFF4A)).intValue() + 1) {        // Compare against WY reg
             savedWindowDataSelect = bgWindowDataSelect;
         }
 
-        int xPixelOfs = Shorts.unsigned(cpu.ioHandler.registers[0x43]) % 8;
-        int yPixelOfs = Shorts.unsigned(cpu.ioHandler.registers[0x42]) % 8;
+        int xPixelOfs = cpu.ioHandler.read(new Short(0xFF43)).intValue() % 8;
+        int yPixelOfs = cpu.ioHandler.read(new Short(0xFF42)).intValue() % 8;
 
         if (((yPixelOfs + line) % 8 == 4) || (line == 0)) {
 
@@ -290,8 +290,8 @@ public class GraphicsChip {
 
             Graphics back = backBuffer.getGraphics();
 
-            int xTileOfs = Shorts.unsigned(cpu.ioHandler.registers[0x43]) / 8;
-            int yTileOfs = Shorts.unsigned(cpu.ioHandler.registers[0x42]) / 8;
+            int xTileOfs = cpu.ioHandler.read(new Short(0xFF43)).intValue() / 8;
+            int yTileOfs = cpu.ioHandler.read(new Short(0xFF42)).intValue() / 8;
             int bgStartAddress, tileNum;
 
             int y = ((line + yPixelOfs) / 8);
@@ -360,13 +360,13 @@ public class GraphicsChip {
             int wx, wy;
             int windowStartAddress;
 
-            if ((cpu.ioHandler.registers[0x40] & 0x40) != 0) {
+            if ((cpu.ioHandler.read(new Short(0xFF40)).intValue() & 0x40) != 0) {
                 windowStartAddress = 0x1C00;
             } else {
                 windowStartAddress = 0x1800;
             }
-            wx = Shorts.unsigned(cpu.ioHandler.registers[0x4B]) - 7;
-            wy = Shorts.unsigned(cpu.ioHandler.registers[0x4A]);
+            wx = cpu.ioHandler.read(new Short(0xFF4B)).intValue() - 7;
+            wy = cpu.ioHandler.read(new Short(0xFF4A)).intValue();
 
             back.setColor(new Color(backgroundPalette.getRgbEntry(0)));
             back.fillRect(wx, wy, GraphicsChip.WIDTH, GraphicsChip.HEIGHT);

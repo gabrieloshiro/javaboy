@@ -1,6 +1,8 @@
 package javaboy;
 
 import javaboy.graphics.GraphicsChip;
+import javaboy.lang.Byte;
+import javaboy.memory.Memory;
 import org.pmw.tinylog.Logger;
 import javaboy.lang.Short;
 
@@ -10,12 +12,13 @@ import javaboy.lang.Short;
  * LDH instruction which is located at 0xFF50 - 0xFFFF.
  */
 
-public class IoHandler {
+public class IoHandler implements ReadableWritable {
 
     /**
      * Data contained in the handled memory area
      */
-    public final byte[] registers = new byte[0x100];
+//    public final byte[] registers = new byte[0x100];
+    public final Memory io = new Memory(0xFF00, 0x100);
 
     /**
      * Reference to the current CPU object
@@ -49,19 +52,22 @@ public class IoHandler {
      * Read data from IO Ram
      */
     short ioRead(int num) {
+
+        Short address = new Short(0xFF00 + num);
+
         switch (num) {
             case 0x41:         // LCDSTAT
 
                 int output = 0;
 
-                if (registers[0x44] == registers[0x45]) {
+                if (io.read(new Short(0xFF44)).equals(io.read(new Short(0xFF45)))) {
                     output |= 4;
                 }
 
                 int cyclePos = instructionCounter.getCount() % GraphicsConstants.INSTRS_PER_HBLANK;
                 int sectionLength = GraphicsConstants.INSTRS_PER_HBLANK / 6;
 
-                if (Shorts.unsigned(registers[0x44]) > GraphicsChip.HEIGHT) {
+                if (io.read(new Short(0xFF44)).intValue() > GraphicsChip.HEIGHT) {
                     output |= 1;
                 } else {
                     if (cyclePos <= sectionLength * 3) {
@@ -73,10 +79,10 @@ public class IoHandler {
                         output |= 3;
                     }
                 }
-                return (byte) (output | (registers[0x41] & 0xF8));
+                return (byte) (output | (io.read(new Short(0xFF41)).intValue() & 0xF8));
 
             default:
-                return registers[num];
+                return (short) io.read(address).intValue();
         }
     }
 
@@ -85,11 +91,15 @@ public class IoHandler {
      */
     void ioWrite(int num, short data) {
 
+        Short address = new Short(0xFF00 + num);
+        Byte dataByte = new Byte(data);
+
         switch (num) {
 
             // DIV
             case 0x04:
-                registers[0x04] = 0;
+                io.write(new Short(0xFF04), new Byte(data));
+//                registers[0x04] = 0;
                 break;
 
             // TAC
@@ -138,8 +148,8 @@ public class IoHandler {
                     cpu.graphicsChip.bgEnabled = false;
                     cpu.graphicsChip.winEnabled = false;
                 }
-
-                registers[0x40] = (byte) data;
+                io.write(new Short(0xFF40), new Byte(data));
+//                registers[0x40] = (byte) data;
                 break;
 
             // DMA
@@ -157,32 +167,34 @@ public class IoHandler {
             case 0x47:           // FF47 - BKG and WIN palette
                 //    Logger.debug("Palette created!");
                 cpu.graphicsChip.backgroundPalette.decodePalette(data);
-                if (registers[num] != (byte) data) {
-                    registers[num] = (byte) data;
+                if (io.read(address).intValue() != (byte) data) {
+                    io.write(address, dataByte);
                     cpu.graphicsChip.invalidateAll(GraphicsChip.TILE_BKG);
                 }
                 break;
             case 0x48:           // FF48 - OBJ1 palette
                 cpu.graphicsChip.obj1Palette.decodePalette(data);
-                if (registers[num] != (byte) data) {
-                    registers[num] = (byte) data;
+                if (io.read(address).intValue() != (byte) data) {
+                    io.write(address, dataByte);
                     cpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ_1);
                 }
                 break;
             case 0x49:           // FF49 - OBJ2 palette
                 cpu.graphicsChip.obj2Palette.decodePalette(data);
-                if (registers[num] != (byte) data) {
-                    registers[num] = (byte) data;
+                if (io.read(address).intValue() != (byte) data) {
+                    io.write(address, dataByte);
                     cpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ_2);
                 }
                 break;
 
             case 0x55:
-                if (((registers[0x55] & 0x80) == 0) && ((data & 0x80) == 0)) {
-                    int dmaSrc = (Shorts.unsigned(registers[0x51]) << 8) +
-                            (Shorts.unsigned(registers[0x52]) & 0xF0);
-                    int dmaDst = ((Shorts.unsigned(registers[0x53]) & 0x1F) << 8) +
-                            (Shorts.unsigned(registers[0x54]) & 0xF0) + 0x8000;
+
+
+                if (((io.read(new Short(0xFF55)).intValue() & 0x80) == 0) && ((data & 0x80) == 0)) {
+                    int dmaSrc = ((io.read(new Short(0xFF51)).intValue()) << 8) +
+                            (io.read(new Short(0xFF52)).intValue() & 0xF0);
+                    int dmaDst = ((io.read(new Short(0xFF53)).intValue() & 0x1F) << 8) +
+                            (io.read(new Short(0xFF54)).intValue() & 0xF0) + 0x8000;
                     int dmaLen = ((Shorts.unsigned(data) & 0x7F) * 16) + 16;
 
                     if (dmaLen > 2048) dmaLen = 2048;
@@ -194,12 +206,24 @@ public class IoHandler {
                     }
                 }
 
-                registers[0x55] = (byte) data;
+//                registers[0x55] = (byte) data;
+                io.write(new Short(0xFF55), dataByte);
                 break;
 
             default:
-                registers[num] = (byte) data;
+                io.write(address, dataByte);
+//                registers[num] = (byte) data;
                 break;
         }
+    }
+
+    @Override
+    public Byte read(Short address) {
+        return io.read(address);
+    }
+
+    @Override
+    public void write(Short address, Byte data) {
+        io.write(address, data);
     }
 }
