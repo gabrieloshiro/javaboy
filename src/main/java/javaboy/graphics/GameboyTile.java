@@ -38,7 +38,7 @@ class GameboyTile {
      */
     GameboyTile(GraphicsChip graphicsChip, Component a) {
         this.graphicsChip = graphicsChip;
-        allocateImage(GraphicsChip.TILE_BKG, a);
+        allocateImage(GraphicsChip.TILE_BACKGROUND, a);
         this.a = a;
     }
 
@@ -87,9 +87,9 @@ class GameboyTile {
 
         GameboyPalette pal;
 
-        if ((attribs & GraphicsChip.TILE_OBJ_1) != 0) {
+        if ((attribs & GraphicsChip.TILE_OBJECT_1) != 0) {
             pal = graphicsChip.obj1Palette;
-        } else if ((attribs & GraphicsChip.TILE_OBJ_2) != 0) {
+        } else if ((attribs & GraphicsChip.TILE_OBJECT_2) != 0) {
             pal = graphicsChip.obj2Palette;
         } else {
             pal = graphicsChip.backgroundPalette;

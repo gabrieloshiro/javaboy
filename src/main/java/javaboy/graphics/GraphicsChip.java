@@ -13,17 +13,17 @@ public class GraphicsChip {
     /**
      * Tile uses the background palette
      */
-    public static final int TILE_BKG = 0;
+    public static final int TILE_BACKGROUND = 0;
 
     /**
      * Tile uses the first sprite palette
      */
-    public static final int TILE_OBJ_1 = 4;
+    public static final int TILE_OBJECT_1 = 4;
 
     /**
      * Tile uses the second sprite palette
      */
-    public static final int TILE_OBJ_2 = 8;
+    public static final int TILE_OBJECT_2 = 8;
 
     /**
      * Tile is flipped horizontally
@@ -202,9 +202,9 @@ public class GraphicsChip {
 
                 vidRamAddress = tileNum << 4;
                 if ((attributes & 0x10) != 0) {
-                    spriteAttrib |= TILE_OBJ_2;
+                    spriteAttrib |= TILE_OBJECT_2;
                 } else {
-                    spriteAttrib |= TILE_OBJ_1;
+                    spriteAttrib |= TILE_OBJECT_1;
                 }
 
                 if ((attributes & 0x20) != 0) {
@@ -258,13 +258,9 @@ public class GraphicsChip {
         if (line == 0) {
             clearFrameBuffer();
             drawSprites(backBuffer.getGraphics(), 1);
-            //spritesEnabledThisFrame = spritesEnabled;
             windowStopLine = GraphicsChip.HEIGHT;
             windowEnableThisLine = winEnabled;
         }
-
-        // SpritesEnabledThisFrame should be true if sprites were ever on this frame
-        //if (spritesEnabled) spritesEnabledThisFrame = true;
 
         if (windowEnableThisLine) {
             if (!winEnabled) {
@@ -320,7 +316,7 @@ public class GraphicsChip {
                 int attribs;
 
                 vidMemAddr = (tileNum << 4);
-                attribs = TILE_BKG;
+                attribs = TILE_BACKGROUND;
 
                 if (tiles[tileNum].invalid(attribs)) {
                     tiles[tileNum].validate(videoRam, vidMemAddr, attribs);
@@ -378,7 +374,6 @@ public class GraphicsChip {
                 for (int x = 0; x < 21 - (wx / 8); x++) {
                     tileAddress = windowStartAddress + (y * 32) + x;
 
-                    //     if (!bgWindowDataSelect) {
                     if (!savedWindowDataSelect) {
                         tileNum = 256 + videoRam[tileAddress];
                     } else {
@@ -386,7 +381,7 @@ public class GraphicsChip {
                     }
                     tileDataAddress = tileNum << 4;
 
-                    attribs = TILE_BKG;
+                    attribs = TILE_BACKGROUND;
 
                     if (wy + y * 8 < windowStopLine) {
                         if (tiles[tileNum].invalid(attribs)) {

@@ -17,7 +17,6 @@ public class IoHandler implements ReadableWritable {
     /**
      * Data contained in the handled memory area
      */
-//    public final byte[] registers = new byte[0x100];
     public final Memory io = new Memory(0xFF00, 0x100);
 
     /**
@@ -149,7 +148,6 @@ public class IoHandler implements ReadableWritable {
                     cpu.graphicsChip.winEnabled = false;
                 }
                 io.write(new Short(0xFF40), new Byte(data));
-//                registers[0x40] = (byte) data;
                 break;
 
             // DMA
@@ -169,21 +167,21 @@ public class IoHandler implements ReadableWritable {
                 cpu.graphicsChip.backgroundPalette.decodePalette(data);
                 if (io.read(address).intValue() != (byte) data) {
                     io.write(address, dataByte);
-                    cpu.graphicsChip.invalidateAll(GraphicsChip.TILE_BKG);
+                    cpu.graphicsChip.invalidateAll(GraphicsChip.TILE_BACKGROUND);
                 }
                 break;
             case 0x48:           // FF48 - OBJ1 palette
                 cpu.graphicsChip.obj1Palette.decodePalette(data);
                 if (io.read(address).intValue() != (byte) data) {
                     io.write(address, dataByte);
-                    cpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ_1);
+                    cpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJECT_1);
                 }
                 break;
             case 0x49:           // FF49 - OBJ2 palette
                 cpu.graphicsChip.obj2Palette.decodePalette(data);
                 if (io.read(address).intValue() != (byte) data) {
                     io.write(address, dataByte);
-                    cpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJ_2);
+                    cpu.graphicsChip.invalidateAll(GraphicsChip.TILE_OBJECT_2);
                 }
                 break;
 
@@ -206,13 +204,11 @@ public class IoHandler implements ReadableWritable {
                     }
                 }
 
-//                registers[0x55] = (byte) data;
                 io.write(new Short(0xFF55), dataByte);
                 break;
 
             default:
                 io.write(address, dataByte);
-//                registers[num] = (byte) data;
                 break;
         }
     }
