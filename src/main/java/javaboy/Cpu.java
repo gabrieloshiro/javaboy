@@ -6,7 +6,7 @@ import javaboy.lang.Byte;
 import javaboy.lang.FlagRegister;
 import javaboy.lang.Short;
 import javaboy.memory.Memory;
-import javaboy.rom.loader.RomLoader;
+import javaboy.memory.MemoryController;
 import org.pmw.tinylog.Logger;
 
 import java.awt.*;
@@ -20,9 +20,9 @@ public class Cpu implements ReadableWritable {
 
     private final Registers registers;
 
-    private final Memory rom;
-
     private final InstructionCounter instructionCounter = new InstructionCounter();
+
+    private final MemoryController memoryController;
 
     private boolean interruptsEnabled = false;
 
@@ -46,58 +46,17 @@ public class Cpu implements ReadableWritable {
     private final Component applet;
 
     Cpu(Component a) {
-        rom = RomLoader.loadRom("bgblogo.gb", ROM_SIZE);
+
         registers = new Registers(this);
         graphicsChip = new GraphicsChip(a, this);
         ioHandler = new IoHandler(this, instructionCounter);
+        memoryController = new MemoryController(graphicsChip, ioHandler, registers);
         applet = a;
     }
 
     @Override
     public Byte read(Short address) {
-
-        switch ((address.intValue() & 0xF000)) {
-            case 0x0000:
-            case 0x1000:
-            case 0x2000:
-            case 0x3000:
-            case 0x4000:
-            case 0x5000:
-            case 0x6000:
-            case 0x7000:
-                return rom.read(address);
-
-            case 0x8000:
-            case 0x9000:
-                return new Byte(graphicsChip.addressRead(address.intValue() - 0x8000));
-
-            case 0xA000:
-            case 0xB000:
-                return rom.read(address);
-
-            case 0xC000:
-                return new Byte((mainRam[address.intValue() - 0xC000]));
-
-            case 0xD000:
-                return new Byte((mainRam[address.intValue() - 0xD000]));
-
-            case 0xE000:
-                return new Byte(mainRam[address.intValue() - 0xE000]);
-
-            case 0xF000:
-                if (address.intValue() < 0xFE00) {
-                    return new Byte(mainRam[address.intValue() - 0xE000]);
-                } else if (address.intValue() < 0xFF00) {
-                    return oam.read(address);
-                } else {
-                    return new Byte(ioHandler.ioRead(address.intValue() - 0xFF00));
-                }
-
-            default:
-                Logger.debug("Tried to read address " + address + ".  pc = " + String.format("%04X", registers.pc.intValue()));
-                throw new IllegalStateException("");
-        }
-
+        return memoryController.read(address);
     }
 
     private void write(Short address, Short data) {
@@ -107,55 +66,7 @@ public class Cpu implements ReadableWritable {
 
     @Override
     public void write(Short address, Byte data) {
-
-        switch (address.intValue() & 0xF000) {
-            case 0x0000:
-            case 0x1000:
-            case 0x2000:
-            case 0x3000:
-            case 0x4000:
-            case 0x5000:
-            case 0x6000:
-            case 0x7000:
-                break;
-
-            case 0x8000:
-            case 0x9000:
-                graphicsChip.addressWrite(address.intValue() - 0x8000, (byte) data.intValue());
-                break;
-
-            case 0xA000:
-            case 0xB000:
-                break;
-
-            case 0xC000:
-                mainRam[address.intValue() - 0xC000] = (byte) data.intValue();
-                break;
-
-            case 0xD000:
-                mainRam[address.intValue() - 0xD000] = (byte) data.intValue();
-                break;
-
-            case 0xE000:
-                mainRam[address.intValue() - 0xE000] = (byte) data.intValue();
-                break;
-
-            case 0xF000:
-                if (address.intValue() < 0xFE00) {
-                    try {
-                        mainRam[address.intValue() - 0xE000] = (byte) data.intValue();
-                    } catch (ArrayIndexOutOfBoundsException e) {
-                        Logger.debug("Address error: " + address + " pc = " + String.format("%04X", registers.pc.intValue()));
-                    }
-                } else if (address.intValue() < 0xFF00) {
-                    oam.write(address, data);
-                } else {
-                    ioHandler.ioWrite(address.intValue() - 0xFF00, (short) data.intValue());
-                }
-                break;
-        }
-
-
+        memoryController.write(address, data);
     }
 
     /**

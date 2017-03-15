@@ -4,7 +4,7 @@ import javaboy.lang.Byte;
 import javaboy.lang.FlagRegister;
 import javaboy.lang.Short;
 
-class Registers {
+public class Registers {
 
     public final Byte a = new Byte();
     public final FlagRegister f = new FlagRegister();

@@ -39,10 +39,6 @@ public class IoHandler implements ReadableWritable {
      * Initialize IO to initial power on state
      */
     void reset() {
-        Logger.debug("Hardware reset");
-        for (int r = 0; r < 0xFF; r++) {
-            ioWrite(r, (short) 0x00);
-        }
         ioWrite(0x40, (short) 0x91);
         ioWrite(0x0F, (short) 0x01);
     }
@@ -50,7 +46,7 @@ public class IoHandler implements ReadableWritable {
     /**
      * Read data from IO Ram
      */
-    short ioRead(int num) {
+    public short ioRead(int num) {
 
         Short address = new Short(0xFF00 + num);
 
@@ -88,7 +84,7 @@ public class IoHandler implements ReadableWritable {
     /**
      * Write data to IO Ram
      */
-    void ioWrite(int num, short data) {
+    public void ioWrite(int num, short data) {
 
         Short address = new Short(0xFF00 + num);
         Byte dataByte = new Byte(data);
