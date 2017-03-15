@@ -272,11 +272,10 @@ public class Cpu implements ReadableWritable {
                 }
 
                 if (graphicsChip.frameWaitTime >= 0) {
-                    //      Logger.debug("Waiting for " + graphicsChip.frameWaitTime + "ms.");
                     try {
                         java.lang.Thread.sleep(graphicsChip.frameWaitTime);
                     } catch (InterruptedException e) {
-                        // Nothing.
+                        Logger.debug("Error while thread sleeping.");
                     }
                 }
             }

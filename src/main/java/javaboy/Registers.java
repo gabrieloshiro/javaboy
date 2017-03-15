@@ -31,9 +31,6 @@ class Registers {
         this.memory = memory;
     }
 
-    /**
-     * Performs a read of a register by internal register number
-     */
     public int registerRead(int regNum) {
         switch (regNum) {
             case 0:
@@ -57,9 +54,6 @@ class Registers {
         }
     }
 
-    /**
-     * Performs a write of a register by internal register number
-     */
     public void registerWrite(int regNum, int data) {
         switch (regNum) {
             case 0:
