@@ -1,6 +1,8 @@
 package javaboy.instruction;
 
-public enum ExtendedOpcode {
+import javaboy.lang.Byte;
+
+public enum ExtendedOpcode implements Instruction {
     //                DEC     HEX      BIN
     RLC_B(0), //   00   00000000
     RLC_C(1), //   01   00000001
@@ -263,6 +265,25 @@ public enum ExtendedOpcode {
 
     ExtendedOpcode(int opcode) {
         this.opcode = opcode;
+    }
+
+    @Override
+    public Byte byteValue() {
+        return new Byte(intValue());
+    }
+
+    @Override
+    public int intValue() {
+        return opcode;
+    }
+
+    public static ExtendedOpcode from(int opcode) {
+        for (ExtendedOpcode item: ExtendedOpcode.values()) {
+            if (opcode == item.intValue()) {
+                return item;
+            }
+        }
+        throw new IllegalArgumentException();
     }
 
 }
