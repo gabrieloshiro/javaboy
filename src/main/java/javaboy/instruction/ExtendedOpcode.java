@@ -2,7 +2,7 @@ package javaboy.instruction;
 
 import javaboy.lang.Byte;
 
-public enum ExtendedOpcode implements Instruction {
+public enum ExtendedOpcode implements Opcode {
     //                DEC     HEX      BIN
     RLC_B(0), //   00   00000000
     RLC_C(1), //   01   00000001
