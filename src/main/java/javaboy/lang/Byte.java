@@ -53,6 +53,10 @@ public class Byte {
         setValue(value + 1);
     }
 
+    public void neg() {
+        setValue(~value);
+    }
+
     public Bit getBit(int index) {
         if ((index & 0xFFFFFFF8) != 0) {
             throw new IllegalArgumentException("Bit index on a byte should be in the range 0..7. Index passed: " + index);

@@ -535,7 +535,7 @@ public class Cpu implements ReadableWritable {
             }
 
             case CPL:
-                registers.a.setValue((~registers.a.intValue()));
+                registers.a.neg();
                 registers.f.nf(ONE);
                 registers.f.hf(ONE);
                 break;
