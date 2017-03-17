@@ -9,7 +9,6 @@ import javaboy.lang.Bit;
 import javaboy.lang.Byte;
 import javaboy.lang.FlagRegister;
 import javaboy.lang.Short;
-import javaboy.memory.Memory;
 import javaboy.memory.MemoryController;
 import org.pmw.tinylog.Logger;
 
@@ -20,7 +19,6 @@ import static javaboy.lang.Bit.ZERO;
 
 public class Cpu implements ReadableWritable {
 
-    private static final int ROM_SIZE = 0x8000;
     private final Registers registers;
     private final InstructionCounter instructionCounter = new InstructionCounter();
     private final MemoryController memoryController;
@@ -34,13 +32,6 @@ public class Cpu implements ReadableWritable {
 
     boolean timaEnabled = false;
     int instructionsPerTima = 6000;
-
-    // 8Kb main system RAM appears at 0xC000 in address space
-    // 32Kb for GBC
-    private final byte[] mainRam = new byte[ROM_SIZE];
-
-    // 256 bytes at top of RAM are used mainly for registers
-    private final Memory oam = new Memory(0xFE00, 0x100);
 
     final GraphicsChip graphicsChip;
     public final IoHandler ioHandler;
