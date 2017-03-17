@@ -237,7 +237,7 @@ public enum BaseOpcode implements Opcode {
     PUSH_HL(229), //   E5   11100101
     AND_n(230), //   E6   11100110
     RST_20(231), //   E7   11100111
-    ADD_SP_n(232), //   E8   11101000
+    ADD_SP_nn(232), //   E8   11101000
     JP_HL(233), //   E9   11101001
     LD_inni_A(234), //   EA   11101010
     UNUSED_EB(235), //   EB   11101011
@@ -278,8 +278,8 @@ public enum BaseOpcode implements Opcode {
         return opcode;
     }
 
-    public static ExtendedOpcode from(int opcode) {
-        for (ExtendedOpcode item: ExtendedOpcode.values()) {
+    public static BaseOpcode from(int opcode) {
+        for (BaseOpcode item: BaseOpcode.values()) {
             if (opcode == item.intValue()) {
                 return item;
             }

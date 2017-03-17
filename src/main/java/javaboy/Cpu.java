@@ -1,6 +1,10 @@
 package javaboy;
 
 import javaboy.graphics.GraphicsChip;
+import javaboy.instruction.BaseOpcode;
+import javaboy.instruction.ExtendedOpcode;
+import javaboy.instruction.Instruction;
+import javaboy.instruction.Opcode;
 import javaboy.lang.Bit;
 import javaboy.lang.Byte;
 import javaboy.lang.FlagRegister;
@@ -17,14 +21,11 @@ import static javaboy.lang.Bit.ZERO;
 public class Cpu implements ReadableWritable {
 
     private static final int ROM_SIZE = 0x8000;
-
     private final Registers registers;
-
     private final InstructionCounter instructionCounter = new InstructionCounter();
-
     private final MemoryController memoryController;
-
     private boolean interruptsEnabled = false;
+    private boolean prefixCB;
 
     /**
      * Used to implement the IE delay slot
@@ -46,7 +47,6 @@ public class Cpu implements ReadableWritable {
     private final Component applet;
 
     Cpu(Component a) {
-
         registers = new Registers(this);
         graphicsChip = new GraphicsChip(a, this);
         ioHandler = new IoHandler(this, instructionCounter);
@@ -76,6 +76,8 @@ public class Cpu implements ReadableWritable {
         graphicsChip.dispose();
         interruptsEnabled = false;
         ieDelay = -1;
+        prefixCB = false;
+
         registers.pc.setValue(0x0100);
         registers.sp.setValue(0xFFFE);
 
@@ -211,1250 +213,959 @@ public class Cpu implements ReadableWritable {
         }
     }
 
-    final void execute() {
-
+    private void executeBaseOpcode(BaseOpcode opcode) {
         final FlagRegister newf = new FlagRegister();
 
+        switch (opcode) {
+
+            case NOP:
+                break;
+
+            case LD_BC_nn: {
+                Short data = loadImmediateShort(registers.pc);
+                load(registers.bc, data);
+                break;
+            }
+
+            case LD_iBCi_A:
+                write(registers.bc, registers.a);
+                break;
+
+            case INC_BC:
+                registers.bc.inc();
+                break;
+
+            case INC_B:
+                inc(registers.b);
+                break;
+
+            case DEC_B:
+                dec(registers.b);
+                break;
+
+            case LD_B_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                load(registers.b, data);
+                break;
+            }
+
+            case RLCA:
+                rlca(registers.a);
+                break;
+
+            case LD_inni_SP: {
+                Short address = loadImmediateShort(registers.pc);
+                write(address, registers.sp);
+                break;
+            }
+
+            case ADD_HL_BC: {
+                add(registers.hl, registers.bc);
+                break;
+            }
+
+            case LD_A_iBCi: {
+                Byte data = read(registers.bc);
+                registers.a.setValue(data);
+                break;
+            }
+
+            case DEC_BC:
+                registers.bc.dec();
+                break;
+
+            case INC_C:
+                inc(registers.c);
+                break;
+
+            case DEC_C:
+                dec(registers.c);
+                break;
+
+            case LD_C_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                load(registers.c, data);
+                break;
+            }
+
+            case RRCA:
+                rrca(registers.a);
+                break;
+
+            case STOP:
+                registers.pc.inc();
+                break;
+
+            case LD_DE_nn: {
+                Short data = loadImmediateShort(registers.pc);
+                registers.de.setValue(data.intValue());
+                break;
+            }
+
+            case LD_iDEi_A:
+                write(registers.de, registers.a);
+                break;
+
+            case INC_DE:
+                registers.de.inc();
+                break;
+
+            case INC_D:
+                inc(registers.d);
+                break;
+
+            case DEC_D:
+                dec(registers.d);
+                break;
+
+            case LD_D_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                load(registers.d, data);
+                break;
+            }
+
+            case RLA:
+                rl(registers.a, registers.f.cf());
+                break;
+
+            case JR_n: {
+                Byte offset = loadImmediateByte(registers.pc);
+                jr(true, offset);
+                break;
+            }
+
+            case ADD_HL_DE: {
+                add(registers.hl, registers.de);
+                break;
+            }
+
+            case LD_A_iDEi: {
+                Byte data = read(registers.de);
+                load(registers.a, data);
+                break;
+            }
+
+            case DEC_DE:
+                registers.de.inc();
+                break;
+
+            case INC_E:
+                inc(registers.e);
+                break;
+
+            case DEC_E:
+                dec(registers.e);
+                break;
+
+            case LD_E_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                load(registers.e, data);
+                break;
+            }
+
+            case RRA: {
+                rra(registers.a, registers.f.cf());
+                break;
+            }
+
+            case JR_NZ_n: {
+                Byte address = loadImmediateByte(registers.pc);
+                jr(registers.f.zf() == ZERO, address);
+            }
+            break;
+
+            case LD_HL_nn: {
+                Short address = loadImmediateShort(registers.pc);
+                load(registers.hl, address);
+                break;
+            }
+
+            case LDI_iHLi_A:
+                write(registers.hl, registers.a);
+                registers.hl.inc();
+                break;
+
+            case INC_HL:
+                registers.hl.inc();
+                break;
+
+            case INC_H:
+                inc(registers.h);
+                break;
+
+            case DEC_H:
+                dec(registers.h);
+                break;
+
+            case LD_H_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                load(registers.h, data);
+                break;
+            }
+
+            case DAA:
+                int upperNibble = registers.a.upperNibble();
+                int lowerNibble = registers.a.lowerNibble();
+
+                newf.setValue(0);
+                newf.nf(registers.f.nf());
+
+                if (registers.f.nf().intValue() == 0) {
+
+                    if (registers.f.cf().intValue() == 0) {
+                        if ((upperNibble <= 8) && (lowerNibble >= 0xA) &&
+                                (registers.f.hf().intValue() == 0)) {
+                            registers.a.setValue(registers.a.intValue() + 0x06);
+                        }
+
+                        if ((upperNibble <= 9) && (lowerNibble <= 0x3) &&
+                                (registers.f.hf().intValue() == 1)) {
+                            registers.a.setValue(registers.a.intValue() + 0x06);
+                        }
+
+                        if ((upperNibble >= 0xA) && (lowerNibble <= 0x9) &&
+                                (registers.f.hf().intValue() == 0)) {
+                            registers.a.setValue(registers.a.intValue() + 0x60);
+                            newf.cf(ONE);
+                        }
+
+                        if ((upperNibble >= 0x9) && (lowerNibble >= 0xA) &&
+                                (registers.f.hf().intValue() == 0)) {
+                            registers.a.setValue(registers.a.intValue() + 0x66);
+                            newf.cf(ONE);
+                        }
+
+                        if ((upperNibble >= 0xA) && (lowerNibble <= 0x3) &&
+                                (registers.f.hf().intValue() == 1)) {
+                            registers.a.setValue(registers.a.intValue() + 0x66);
+                            newf.cf(ONE);
+                        }
+
+                    } else {  // If carry set
+
+                        if ((upperNibble <= 0x2) && (lowerNibble <= 0x9) &&
+                                (registers.f.hf().intValue() == 0)) {
+                            registers.a.setValue(registers.a.intValue() + 0x60);
+                            newf.cf(ONE);
+                        }
+
+                        if ((upperNibble <= 0x2) && (lowerNibble >= 0xA) &&
+                                (registers.f.hf().intValue() == 0)) {
+                            registers.a.setValue(registers.a.intValue() + 0x66);
+                            newf.cf(ONE);
+                        }
+
+                        if ((upperNibble <= 0x3) && (lowerNibble <= 0x3) &&
+                                (registers.f.hf().intValue() == 1)) {
+                            registers.a.setValue(registers.a.intValue() + 0x66);
+                            newf.cf(ONE);
+                        }
+
+                    }
+
+                } else { // Subtract is set
+
+                    if (registers.f.cf().intValue() == 0) {
+
+                        if ((upperNibble <= 0x8) && (lowerNibble >= 0x6) &&
+                                (registers.f.hf().intValue() == 1)) {
+                            registers.a.setValue(registers.a.intValue() + 0xFA);
+                        }
+
+                    } else { // Carry is set
+
+                        if ((upperNibble >= 0x7) && (lowerNibble <= 0x9) &&
+                                (registers.f.hf().intValue() == 0)) {
+                            registers.a.setValue(registers.a.intValue() + 0xA0);
+                            newf.cf(ONE);
+                        }
+
+                        if ((upperNibble >= 0x6) && (lowerNibble >= 0x6) &&
+                                (registers.f.hf().intValue() == 1)) {
+                            registers.a.setValue(registers.a.intValue() + 0x9A);
+                            newf.cf(ONE);
+                        }
+
+                    }
+
+                }
+
+                if (registers.a.intValue() == 0) {
+                    newf.zf(ONE);
+                }
+
+                registers.f.setValue(newf.intValue());
+
+                break;
+
+            case JR_Z_n: {
+                Byte address = loadImmediateByte(registers.pc);
+                jr(registers.f.zf() == ONE, address);
+                break;
+            }
+
+            case ADD_HL_HL: {
+                add(registers.hl, registers.hl);
+                break;
+            }
+
+            case LDI_A_iHLi: {
+                Byte data = read(registers.hl);
+                load(registers.a, data);
+                registers.hl.inc();
+                break;
+            }
+
+            case DEC_HL:
+                registers.hl.dec();
+                break;
+
+            case INC_L:
+                inc(registers.l);
+                break;
+
+            case DEC_L:
+                dec(registers.l);
+                break;
+
+            case LD_L_n: {
+                Byte address = loadImmediateByte(registers.pc);
+                load(registers.l, address);
+                break;
+            }
+
+            case CPL:
+                registers.a.setValue((~registers.a.intValue()));
+                registers.f.nf(ONE);
+                registers.f.hf(ONE);
+                break;
+
+            case JR_NC_n: {
+                Byte address = loadImmediateByte(registers.pc);
+                jr(registers.f.cf() == ZERO, address);
+                break;
+            }
+
+            case LD_SP_nn: {
+                Short address = loadImmediateShort(registers.pc);
+                load(registers.sp, address);
+                break;
+            }
+
+            case LDD_iHLi_A:
+                write(registers.hl, registers.a);
+                registers.hl.dec();
+                break;
+
+            case INC_SP:
+                registers.sp.inc();
+                break;
+
+            case INC_iHLi: {
+                Byte data = read(registers.hl);
+                inc(data);
+                write(registers.hl, data);
+                break;
+            }
+
+            case DEC_iHLi:
+                registers.hl.dec();
+                break;
+
+            case LD_iHLi_n: {
+                Byte address = loadImmediateByte(registers.pc);
+                write(registers.hl, address);
+                break;
+            }
+
+            case SCF:
+                registers.f.nf(ZERO);
+                registers.f.hf(ZERO);
+                registers.f.cf(ONE);
+                break;
+
+            case JR_C_n: {
+                Byte address = loadImmediateByte(registers.pc);
+                jr(registers.f.cf() == ONE, address);
+                break;
+            }
+
+            case ADD_HL_SP: {
+                add(registers.hl, registers.sp);
+                break;
+            }
+
+            case LDD_A_iHLi: {
+                Byte data = read(registers.hl);
+                load(registers.a, data);
+                registers.hl.dec();
+                break;
+            }
+
+            case DEC_SP:
+                registers.sp.dec();
+                break;
+
+            case INC_A:
+                inc(registers.a);
+                break;
+
+            case DEC_A:
+                dec(registers.a);
+                break;
+
+            case LD_A_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                load(registers.a, data);
+                break;
+            }
+
+            case CCF:
+                registers.f.nf(ZERO);
+                registers.f.hf(ZERO);
+                registers.f.cf(registers.f.cf().toggle());
+                break;
+
+            case LD_B_B:
+                break;
+
+                /*
+                 HALT
+                 */
+            case HALT:
+                interruptsEnabled = true;
+                while (ioHandler.read(new Short(0xFF0F)).intValue() == 0) {
+                    initiateInterrupts();
+                    instructionCounter.inc();
+                }
+                break;
+
+            case XOR_A:
+                xor(registers.a, registers.a);
+                break;
+
+            case RET_NZ:
+                ret(registers.f.zf() == ZERO, registers.sp);
+                break;
+
+            case POP_BC: {
+                load(registers.bc, popShort(registers.sp));
+                break;
+            }
+
+            case JP_NZ_nn: {
+                Short address = loadImmediateShort(registers.pc);
+                jp(registers.f.zf() == ZERO, address);
+                break;
+            }
+
+            case JP_nn: {
+                Short address = loadImmediateShort(registers.pc);
+                jp(address);
+                break;
+            }
+
+            case CALL_NZ_nn:
+                call(registers.f.zf() == ZERO);
+                break;
+
+            case PUSH_BC:
+                pushShort(registers.sp, registers.bc);
+                break;
+
+            case ADD_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                add(registers.a, data);
+                break;
+            }
+
+            case RST_08:
+                rst(0x08);
+                break;
+
+            case RET_Z: {
+                ret(registers.f.zf() == ONE, registers.sp);
+                break;
+            }
+
+            case RET:
+                ret(registers.sp);
+                break;
+
+            case JP_Z_nn: {
+                Short address = loadImmediateShort(registers.pc);
+                jp(registers.f.zf() == ONE, address);
+                break;
+            }
+
+            // Shift/bit test
+            case PREFIX_CB:
+                prefixCB = true;
+                break;
+
+            case CALL_Z_nn:
+                call(registers.f.zf() == ONE);
+                break;
+
+            case CALL_nn: {
+                call();
+                break;
+            }
+
+            case ADC_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                adc(registers.a, data, registers.f.cf());
+                break;
+            }
+
+            case RST_00:
+                rst(0x00);
+                break;
+
+            case RET_NC:
+                ret(registers.f.cf() == ZERO, registers.sp);
+                break;
+
+            case POP_DE: {
+                Short data = popShort(registers.sp);
+                registers.de.setValue(data.intValue());
+                break;
+            }
+
+            case JP_NC_nn: {
+                Short address = loadImmediateShort(registers.pc);
+                jp(registers.f.cf() == ZERO, address);
+                break;
+            }
+
+            case CALL_NC_nn:
+                call(registers.f.cf() == ZERO);
+                break;
+
+            case PUSH_DE:
+                pushShort(registers.sp, registers.de);
+                break;
+
+            case SUB_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                sub(registers.a, data);
+                break;
+            }
+
+            case RST_10:
+                rst(0x10);
+                break;
+
+            case RET_C:
+                ret(registers.f.cf() == ONE, registers.sp);
+                break;
+
+            case RETI:
+                interruptsEnabled = true;
+                ret(registers.sp);
+                break;
+
+            case JP_C_nn: {
+                Short address = loadImmediateShort(registers.pc);
+                jp(registers.f.cf() == ONE, address);
+                break;
+            }
+
+            case CALL_C_nn:
+                call(registers.f.cf() == ONE);
+                break;
+
+            case SBC_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                sbc(registers.a, data, registers.f.cf());
+                break;
+            }
+
+            case RST_18:
+                rst(0x18);
+                break;
+
+            case LDH_ini_A: {
+                Byte data = loadImmediateByte(registers.pc);
+                write(new Short(0xFF00 | data.intValue()), registers.a);
+                break;
+            }
+
+            case POP_HL: {
+                Short data = popShort(registers.sp);
+                load(registers.hl, data);
+                break;
+            }
+
+            // LDH (FF00 + C), A
+            case LDH_iCi_A: {
+                Short address = new Short(new Byte(0xFF), registers.c);
+                write(address, registers.a);
+                break;
+            }
+
+            case PUSH_HL:
+                pushShort(registers.sp, registers.hl);
+                break;
+
+            case AND_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                and(registers.a, data);
+                break;
+            }
+
+            case RST_20:
+                rst(0x20);
+                break;
+
+            case ADD_SP_nn: {
+                Short data = loadImmediateShort(registers.pc);
+                add(registers.sp, data);
+                break;
+            }
+
+            case JP_HL: {
+                jp(registers.hl);
+                break;
+            }
+
+            case LD_inni_A: {
+                Short address = loadImmediateShort(registers.pc);
+                write(address, registers.a);
+                break;
+            }
+
+            case XOR_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                xor(registers.a, data);
+                break;
+            }
+
+            case RST_28:
+                rst(0x28);
+                break;
+
+            case LDH_A_ini: {
+                Byte addressOffset = loadImmediateByte(registers.pc);
+                Byte ff = new Byte(0xFF);
+
+                Short address = new Short(ff, addressOffset);
+                load(registers.a, read(address));
+                break;
+            }
+
+            case POP_AF:
+                load(registers.af, popShort(registers.sp));
+                break;
+
+            // LD A, (FF00 + C)
+            case LDH_A_iCi: {
+                Short address = new Short(new Byte(0xFF), registers.c);
+                Byte data = read(address);
+                load(registers.a, data);
+                break;
+            }
+
+            case DI:
+                interruptsEnabled = false;
+                break;
+
+            case PUSH_AF:
+                pushShort(registers.sp, registers.af);
+                break;
+
+            case OR_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                or(registers.a, data);
+                break;
+            }
+
+            case RST_30:
+                rst(0x30);
+                break;
+
+            // LD HL, SP + n  ** HALFCARRY FLAG NOT SET ***
+            case LDHL_SP_n: {
+                Byte offset = loadImmediateByte(registers.pc);
+                int result = registers.sp.intValue() + offset.intValue();
+                add(registers.hl, new Short(result));
+                break;
+            }
+
+            case LD_SP_HL:
+                registers.sp.setValue(registers.hl.intValue());
+                break;
+
+            case LD_A_inni: {
+                Short address = loadImmediateShort(registers.pc);
+                Byte data = read(address);
+                load(registers.a, data);
+                break;
+            }
+
+            case EI:
+                ieDelay = 1;
+                break;
+
+            case CP_n: {
+                Byte data = loadImmediateByte(registers.pc);
+                cp(registers.a, data);
+                break;
+            }
+
+            case RST_38:
+                rst(0x38);
+                break;
+
+            default:
+
+                // ALU Operations
+                if ((opcode.intValue() & 0xC0) == 0x80) {
+                    int operand = registers.registerRead(opcode.intValue() & 0x07);
+                    switch ((opcode.intValue() & 0x38) >> 3) {
+
+                        // ADC A, r
+                        case 1:
+                            adc(registers.a, new Byte(operand), registers.f.cf());
+                            break;
+
+                        // ADD A, r
+                        case 0: {
+                            add(registers.a, new Byte(operand));
+                            break;
+                        }
+
+                        // SBC A, r
+                        case 3:
+                            sbc(registers.a, new Byte(operand), registers.f.cf());
+                            break;
+
+                        // SUB A, r
+                        case 2: {
+                            sub(registers.a, new Byte(operand));
+                            break;
+                        }
+
+                        // AND A, r
+                        case 4:
+                            and(registers.a, new Byte(operand));
+                            break;
+
+                        // XOR A, r
+                        case 5:
+                            xor(registers.a, new Byte(operand));
+                            break;
+
+                        // OR A, r
+                        case 6:
+                            or(registers.a, new Byte(operand));
+                            break;
+
+                        // CP A, r (compare)
+                        case 7:
+                            cp(registers.a, new Byte(operand));
+                            break;
+                    }
+
+                } else if ((opcode.intValue() & 0xC0) == 0x40) {   // Byte 0x01xxxxxxx indicates 8-bit ld
+                    registers.registerWrite((opcode.intValue() & 0x38) >> 3, registers.registerRead(opcode.intValue() & 0x07));
+                } else {
+                    throw new IllegalArgumentException("Unrecognized base opcode [" + String.format("%02X", opcode.intValue()) + "][" + opcode.name() + "]");
+                }
+        }
+
+    }
+
+    private void executeExtendedOpcode(ExtendedOpcode opcode) {
+        final FlagRegister newf = new FlagRegister();
+
+        int regNum = opcode.intValue() & 0x07;
+        int data = registers.registerRead(regNum);
+
+        if ((opcode.intValue() & 0xC0) == 0) {
+            switch ((opcode.intValue() & 0xF8)) {
+
+                // RLC A
+                case 0x00:
+                    registers.f.setValue(0);
+                    if ((data & 0x80) == 0x80) {
+                        registers.f.cf(ONE);
+                    }
+                    data <<= 1;
+                    if (registers.f.cf().intValue() == 1) {
+                        data |= 1;
+                    }
+
+                    data &= 0xFF;
+                    if (data == 0) {
+                        registers.f.zf(ONE);
+                    }
+                    registers.registerWrite(regNum, data);
+                    break;
+
+                // RRC A
+                case 0x08:
+                    registers.f.setValue(0);
+                    if ((data & 0x01) == 0x01) {
+                        registers.f.cf(ONE);
+                    }
+                    data >>= 1;
+                    if (registers.f.cf().intValue() == 1) {
+                        data |= 0x80;
+                    }
+                    if (data == 0) {
+                        registers.f.zf(ONE);
+                    }
+                    registers.registerWrite(regNum, data);
+                    break;
+
+                // RL r
+                case 0x10:
+                    newf.setValue(0);
+                    if ((data & 0x80) == 0x80) {
+                        newf.cf(ONE);
+                    }
+                    data <<= 1;
+
+                    if (registers.f.cf().intValue() == 1) {
+                        data |= 1;
+                    }
+
+                    data &= 0xFF;
+                    if (data == 0) {
+                        newf.zf(ONE);
+                    }
+                    registers.f.setValue(newf.intValue());
+                    registers.registerWrite(regNum, data);
+                    break;
+
+                // RR r
+                case 0x18:
+                    newf.setValue(0);
+                    if ((data & 0x01) == 0x01) {
+                        newf.cf(ONE);
+
+                    }
+                    data >>= 1;
+
+                    if (registers.f.cf().intValue() == 1) {
+                        data |= 0x80;
+                    }
+
+                    if (data == 0) {
+                        newf.zf(ONE);
+                    }
+                    registers.f.setValue(newf.intValue());
+                    registers.registerWrite(regNum, data);
+                    break;
+
+                // SLA r
+                case 0x20:
+                    registers.f.setValue(0);
+                    if ((data & 0x80) == 0x80) {
+                        registers.f.cf(ONE);
+                    }
+
+                    data <<= 1;
+
+                    data &= 0xFF;
+                    if (data == 0) {
+                        registers.f.zf(ONE);
+                    }
+                    registers.registerWrite(regNum, data);
+                    break;
+
+                // SRA r
+                case 0x28:
+                    short topBit;
+
+                    topBit = (short) (data & 0x80);
+                    registers.f.setValue(0);
+                    if ((data & 0x01) == 0x01) {
+                        registers.f.cf(ONE);
+                    }
+
+                    data >>= 1;
+                    data |= topBit;
+
+                    if (data == 0) {
+                        registers.f.zf(ONE);
+                    }
+                    registers.registerWrite(regNum, data);
+                    break;
+
+                // SWAP r
+                case 0x30:
+
+                    data = (short) (((data & 0x0F) << 4) | ((data & 0xF0) >> 4));
+                    registers.f.setValue(0);
+                    if (data == 0) {
+                        registers.f.zf(ONE);
+                    }
+                    registers.registerWrite(regNum, data);
+                    break;
+
+                // SRL r
+                case 0x38:
+                    registers.f.setValue(0);
+                    if ((data & 0x01) == 0x01) {
+                        registers.f.cf(ONE);
+                    }
+
+                    data >>= 1;
+
+                    if (data == 0) {
+                        registers.f.zf(ONE);
+                    }
+                    registers.registerWrite(regNum, data);
+                    break;
+            }
+        } else {
+            int mask;
+            int bitNumber = (opcode.intValue() & 0x38) >> 3;
+
+            // BIT n, r
+            if ((opcode.intValue() & 0xC0) == 0x40) {
+                mask = (short) (0x01 << bitNumber);
+                registers.f.nf(ZERO);
+                registers.f.hf(ONE);
+                if ((data & mask) != 0) {
+                    registers.f.zf(ZERO);
+                } else {
+                    registers.f.zf(ONE);
+                }
+            }
+
+            // RES n, r
+            if ((opcode.intValue() & 0xC0) == 0x80) {
+                mask = (short) (0xFF - (0x01 << bitNumber));
+                data = (short) (data & mask);
+                registers.registerWrite(regNum, data);
+            }
+
+            // SET n, r
+            if ((opcode.intValue() & 0xC0) == 0xC0) {
+                mask = (short) (0x01 << bitNumber);
+                data = (short) (data | mask);
+                registers.registerWrite(regNum, data);
+            }
+        }
+    }
+
+    final void execute() {
         graphicsChip.startTime = System.currentTimeMillis();
 
         while (true) {
             instructionCounter.inc();
 
-            Byte opcode = loadImmediateByte(registers.pc);
-
-            switch (opcode.intValue()) {
-
-                /*
-                  NOP
-                 */
-                case 0x00:
-                    break;
-
-                /*
-                  LD BC, nn
-                 */
-                case 0x01: {
-                    Short data = loadImmediateShort(registers.pc);
-                    load(registers.bc, data);
-                    break;
-                }
-
-                /*
-                  LD (BC), A
-                 */
-                case 0x02:
-                    write(registers.bc, registers.a);
-                    break;
-
-                /*
-                  INC BC
-                 */
-                case 0x03:
-                    registers.bc.inc();
-                    break;
-
-                /*
-                  INC B
-                */
-                case 0x04:
-                    inc(registers.b);
-                    break;
-
-                /*
-                  DEC B
-                 */
-                case 0x05:
-                    dec(registers.b);
-                    break;
-
-                /*
-                  LD B, n
-                 */
-                case 0x06: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    load(registers.b, data);
-                    break;
-                }
-
-                /*
-                  RLCA
-                 */
-                case 0x07:
-                    rlca(registers.a);
-                    break;
-
-                /*
-                  LD (nn), SP
-                */
-                case 0x08: {
-                    Short address = loadImmediateShort(registers.pc);
-                    write(address, registers.sp);
-                    break;
-                }
-
-                /*
-                  ADD HL, BC
-                 */
-                case 0x09: {
-                    add(registers.hl, registers.bc);
-                    break;
-                }
-
-                /*
-                  LD A, (BC)
-                 */
-                case 0x0A: {
-                    Byte data = read(registers.bc);
-                    registers.a.setValue(data);
-                    break;
-                }
-
-                /*
-                  DEC BC
-                 */
-                case 0x0B:
-                    registers.bc.dec();
-                    break;
-
-                /*
-                  INC C
-                 */
-                case 0x0C:
-                    inc(registers.c);
-                    break;
-
-                /*
-                  DEC C
-                 */
-                case 0x0D:
-                    dec(registers.c);
-                    break;
-
-                /*
-                  LD C, n
-                 */
-                case 0x0E: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    load(registers.c, data);
-                    break;
-                }
-
-                /*
-                 RRCA
-                 */
-                case 0x0F:
-                    rrca(registers.a);
-                    break;
-
-                /*
-                 STOP
-                 */
-                case 0x10:
-                    registers.pc.inc();
-                    break;
-
-                /*
-                 LD DE, nn
-                 */
-                case 0x11: {
-                    Short data = loadImmediateShort(registers.pc);
-                    registers.de.setValue(data.intValue());
-                    break;
-                }
-
-                /*
-                 LD (DE), A
-                 */
-                case 0x12:
-                    write(registers.de, registers.a);
-                    break;
-
-                /*
-                 INC DE
-                 */
-                case 0x13:
-                    registers.de.inc();
-                    break;
-
-                /*
-                 INC D
-                 */
-                case 0x14:
-                    inc(registers.d);
-                    break;
-
-                /*
-                 DEC D
-                 */
-                case 0x15:
-                    dec(registers.d);
-                    break;
-
-                /*
-                 LD D, n
-                 */
-                case 0x16: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    load(registers.d, data);
-                    break;
-                }
-
-                /*
-                 RL A
-                 */
-                case 0x17:
-                    rl(registers.a, registers.f.cf());
-                    break;
-
-                /*
-                 JR n
-                 */
-                case 0x18: {
-                    Byte offset = loadImmediateByte(registers.pc);
-                    jr(true, offset);
-                    break;
-                }
-
-                /*
-                 ADD HL, DE
-                 */
-                case 0x19: {
-                    add(registers.hl, registers.de);
-                    break;
-                }
-
-                /*
-                 LD A, (DE)
-                 */
-                case 0x1A: {
-                    Byte data = read(registers.de);
-                    load(registers.a, data);
-                    break;
-                }
-
-                /*
-                 DEC DE
-                 */
-                case 0x1B:
-                    registers.de.inc();
-                    break;
-
-                /*
-                 INC E
-                 */
-                case 0x1C:
-                    inc(registers.e);
-                    break;
-
-                /*
-                 DEC E
-                 */
-                case 0x1D:
-                    dec(registers.e);
-                    break;
-
-                /*
-                LD E, n
-                */
-                case 0x1E: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    load(registers.e, data);
-                    break;
-                }
-
-                /*
-                 RR A
-                 */
-                case 0x1F: {
-                    rra(registers.a, registers.f.cf());
-                    break;
-                }
-
-                /*
-                 JR NZ, n
-                  */
-                case 0x20: {
-                    Byte address = loadImmediateByte(registers.pc);
-                    jr(registers.f.zf() == ZERO, address);
-                }
-                break;
-
-                /*
-                 LD HL, nn
-                 */
-                case 0x21: {
-                    Short address = loadImmediateShort(registers.pc);
-                    load(registers.hl, address);
-                    break;
-                }
-
-                /*
-                 LDH (HL), A
-                 */
-                case 0x22:
-                    write(registers.hl, registers.a);
-                    registers.hl.inc();
-                    break;
-
-                /*
-                 INC HL
-                 */
-                case 0x23:
-                    registers.hl.inc();
-                    break;
-
-                /*
-                 INC H
-                 */
-                case 0x24:
-                    inc(registers.h);
-                    break;
-
-                /*
-                 DEC H
-                 */
-                case 0x25:
-                    dec(registers.h);
-                    break;
-
-                /*
-                 LD H, n
-                 */
-                case 0x26: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    load(registers.h, data);
-                    break;
-                }
-
-                /*
-                 DAA
-                 */
-                case 0x27:
-                    int upperNibble = registers.a.upperNibble();
-                    int lowerNibble = registers.a.lowerNibble();
-
-                    newf.setValue(0);
-                    newf.nf(registers.f.nf());
-
-                    if (registers.f.nf().intValue() == 0) {
-
-                        if (registers.f.cf().intValue() == 0) {
-                            if ((upperNibble <= 8) && (lowerNibble >= 0xA) &&
-                                    (registers.f.hf().intValue() == 0)) {
-                                registers.a.setValue(registers.a.intValue() + 0x06);
-                            }
-
-                            if ((upperNibble <= 9) && (lowerNibble <= 0x3) &&
-                                    (registers.f.hf().intValue() == 1)) {
-                                registers.a.setValue(registers.a.intValue() + 0x06);
-                            }
-
-                            if ((upperNibble >= 0xA) && (lowerNibble <= 0x9) &&
-                                    (registers.f.hf().intValue() == 0)) {
-                                registers.a.setValue(registers.a.intValue() + 0x60);
-                                newf.cf(ONE);
-                            }
-
-                            if ((upperNibble >= 0x9) && (lowerNibble >= 0xA) &&
-                                    (registers.f.hf().intValue() == 0)) {
-                                registers.a.setValue(registers.a.intValue() + 0x66);
-                                newf.cf(ONE);
-                            }
-
-                            if ((upperNibble >= 0xA) && (lowerNibble <= 0x3) &&
-                                    (registers.f.hf().intValue() == 1)) {
-                                registers.a.setValue(registers.a.intValue() + 0x66);
-                                newf.cf(ONE);
-                            }
-
-                        } else {  // If carry set
-
-                            if ((upperNibble <= 0x2) && (lowerNibble <= 0x9) &&
-                                    (registers.f.hf().intValue() == 0)) {
-                                registers.a.setValue(registers.a.intValue() + 0x60);
-                                newf.cf(ONE);
-                            }
-
-                            if ((upperNibble <= 0x2) && (lowerNibble >= 0xA) &&
-                                    (registers.f.hf().intValue() == 0)) {
-                                registers.a.setValue(registers.a.intValue() + 0x66);
-                                newf.cf(ONE);
-                            }
-
-                            if ((upperNibble <= 0x3) && (lowerNibble <= 0x3) &&
-                                    (registers.f.hf().intValue() == 1)) {
-                                registers.a.setValue(registers.a.intValue() + 0x66);
-                                newf.cf(ONE);
-                            }
-
-                        }
-
-                    } else { // Subtract is set
-
-                        if (registers.f.cf().intValue() == 0) {
-
-                            if ((upperNibble <= 0x8) && (lowerNibble >= 0x6) &&
-                                    (registers.f.hf().intValue() == 1)) {
-                                registers.a.setValue(registers.a.intValue() + 0xFA);
-                            }
-
-                        } else { // Carry is set
-
-                            if ((upperNibble >= 0x7) && (lowerNibble <= 0x9) &&
-                                    (registers.f.hf().intValue() == 0)) {
-                                registers.a.setValue(registers.a.intValue() + 0xA0);
-                                newf.cf(ONE);
-                            }
-
-                            if ((upperNibble >= 0x6) && (lowerNibble >= 0x6) &&
-                                    (registers.f.hf().intValue() == 1)) {
-                                registers.a.setValue(registers.a.intValue() + 0x9A);
-                                newf.cf(ONE);
-                            }
-
-                        }
-
-                    }
-
-                    if (registers.a.intValue() == 0) {
-                        newf.zf(ONE);
-                    }
-
-                    registers.f.setValue(newf.intValue());
-
-                    break;
-
-                /*
-                 JR Z, n
-                 */
-                case 0x28: {
-                    Byte address = loadImmediateByte(registers.pc);
-                    jr(registers.f.zf() == ONE, address);
-                    break;
-                }
-
-                /*
-                 ADD HL, HL
-                 */
-                case 0x29: {
-                    add(registers.hl, registers.hl);
-                    break;
-                }
-
-                /*
-                 LDI A, (HL)
-                 */
-                case 0x2A: {
-                    Byte data = read(registers.hl);
-                    load(registers.a, data);
-                    registers.hl.inc();
-                    break;
-                }
-
-                /*
-                 DEC HL
-                 */
-                case 0x2B:
-                    registers.hl.dec();
-                    break;
-
-                /*
-                 INC L
-                 */
-                case 0x2C:
-                    inc(registers.l);
-                    break;
-
-                /*
-                 DEC L
-                 */
-                case 0x2D:
-                    dec(registers.l);
-                    break;
-
-                /*
-                 LD L, n
-                 */
-                case 0x2E: {
-                    Byte address = loadImmediateByte(registers.pc);
-                    load(registers.l, address);
-                    break;
-                }
-
-                /*
-                 CPL A
-                 */
-                case 0x2F:
-                    registers.a.setValue((~registers.a.intValue()));
-                    registers.f.nf(ONE);
-                    registers.f.hf(ONE);
-                    break;
-
-                /*
-                 JR NC, n
-                 */
-                case 0x30: {
-                    Byte address = loadImmediateByte(registers.pc);
-                    jr(registers.f.cf() == ZERO, address);
-                    break;
-                }
-
-                /*
-                 LD SP, nn
-                 */
-                case 0x31: {
-                    Short address = loadImmediateShort(registers.pc);
-                    load(registers.sp, address);
-                    break;
-                }
-
-                /*
-                 LD (HL-), A
-                 */
-                case 0x32:
-                    write(registers.hl, registers.a);
-                    registers.hl.dec();
-                    break;
-
-                /*
-                 INC SP
-                 */
-                case 0x33:
-                    registers.sp.inc();
-                    break;
-
-                /*
-                 INC (HL)
-                  */
-                case 0x34: {
-                    Byte data = read(registers.hl);
-                    inc(data);
-                    write(registers.hl, data);
-                    break;
-                }
-
-                /*
-                 DEC (HL)
-                 */
-                case 0x35:
-                    registers.hl.dec();
-                    break;
-
-                /*
-                 LD (HL), n
-                 */
-                case 0x36: {
-                    Byte address = loadImmediateByte(registers.pc);
-                    write(registers.hl, address);
-                    break;
-                }
-
-                /*
-                 SCF
-                 */
-                case 0x37:
-                    registers.f.nf(ZERO);
-                    registers.f.hf(ZERO);
-                    registers.f.cf(ONE);
-                    break;
-
-                /*
-                 JR C, n
-                 */
-                case 0x38: {
-                    Byte address = loadImmediateByte(registers.pc);
-                    jr(registers.f.cf() == ONE, address);
-                    break;
-                }
-
-                /*
-                 ADD HL, SP
-                 */
-                case 0x39: {
-                    add(registers.hl, registers.sp);
-                    break;
-                }
-
-                /*
-                 LD A, (HL-)
-                 */
-                case 0x3A: {
-                    Byte data = read(registers.hl);
-                    load(registers.a, data);
-                    registers.hl.dec();
-                    break;
-                }
-
-                /*
-                 DEC SP
-                 */
-                case 0x3B:
-                    registers.sp.dec();
-                    break;
-
-                /*
-                 INC A
-                 */
-                case 0x3C:
-                    inc(registers.a);
-                    break;
-
-                /*
-                 DEC A
-                 */
-                case 0x3D:
-                    dec(registers.a);
-                    break;
-
-                /*
-                 LD A, n
-                 */
-                case 0x3E: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    load(registers.a, data);
-                    break;
-                }
-
-                /*
-                 CCF
-                 */
-                case 0x3F:
-                    registers.f.nf(ZERO);
-                    registers.f.hf(ZERO);
-                    registers.f.cf(registers.f.cf().toggle());
-                    break;
-
-                case 0x52:
-                    break;
-
-                /*
-                 HALT
-                 */
-                case 0x76:
-                    interruptsEnabled = true;
-                    while (ioHandler.read(new Short(0xFF0F)).intValue() == 0) {
-                        initiateInterrupts();
-                        instructionCounter.inc();
-                    }
-                    break;
-
-                /*
-                 XOR A, A
-                 */
-                case 0xAF:
-                    xor(registers.a, registers.a);
-                    break;
-
-                /*
-                 RET NZ
-                 */
-                case 0xC0:
-                    ret(registers.f.zf() == ZERO, registers.sp);
-                    break;
-
-                // POP BC
-                case 0xC1: {
-                    load(registers.bc, popShort(registers.sp));
-                    break;
-                }
-
-                // JP NZ, n
-                case 0xC2: {
-                    Short address = loadImmediateShort(registers.pc);
-                    jp(registers.f.zf() == ZERO, address);
-                    break;
-                }
-
-                /*
-                 JP nn
-                 */
-                case 0xC3: {
-                    Short address = loadImmediateShort(registers.pc);
-                    jp(address);
-                    break;
-                }
-
-                /*
-                 CALL NZ, nn
-                 */
-                case 0xC4:
-                    call(registers.f.zf() == ZERO);
-                    break;
-
-                /*
-                 PUSH BC
-                 */
-                case 0xC5:
-                    pushShort(registers.sp, registers.bc);
-                    break;
-
-                /*
-                 ADD A, n
-                 */
-                case 0xC6: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    add(registers.a, data);
-                    break;
-                }
-
-                // RST 08
-                case 0xCF:
-                    rst(0x08);
-                    break;
-
-                // RET Z
-                case 0xC8: {
-                    ret(registers.f.zf() == ONE, registers.sp);
-                    break;
-                }
-
-                /*
-                 RET
-                 */
-                case 0xC9:
-                    ret(registers.sp);
-                    break;
-
-                /*
-                 JP Z, nn
-                 */
-                case 0xCA: {
-                    Short address = loadImmediateShort(registers.pc);
-                    jp(registers.f.zf() == ONE, address);
-                    break;
-                }
-
-                // Shift/bit test
-                case 0xCB: {
-                    Byte operand = loadImmediateByte(registers.pc);
-                    int regNum = operand.intValue() & 0x07;
-                    int data = registers.registerRead(regNum);
-                    if ((operand.intValue() & 0xC0) == 0) {
-                        switch ((operand.intValue() & 0xF8)) {
-
-                            // RLC A
-                            case 0x00:
-                                registers.f.setValue(0);
-                                if ((data & 0x80) == 0x80) {
-                                    registers.f.cf(ONE);
-                                }
-                                data <<= 1;
-                                if (registers.f.cf().intValue() == 1) {
-                                    data |= 1;
-                                }
-
-                                data &= 0xFF;
-                                if (data == 0) {
-                                    registers.f.zf(ONE);
-                                }
-                                registers.registerWrite(regNum, data);
-                                break;
-
-                            // RRC A
-                            case 0x08:
-                                registers.f.setValue(0);
-                                if ((data & 0x01) == 0x01) {
-                                    registers.f.cf(ONE);
-                                }
-                                data >>= 1;
-                                if (registers.f.cf().intValue() == 1) {
-                                    data |= 0x80;
-                                }
-                                if (data == 0) {
-                                    registers.f.zf(ONE);
-                                }
-                                registers.registerWrite(regNum, data);
-                                break;
-
-                            // RL r
-                            case 0x10:
-                                newf.setValue(0);
-                                if ((data & 0x80) == 0x80) {
-                                    newf.cf(ONE);
-                                }
-                                data <<= 1;
-
-                                if (registers.f.cf().intValue() == 1) {
-                                    data |= 1;
-                                }
-
-                                data &= 0xFF;
-                                if (data == 0) {
-                                    newf.zf(ONE);
-                                }
-                                registers.f.setValue(newf.intValue());
-                                registers.registerWrite(regNum, data);
-                                break;
-
-                            // RR r
-                            case 0x18:
-                                newf.setValue(0);
-                                if ((data & 0x01) == 0x01) {
-                                    newf.cf(ONE);
-
-                                }
-                                data >>= 1;
-
-                                if (registers.f.cf().intValue() == 1) {
-                                    data |= 0x80;
-                                }
-
-                                if (data == 0) {
-                                    newf.zf(ONE);
-                                }
-                                registers.f.setValue(newf.intValue());
-                                registers.registerWrite(regNum, data);
-                                break;
-
-                            // SLA r
-                            case 0x20:
-                                registers.f.setValue(0);
-                                if ((data & 0x80) == 0x80) {
-                                    registers.f.cf(ONE);
-                                }
-
-                                data <<= 1;
-
-                                data &= 0xFF;
-                                if (data == 0) {
-                                    registers.f.zf(ONE);
-                                }
-                                registers.registerWrite(regNum, data);
-                                break;
-
-                            // SRA r
-                            case 0x28:
-                                short topBit;
-
-                                topBit = (short) (data & 0x80);
-                                registers.f.setValue(0);
-                                if ((data & 0x01) == 0x01) {
-                                    registers.f.cf(ONE);
-                                }
-
-                                data >>= 1;
-                                data |= topBit;
-
-                                if (data == 0) {
-                                    registers.f.zf(ONE);
-                                }
-                                registers.registerWrite(regNum, data);
-                                break;
-
-                            // SWAP r
-                            case 0x30:
-
-                                data = (short) (((data & 0x0F) << 4) | ((data & 0xF0) >> 4));
-                                registers.f.setValue(0);
-                                if (data == 0) {
-                                    registers.f.zf(ONE);
-                                }
-                                registers.registerWrite(regNum, data);
-                                break;
-
-                            // SRL r
-                            case 0x38:
-                                registers.f.setValue(0);
-                                if ((data & 0x01) == 0x01) {
-                                    registers.f.cf(ONE);
-                                }
-
-                                data >>= 1;
-
-                                if (data == 0) {
-                                    registers.f.zf(ONE);
-                                }
-                                registers.registerWrite(regNum, data);
-                                break;
-                        }
-                    } else {
-                        int mask;
-                        int bitNumber = (operand.intValue() & 0x38) >> 3;
-
-                        // BIT n, r
-                        if ((operand.intValue() & 0xC0) == 0x40) {
-                            mask = (short) (0x01 << bitNumber);
-                            registers.f.nf(ZERO);
-                            registers.f.hf(ONE);
-                            if ((data & mask) != 0) {
-                                registers.f.zf(ZERO);
-                            } else {
-                                registers.f.zf(ONE);
-                            }
-                        }
-
-                        // RES n, r
-                        if ((operand.intValue() & 0xC0) == 0x80) {
-                            mask = (short) (0xFF - (0x01 << bitNumber));
-                            data = (short) (data & mask);
-                            registers.registerWrite(regNum, data);
-                        }
-
-                        // SET n, r
-                        if ((operand.intValue() & 0xC0) == 0xC0) {
-                            mask = (short) (0x01 << bitNumber);
-                            data = (short) (data | mask);
-                            registers.registerWrite(regNum, data);
-                        }
-                    }
-
-                    break;
-                }
-
-                // CALL Z, nn
-                case 0xCC:
-                    call(registers.f.zf() == ONE);
-                    break;
-
-                // CALL nn
-                case 0xCD: {
-                    call();
-                    break;
-                }
-
-                /*
-                *  ADC A, n
-                */
-                case 0xCE: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    adc(registers.a, data, registers.f.cf());
-                    break;
-                }
-
-                /*
-                 RST 00
-                  */
-                case 0xC7:
-                    rst(0x00);
-                    break;
-
-                /*
-                 RET NC
-                  */
-                case 0xD0:
-                    ret(registers.f.cf() == ZERO, registers.sp);
-                    break;
-
-                /*
-                 POP DE
-                  */
-                case 0xD1: {
-                    Short data = popShort(registers.sp);
-                    registers.de.setValue(data.intValue());
-                    break;
-                }
-
-                /*
-                 JP NC, nn
-                 */
-                case 0xD2: {
-                    Short address = loadImmediateShort(registers.pc);
-                    jp(registers.f.cf() == ZERO, address);
-                    break;
-                }
-
-                /*
-                 CALL NC, nn
-                 */
-                case 0xD4:
-                    call(registers.f.cf() == ZERO);
-                    break;
-
-                /*
-                 PUSH DE
-                 */
-                case 0xD5:
-                    pushShort(registers.sp, registers.de);
-                    break;
-
-                /*
-                 SUB A, n
-                 */
-                case 0xD6: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    sub(registers.a, data);
-                    break;
-                }
-
-                /*
-                 RST 10
-                  */
-                case 0xD7:
-                    rst(0x10);
-                    break;
-
-                /*
-                 RET C
-                  */
-                case 0xD8:
-                    ret(registers.f.cf() == ONE, registers.sp);
-                    break;
-
-                /*
-                 RETI
-                  */
-                case 0xD9:
-                    interruptsEnabled = true;
-                    ret(registers.sp);
-                    break;
-
-                /*
-                 JP C, nn
-                 */
-                case 0xDA: {
-                    Short address = loadImmediateShort(registers.pc);
-                    jp(registers.f.cf() == ONE, address);
-                    break;
-                }
-
-                /*
-                 CALL C, nn
-                 */
-                case 0xDC:
-                    call(registers.f.cf() == ONE);
-                    break;
-
-                // SBC A, n
-                case 0xDE: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    sbc(registers.a, data, registers.f.cf());
-                    break;
-                }
-
-                // RST 18
-                case 0xDF:
-                    rst(0x18);
-                    break;
-
-                // LDH (n), A
-                case 0xE0: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    write(new Short(0xFF00 | data.intValue()), registers.a);
-                    break;
-                }
-
-                // POP HL
-                case 0xE1: {
-                    Short data = popShort(registers.sp);
-                    load(registers.hl, data);
-                    break;
-                }
-
-                // LDH (FF00 + C), A
-                case 0xE2: {
-                    Short address = new Short(new Byte(0xFF), registers.c);
-                    write(address, registers.a);
-                    break;
-                }
-
-                // PUSH HL
-                case 0xE5:
-                    pushShort(registers.sp, registers.hl);
-                    break;
-
-                // AND n
-                case 0xE6: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    and(registers.a, data);
-                    break;
-                }
-
-                // RST 20
-                case 0xE7:
-                    rst(0x20);
-                    break;
-
-                // ADD SP, nn
-                case 0xE8: {
-                    Short data = loadImmediateShort(registers.pc);
-                    add(registers.sp, data);
-                    break;
-                }
-
-                /*
-                 JP HL
-                 */
-                case 0xE9: {
-                    jp(registers.hl);
-                    break;
-                }
-
-                /*
-                 LD (nn), A
-                 */
-                case 0xEA: {
-                    Short address = loadImmediateShort(registers.pc);
-                    write(address, registers.a);
-                    break;
-                }
-
-                // XOR A, n
-                case 0xEE: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    xor(registers.a, data);
-                    break;
-                }
-
-                /*
-                 RST 28
-                 */
-                case 0xEF:
-                    rst(0x28);
-                    break;
-
-                /*
-                 LDH A, (n)
-                 */
-                case 0xF0: {
-                    Byte addressOffset = loadImmediateByte(registers.pc);
-                    Byte ff = new Byte(0xFF);
-
-                    Short address = new Short(ff, addressOffset);
-                    load(registers.a, read(address));
-                    break;
-                }
-
-                /*
-                 POP AF
-                 */
-                case 0xF1:
-                    load(registers.af, popShort(registers.sp));
-                    break;
-
-                // LD A, (FF00 + C)
-                case 0xF2: {
-                    Short address = new Short(new Byte(0xFF), registers.c);
-                    Byte data = read(address);
-                    load(registers.a, data);
-                    break;
-                }
-
-                // DI
-                case 0xF3:
-                    interruptsEnabled = false;
-                    break;
-
-                // PUSH AF
-                case 0xF5:
-                    pushShort(registers.sp, registers.af);
-                    break;
-
-                // OR A, n
-                case 0xF6: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    or(registers.a, data);
-                    break;
-                }
-
-                // RST 30
-                case 0xF7:
-                    rst(0x30);
-                    break;
-
-                // LD HL, SP + n  ** HALFCARRY FLAG NOT SET ***
-                case 0xF8: {
-                    Byte offset = loadImmediateByte(registers.pc);
-                    int result = registers.sp.intValue() + offset.intValue();
-                    add(registers.hl, new Short(result));
-                    break;
-                }
-
-                // LD SP, HL
-                case 0xF9:
-                    registers.sp.setValue(registers.hl.intValue());
-                    break;
-
-                /*
-                 LD A, (nn)
-                 */
-                case 0xFA: {
-                    Short address = loadImmediateShort(registers.pc);
-                    Byte data = read(address);
-                    load(registers.a, data);
-                    break;
-                }
-
-                /*
-                 EI
-                 */
-                case 0xFB:
-                    ieDelay = 1;
-                    break;
-
-                /*
-                 CP n
-                 */
-                case 0xFE: {
-                    Byte data = loadImmediateByte(registers.pc);
-                    cp(registers.a, data);
-                    break;
-                }
-
-                /*
-                 RST 38
-                 */
-                case 0xFF:
-                    rst(0x38);
-                    break;
-
-                default:
-
-                    // ALU Operations
-                    if ((opcode.intValue() & 0xC0) == 0x80) {
-                        int operand = registers.registerRead(opcode.intValue() & 0x07);
-                        switch ((opcode.intValue() & 0x38) >> 3) {
-
-                            // ADC A, r
-                            case 1:
-                                adc(registers.a, new Byte(operand), registers.f.cf());
-                                break;
-
-                            // ADD A, r
-                            case 0: {
-                                add(registers.a, new Byte(operand));
-                                break;
-                            }
-
-                            // SBC A, r
-                            case 3:
-                                sbc(registers.a, new Byte(operand), registers.f.cf());
-                                break;
-
-                            // SUB A, r
-                            case 2: {
-                                sub(registers.a, new Byte(operand));
-                                break;
-                            }
-
-                            // AND A, r
-                            case 4:
-                                and(registers.a, new Byte(operand));
-                                break;
-
-                            // XOR A, r
-                            case 5:
-                                xor(registers.a, new Byte(operand));
-                                break;
-
-                            // OR A, r
-                            case 6:
-                                or(registers.a, new Byte(operand));
-                                break;
-
-                            // CP A, r (compare)
-                            case 7:
-                                cp(registers.a, new Byte(operand));
-                                break;
-                        }
-
-                    } else if ((opcode.intValue() & 0xC0) == 0x40) {   // Byte 0x01xxxxxxx indicates 8-bit ld
-                        registers.registerWrite((opcode.intValue() & 0x38) >> 3, registers.registerRead(opcode.intValue() & 0x07));
-                    } else {
-                        Logger.debug("Unrecognized opcode (" + String.format("%02X", opcode.intValue()) + ")");
-                        break;
-                    }
+            Opcode opcode = Instruction.from(loadImmediateByte(registers.pc), prefixCB);
+
+            if (prefixCB) {
+                executeExtendedOpcode((ExtendedOpcode) opcode);
+                prefixCB = false;
+            } else {
+                executeBaseOpcode((BaseOpcode) opcode);
             }
-
 
             if (ieDelay != -1) {
 
@@ -1709,7 +1420,7 @@ public class Cpu implements ReadableWritable {
     /**
      * RLC
      * <p>
-     *         ╔══════════════════════╗
+     * ╔══════════════════════╗
      * ┌────┐  ║ ┌───┬────────┬───┐   ║
      * │ CF │<═╩═│ 7 │ <═════ │ 0 │<══╝
      * └────┘    └───┴────────┴───┘
@@ -1729,7 +1440,7 @@ public class Cpu implements ReadableWritable {
      * ╔════════════════════════════════╗
      * ║  ┌────┐    ┌───┬────────┬───┐  ║
      * ╚═>│ CF │═══>│ 7 │ ═════> │ 0 │══╝
-     *    └────┘    └───┴────────┴───┘
+     * └────┘    └───┴────────┴───┘
      */
     private void rr(Byte operand, Bit carry) {
         int result = (carry.intValue() << 7) | (operand.intValue() >> 1);
@@ -1753,7 +1464,7 @@ public class Cpu implements ReadableWritable {
      * ╔═════════╦═══════════════════════╗
      * ║  ┌────┐ ║  ┌───┬────────┬───┐   ║
      * ╚═>│ CF │ ╚═>│ 7 │ ═════> │ 0 │═══╝
-     *    └────┘    └───┴────────┴───┘
+     * └────┘    └───┴────────┴───┘
      */
     private void rrc(Byte operand) {
         rr(operand, operand.getBit(0));
@@ -1788,7 +1499,7 @@ public class Cpu implements ReadableWritable {
      * ╔════╗
      * ║  ┌───┬────────┬───┐    ┌────┐
      * ╚═>│ 7 │ ═════> │ 0 │═══>│ CF │
-     *    └───┴────────┴───┘    └────┘
+     * └───┴────────┴───┘    └────┘
      */
     private void sra(Byte operand, Bit sign) {
         int result = (sign.intValue() << 7) | (operand.intValue() >> 1);
@@ -1804,9 +1515,9 @@ public class Cpu implements ReadableWritable {
     /**
      * SRL
      * <p>
-     *      ┌───┬────────┬───┐    ┌────┐
+     * ┌───┬────────┬───┐    ┌────┐
      * 0 ══>│ 7 │ ═════> │ 0 │═══>│ CF │
-     *      └───┴────────┴───┘    └────┘
+     * └───┴────────┴───┘    └────┘
      */
     private void srl(Byte operand) {
         sra(operand, ZERO);
