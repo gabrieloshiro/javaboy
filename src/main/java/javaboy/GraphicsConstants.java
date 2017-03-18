@@ -16,7 +16,7 @@ class GraphicsConstants {
     /**
      * Used to set the speed of DIV increments
      */
-    public static final short BASE_INSTRS_PER_DIV = 33;
+    public static final short BASE_INSTRUCTIONS_PER_DIV = 33;
 
 
 }

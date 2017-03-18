@@ -89,9 +89,13 @@ public class Cpu implements ReadableWritable {
      * If an interrupt is enabled an the interrupt register shows that it has occurred, jump to
      * the relevant interrupt vector address
      */
+
+    public static final Short INTERRUPT_FLAGS_ADDRESS = new Short(0xFF0F);
+    public static final Short INTERRUPT_ENABLE_ADDRESS = new Short(0xFFFF);
+
     private void checkInterrupts() {
-        int intFlags = ioHandler.read(new Short(0xFF0F)).intValue();
-        int ieReg = ioHandler.read(new Short(0xFFFF)).intValue();
+        int intFlags = ioHandler.read(INTERRUPT_FLAGS_ADDRESS).intValue();
+        int ieReg = ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue();
         if ((intFlags & ieReg) != 0) {
             registers.sp.dec();
             registers.sp.dec();
@@ -115,7 +119,7 @@ public class Cpu implements ReadableWritable {
                 intFlags -= Interrupts.INT_P10;
             }
 
-            ioHandler.write(new Short(0xFF0F), new Byte(intFlags));
+            ioHandler.write(INTERRUPT_FLAGS_ADDRESS, new Byte(intFlags));
         }
     }
 
@@ -123,8 +127,8 @@ public class Cpu implements ReadableWritable {
      * Initiate an interrupt of the specified type
      */
     private void triggerInterrupt(int interrupt) {
-        Byte data = ioHandler.read(new Short(0xFF0F));
-        ioHandler.write(new Short(0xFF0F), new Byte(data.intValue() | interrupt));
+        Byte data = ioHandler.read(INTERRUPT_FLAGS_ADDRESS);
+        data.setValue(data.intValue() | interrupt);
     }
 
     /**
@@ -134,14 +138,14 @@ public class Cpu implements ReadableWritable {
         if (timaEnabled && ((instructionCounter.getCount() % instructionsPerTima) == 0)) {
             if (ioHandler.read(new Short(0xFF05)).intValue() == 0) {
                 ioHandler.write(new Short(0xFF05), ioHandler.read(new Short(0xFF06))); // Set TIMA modulo
-                if ((ioHandler.read(new Short(0xFFFF)).intValue() & Interrupts.INT_TIMA) != 0)
+                if ((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & Interrupts.INT_TIMA) != 0)
                     triggerInterrupt(Interrupts.INT_TIMA);
             }
             ioHandler.read(new Short(0xFF05)).inc();
         }
 
-        short INSTRS_PER_DIV = GraphicsConstants.BASE_INSTRS_PER_DIV;
-        if ((instructionCounter.getCount() % INSTRS_PER_DIV) == 0) {
+        short INSTRUCTIONS_PER_DIV = GraphicsConstants.BASE_INSTRUCTIONS_PER_DIV;
+        if ((instructionCounter.getCount() % INSTRUCTIONS_PER_DIV) == 0) {
             ioHandler.read(new Short(0xFF04)).inc();
         }
 
@@ -152,14 +156,14 @@ public class Cpu implements ReadableWritable {
             int cline = ioHandler.read(new Short(0xFF44)).intValue() + 1;
             if (cline == 152) cline = 0;
 
-            if (((ioHandler.read(new Short(0xFFFF)).intValue() & Interrupts.INT_LCDC) != 0) &&
+            if (((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & Interrupts.INT_LCDC) != 0) &&
                     ((ioHandler.read(new Short(0xFF41)).intValue() & 64) != 0) &&
                     (ioHandler.read(new Short(0xFF45)).intValue() == cline) && ((ioHandler.read(new Short(0xFF40)).intValue() & 0x80) != 0) && (cline < 0x90)) {
                 triggerInterrupt(Interrupts.INT_LCDC);
             }
 
             // Trigger on every line
-            if (((ioHandler.read(new Short(0xFFFF)).intValue() & Interrupts.INT_LCDC) != 0) &&
+            if (((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & Interrupts.INT_LCDC) != 0) &&
                     ((ioHandler.read(new Short(0xFF41)).intValue() & 0x8) != 0) && ((ioHandler.read(new Short(0xFF40)).intValue() & 0x80) != 0) && (cline < 0x90)) {
                 triggerInterrupt(Interrupts.INT_LCDC);
             }
@@ -168,9 +172,9 @@ public class Cpu implements ReadableWritable {
                 for (int r = GraphicsChip.HEIGHT; r < 170; r++) {
                     graphicsChip.notifyScanline(r);
                 }
-                if (((ioHandler.read(new Short(0xFF40)).intValue() & 0x80) != 0) && ((ioHandler.read(new Short(0xFFFF)).intValue() & Interrupts.INT_VBLANK) != 0)) {
+                if (((ioHandler.read(new Short(0xFF40)).intValue() & 0x80) != 0) && ((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & Interrupts.INT_VBLANK) != 0)) {
                     triggerInterrupt(Interrupts.INT_VBLANK);
-                    if (((ioHandler.read(new Short(0xFF41)).intValue() & 16) != 0) && ((ioHandler.read(new Short(0xFFFF)).intValue() & Interrupts.INT_LCDC) != 0)) {
+                    if (((ioHandler.read(new Short(0xFF41)).intValue() & 16) != 0) && ((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & Interrupts.INT_LCDC) != 0)) {
                         triggerInterrupt(Interrupts.INT_LCDC);
                     }
                 }
@@ -625,7 +629,7 @@ public class Cpu implements ReadableWritable {
                  */
             case HALT:
                 interruptsEnabled = true;
-                while (ioHandler.read(new Short(0xFF0F)).intValue() == 0) {
+                while (ioHandler.read(INTERRUPT_FLAGS_ADDRESS).intValue() == 0) {
                     initiateInterrupts();
                     instructionCounter.inc();
                 }
