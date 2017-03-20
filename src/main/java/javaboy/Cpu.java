@@ -105,34 +105,32 @@ public class Cpu implements ReadableWritable {
         return (interruptFlags().intValue() & interruptEnable().intValue()) != 0;
     }
 
+    private boolean didInterruptOccur(InterruptController.Interrupt interrupt) {
+        return (interruptFlags().intValue() & interruptEnable().intValue() & interrupt.getBitMask()) != 0;
+    }
+
     private void checkInterrupts() {
-        int intFlags = interruptFlags().intValue();
-        int ieReg = interruptEnable().intValue();
         if (didInterruptOccur()) {
-            registers.sp.dec();
-            registers.sp.dec();
-            write(registers.sp, registers.pc);// Push current program counter onto stack
+            pushShort(registers.sp, registers.pc);
             interruptsEnabled = false;
 
-            if ((intFlags & ieReg & InterruptController.Interrupt.VBLANK.getBitMask()) != 0) {
-                registers.pc.setValue(0x40);
-                intFlags -= InterruptController.Interrupt.VBLANK.getBitMask();
-            } else if ((intFlags & ieReg & InterruptController.Interrupt.LCDC.getBitMask()) != 0) {
-                registers.pc.setValue(0x48);
-                intFlags -= InterruptController.Interrupt.LCDC.getBitMask();
-            } else if ((intFlags & ieReg & InterruptController.Interrupt.TIMA.getBitMask()) != 0) {
-                registers.pc.setValue(0x50);
-                intFlags -= InterruptController.Interrupt.TIMA.getBitMask();
-            } else if ((intFlags & ieReg & InterruptController.Interrupt.SERIAL.getBitMask()) != 0) {
-                registers.pc.setValue(0x58);
-                intFlags -= InterruptController.Interrupt.SERIAL.getBitMask();
-            } else if ((intFlags & ieReg & InterruptController.Interrupt.JOYPAD.getBitMask()) != 0) {
-                registers.pc.setValue(0x60);
-                intFlags -= InterruptController.Interrupt.JOYPAD.getBitMask();
+            if (didInterruptOccur(InterruptController.Interrupt.VBLANK)) {
+                attendInterrupt(InterruptController.Interrupt.VBLANK, 0x40);
+            } else if (didInterruptOccur(InterruptController.Interrupt.LCDC)) {
+                attendInterrupt(InterruptController.Interrupt.LCDC, 0x48);
+            } else if (didInterruptOccur(InterruptController.Interrupt.TIMA)) {
+                attendInterrupt(InterruptController.Interrupt.TIMA, 0x50);
+            } else if (didInterruptOccur(InterruptController.Interrupt.SERIAL)) {
+                attendInterrupt(InterruptController.Interrupt.SERIAL, 0x58);
+            } else if (didInterruptOccur(InterruptController.Interrupt.JOYPAD)) {
+                attendInterrupt(InterruptController.Interrupt.JOYPAD, 0x60);
             }
-
-            ioHandler.write(INTERRUPT_FLAGS_ADDRESS, new Byte(intFlags));
         }
+    }
+
+    private void attendInterrupt(InterruptController.Interrupt interrupt, int address) {
+        registers.pc.setValue(address);
+        interruptFlags().setValue(interruptFlags().intValue() - interrupt.getBitMask());
     }
 
     /**
