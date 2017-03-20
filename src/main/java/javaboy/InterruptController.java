@@ -1,6 +1,8 @@
 package javaboy;
 
-class Interrupts {
+class InterruptController {
+
+
 
     /**
      * Vertical blank interrupt

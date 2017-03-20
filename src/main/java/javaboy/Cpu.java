@@ -93,30 +93,42 @@ public class Cpu implements ReadableWritable {
     public static final Short INTERRUPT_FLAGS_ADDRESS = new Short(0xFF0F);
     public static final Short INTERRUPT_ENABLE_ADDRESS = new Short(0xFFFF);
 
+    private Byte interruptFlags() {
+        return ioHandler.read(INTERRUPT_FLAGS_ADDRESS);
+    }
+
+    private Byte interruptEnable() {
+        return ioHandler.read(INTERRUPT_ENABLE_ADDRESS);
+    }
+
+    private boolean didInterruptOccur() {
+        return (interruptFlags().intValue() & interruptEnable().intValue()) != 0;
+    }
+
     private void checkInterrupts() {
-        int intFlags = ioHandler.read(INTERRUPT_FLAGS_ADDRESS).intValue();
-        int ieReg = ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue();
-        if ((intFlags & ieReg) != 0) {
+        int intFlags = interruptFlags().intValue();
+        int ieReg = interruptEnable().intValue();
+        if (didInterruptOccur()) {
             registers.sp.dec();
             registers.sp.dec();
             write(registers.sp, registers.pc);// Push current program counter onto stack
             interruptsEnabled = false;
 
-            if ((intFlags & ieReg & Interrupts.INT_VBLANK) != 0) {
-                registers.pc.setValue(0x40);                      // Jump to Vblank interrupt address
-                intFlags -= Interrupts.INT_VBLANK;
-            } else if ((intFlags & ieReg & Interrupts.INT_LCDC) != 0) {
+            if ((intFlags & ieReg & InterruptController.INT_VBLANK) != 0) {
+                registers.pc.setValue(0x40);
+                intFlags -= InterruptController.INT_VBLANK;
+            } else if ((intFlags & ieReg & InterruptController.INT_LCDC) != 0) {
                 registers.pc.setValue(0x48);
-                intFlags -= Interrupts.INT_LCDC;
-            } else if ((intFlags & ieReg & Interrupts.INT_TIMA) != 0) {
+                intFlags -= InterruptController.INT_LCDC;
+            } else if ((intFlags & ieReg & InterruptController.INT_TIMA) != 0) {
                 registers.pc.setValue(0x50);
-                intFlags -= Interrupts.INT_TIMA;
-            } else if ((intFlags & ieReg & Interrupts.INT_SER) != 0) {
+                intFlags -= InterruptController.INT_TIMA;
+            } else if ((intFlags & ieReg & InterruptController.INT_SER) != 0) {
                 registers.pc.setValue(0x58);
-                intFlags -= Interrupts.INT_SER;
-            } else if ((intFlags & ieReg & Interrupts.INT_P10) != 0) {    // Joypad interrupt
+                intFlags -= InterruptController.INT_SER;
+            } else if ((intFlags & ieReg & InterruptController.INT_P10) != 0) {
                 registers.pc.setValue(0x60);
-                intFlags -= Interrupts.INT_P10;
+                intFlags -= InterruptController.INT_P10;
             }
 
             ioHandler.write(INTERRUPT_FLAGS_ADDRESS, new Byte(intFlags));
@@ -138,8 +150,8 @@ public class Cpu implements ReadableWritable {
         if (timaEnabled && ((instructionCounter.getCount() % instructionsPerTima) == 0)) {
             if (ioHandler.read(new Short(0xFF05)).intValue() == 0) {
                 ioHandler.write(new Short(0xFF05), ioHandler.read(new Short(0xFF06))); // Set TIMA modulo
-                if ((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & Interrupts.INT_TIMA) != 0)
-                    triggerInterrupt(Interrupts.INT_TIMA);
+                if ((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & InterruptController.INT_TIMA) != 0)
+                    triggerInterrupt(InterruptController.INT_TIMA);
             }
             ioHandler.read(new Short(0xFF05)).inc();
         }
@@ -156,26 +168,26 @@ public class Cpu implements ReadableWritable {
             int cline = ioHandler.read(new Short(0xFF44)).intValue() + 1;
             if (cline == 152) cline = 0;
 
-            if (((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & Interrupts.INT_LCDC) != 0) &&
+            if (((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & InterruptController.INT_LCDC) != 0) &&
                     ((ioHandler.read(new Short(0xFF41)).intValue() & 64) != 0) &&
                     (ioHandler.read(new Short(0xFF45)).intValue() == cline) && ((ioHandler.read(new Short(0xFF40)).intValue() & 0x80) != 0) && (cline < 0x90)) {
-                triggerInterrupt(Interrupts.INT_LCDC);
+                triggerInterrupt(InterruptController.INT_LCDC);
             }
 
             // Trigger on every line
-            if (((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & Interrupts.INT_LCDC) != 0) &&
+            if (((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & InterruptController.INT_LCDC) != 0) &&
                     ((ioHandler.read(new Short(0xFF41)).intValue() & 0x8) != 0) && ((ioHandler.read(new Short(0xFF40)).intValue() & 0x80) != 0) && (cline < 0x90)) {
-                triggerInterrupt(Interrupts.INT_LCDC);
+                triggerInterrupt(InterruptController.INT_LCDC);
             }
 
             if (ioHandler.read(new Short(0xFF44)).intValue() == 143) {
                 for (int r = GraphicsChip.HEIGHT; r < 170; r++) {
                     graphicsChip.notifyScanline(r);
                 }
-                if (((ioHandler.read(new Short(0xFF40)).intValue() & 0x80) != 0) && ((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & Interrupts.INT_VBLANK) != 0)) {
-                    triggerInterrupt(Interrupts.INT_VBLANK);
-                    if (((ioHandler.read(new Short(0xFF41)).intValue() & 16) != 0) && ((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & Interrupts.INT_LCDC) != 0)) {
-                        triggerInterrupt(Interrupts.INT_LCDC);
+                if (((ioHandler.read(new Short(0xFF40)).intValue() & 0x80) != 0) && ((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & InterruptController.INT_VBLANK) != 0)) {
+                    triggerInterrupt(InterruptController.INT_VBLANK);
+                    if (((ioHandler.read(new Short(0xFF41)).intValue() & 16) != 0) && ((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & InterruptController.INT_LCDC) != 0)) {
+                        triggerInterrupt(InterruptController.INT_LCDC);
                     }
                 }
 
