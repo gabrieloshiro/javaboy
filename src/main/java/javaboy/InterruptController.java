@@ -3,29 +3,22 @@ package javaboy;
 class InterruptController {
 
 
+    public enum Interrupt {
+        VBLANK(0b0000_0001),
+        LCDC(0b0000_0010),
+        TIMA(0b0000_0100),
+        SERIAL(0b0000_1000),
+        JOYPAD(0b0001_0000);
 
-    /**
-     * Vertical blank interrupt
-     */
-    public static final short INT_VBLANK = 0x01;
+        private int mask;
 
-    /**
-     * LCD Coincidence interrupt
-     */
-    public static final short INT_LCDC = 0x02;
+        Interrupt(int mask) {
+            this.mask = mask;
+        }
 
-    /**
-     * TIMA (programmable timer) interrupt
-     */
-    public static final short INT_TIMA = 0x04;
+        public int getBitMask() {
+            return mask;
+        }
+    }
 
-    /**
-     * Serial interrupt
-     */
-    public static final short INT_SER = 0x08;
-
-    /**
-     * P10 - P13 (Joypad) interrupt
-     */
-    public static final short INT_P10 = 0x10;
 }
