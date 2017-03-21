@@ -22,7 +22,7 @@ public class Cpu implements ReadableWritable {
     private final Registers registers;
     private final InstructionCounter instructionCounter = new InstructionCounter();
     private final MemoryController memoryController;
-    private boolean interruptsEnabled = false;
+    private final InterruptController interruptController;
     private boolean prefixCB;
 
     /**
@@ -38,6 +38,7 @@ public class Cpu implements ReadableWritable {
     private final Component applet;
 
     Cpu(Component a) {
+        interruptController = new InterruptController();
         registers = new Registers(this);
         graphicsChip = new GraphicsChip(a, this);
         ioHandler = new IoHandler(this, instructionCounter);
@@ -65,7 +66,6 @@ public class Cpu implements ReadableWritable {
      */
     void reset() {
         graphicsChip.dispose();
-        interruptsEnabled = false;
         ieDelay = -1;
         prefixCB = false;
 
@@ -115,7 +115,7 @@ public class Cpu implements ReadableWritable {
         if (interrupt == null) return;
 
         pushShort(registers.sp, registers.pc);
-        interruptsEnabled = false;
+        interruptController.setMasterInterruptEnable(false);
         attendInterrupt(interrupt, interrupt.getAddress());
     }
 
@@ -649,7 +649,7 @@ public class Cpu implements ReadableWritable {
                  HALT
                  */
             case HALT:
-                interruptsEnabled = true;
+                interruptController.setMasterInterruptEnable(true);
                 while (interruptFlags().intValue() == 0) {
                     initiateInterrupts();
                     instructionCounter.inc();
@@ -777,7 +777,7 @@ public class Cpu implements ReadableWritable {
                 break;
 
             case RETI:
-                interruptsEnabled = true;
+                interruptController.setMasterInterruptEnable(true);
                 ret(registers.sp);
                 break;
 
@@ -883,7 +883,7 @@ public class Cpu implements ReadableWritable {
             }
 
             case DI:
-                interruptsEnabled = false;
+                interruptController.setMasterInterruptEnable(false);
                 break;
 
             case PUSH_AF:
@@ -1188,13 +1188,13 @@ public class Cpu implements ReadableWritable {
                 if (ieDelay > 0) {
                     ieDelay--;
                 } else {
-                    interruptsEnabled = true;
+                    interruptController.setMasterInterruptEnable(true);
                     ieDelay = -1;
                 }
 
             }
 
-            if (interruptsEnabled) {
+            if (interruptController.isMasterInterruptEnable()) {
                 checkInterrupts();
             }
 

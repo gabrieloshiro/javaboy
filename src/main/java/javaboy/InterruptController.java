@@ -2,6 +2,16 @@ package javaboy;
 
 class InterruptController {
 
+    private boolean masterInterruptEnable;
+
+    public boolean isMasterInterruptEnable() {
+        return masterInterruptEnable;
+    }
+
+    public void setMasterInterruptEnable(boolean masterInterruptEnable) {
+        this.masterInterruptEnable = masterInterruptEnable;
+    }
+
     public enum Interrupt {
         VBLANK(0b0000_0001, 0x40),
         LCDC(0b0000_0010, 0x48),
@@ -25,5 +35,7 @@ class InterruptController {
             return address;
         }
     }
+
+
 
 }
