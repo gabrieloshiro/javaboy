@@ -110,22 +110,33 @@ public class Cpu implements ReadableWritable {
     }
 
     private void checkInterrupts() {
-        if (didInterruptOccur()) {
-            pushShort(registers.sp, registers.pc);
-            interruptsEnabled = false;
+        InterruptController.Interrupt interrupt = checkInterrupt();
 
-            if (didInterruptOccur(InterruptController.Interrupt.VBLANK)) {
-                attendInterrupt(InterruptController.Interrupt.VBLANK, 0x40);
-            } else if (didInterruptOccur(InterruptController.Interrupt.LCDC)) {
-                attendInterrupt(InterruptController.Interrupt.LCDC, 0x48);
-            } else if (didInterruptOccur(InterruptController.Interrupt.TIMA)) {
-                attendInterrupt(InterruptController.Interrupt.TIMA, 0x50);
-            } else if (didInterruptOccur(InterruptController.Interrupt.SERIAL)) {
-                attendInterrupt(InterruptController.Interrupt.SERIAL, 0x58);
-            } else if (didInterruptOccur(InterruptController.Interrupt.JOYPAD)) {
-                attendInterrupt(InterruptController.Interrupt.JOYPAD, 0x60);
-            }
+        if (interrupt == null) return;
+
+        pushShort(registers.sp, registers.pc);
+        interruptsEnabled = false;
+        attendInterrupt(interrupt, interrupt.getAddress());
+    }
+
+    private InterruptController.Interrupt checkInterrupt() {
+        if (didInterruptOccur(InterruptController.Interrupt.VBLANK)) {
+            return InterruptController.Interrupt.VBLANK;
         }
+        if (didInterruptOccur(InterruptController.Interrupt.LCDC)) {
+            return InterruptController.Interrupt.LCDC;
+        }
+        if (didInterruptOccur(InterruptController.Interrupt.TIMA)) {
+            return InterruptController.Interrupt.TIMA;
+        }
+        if (didInterruptOccur(InterruptController.Interrupt.SERIAL)) {
+            return InterruptController.Interrupt.SERIAL;
+        }
+        if (didInterruptOccur(InterruptController.Interrupt.JOYPAD)) {
+            return InterruptController.Interrupt.JOYPAD;
+        }
+
+        return null;
     }
 
     private void attendInterrupt(InterruptController.Interrupt interrupt, int address) {
@@ -148,7 +159,7 @@ public class Cpu implements ReadableWritable {
         if (timaEnabled && ((instructionCounter.getCount() % instructionsPerTima) == 0)) {
             if (ioHandler.read(new Short(0xFF05)).intValue() == 0) {
                 ioHandler.write(new Short(0xFF05), ioHandler.read(new Short(0xFF06))); // Set TIMA modulo
-                if ((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & InterruptController.Interrupt.TIMA.getBitMask()) != 0)
+                if ((interruptEnable().intValue() & InterruptController.Interrupt.TIMA.getBitMask()) != 0)
                     triggerInterrupt(InterruptController.Interrupt.TIMA.getBitMask());
             }
             ioHandler.read(new Short(0xFF05)).inc();
@@ -166,14 +177,14 @@ public class Cpu implements ReadableWritable {
             int cline = ioHandler.read(new Short(0xFF44)).intValue() + 1;
             if (cline == 152) cline = 0;
 
-            if (((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & InterruptController.Interrupt.LCDC.getBitMask()) != 0) &&
+            if (((interruptEnable().intValue() & InterruptController.Interrupt.LCDC.getBitMask()) != 0) &&
                     ((ioHandler.read(new Short(0xFF41)).intValue() & 64) != 0) &&
                     (ioHandler.read(new Short(0xFF45)).intValue() == cline) && ((ioHandler.read(new Short(0xFF40)).intValue() & 0x80) != 0) && (cline < 0x90)) {
                 triggerInterrupt(InterruptController.Interrupt.LCDC.getBitMask());
             }
 
             // Trigger on every line
-            if (((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & InterruptController.Interrupt.LCDC.getBitMask()) != 0) &&
+            if (((interruptEnable().intValue() & InterruptController.Interrupt.LCDC.getBitMask()) != 0) &&
                     ((ioHandler.read(new Short(0xFF41)).intValue() & 0x8) != 0) && ((ioHandler.read(new Short(0xFF40)).intValue() & 0x80) != 0) && (cline < 0x90)) {
                 triggerInterrupt(InterruptController.Interrupt.LCDC.getBitMask());
             }
@@ -182,9 +193,9 @@ public class Cpu implements ReadableWritable {
                 for (int r = GraphicsChip.HEIGHT; r < 170; r++) {
                     graphicsChip.notifyScanline(r);
                 }
-                if (((ioHandler.read(new Short(0xFF40)).intValue() & 0x80) != 0) && ((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & InterruptController.Interrupt.VBLANK.getBitMask()) != 0)) {
+                if (((ioHandler.read(new Short(0xFF40)).intValue() & 0x80) != 0) && ((interruptEnable().intValue() & InterruptController.Interrupt.VBLANK.getBitMask()) != 0)) {
                     triggerInterrupt(InterruptController.Interrupt.VBLANK.getBitMask());
-                    if (((ioHandler.read(new Short(0xFF41)).intValue() & 16) != 0) && ((ioHandler.read(INTERRUPT_ENABLE_ADDRESS).intValue() & InterruptController.Interrupt.LCDC.getBitMask()) != 0)) {
+                    if (((ioHandler.read(new Short(0xFF41)).intValue() & 16) != 0) && ((interruptEnable().intValue() & InterruptController.Interrupt.LCDC.getBitMask()) != 0)) {
                         triggerInterrupt(InterruptController.Interrupt.LCDC.getBitMask());
                     }
                 }
@@ -639,7 +650,7 @@ public class Cpu implements ReadableWritable {
                  */
             case HALT:
                 interruptsEnabled = true;
-                while (ioHandler.read(INTERRUPT_FLAGS_ADDRESS).intValue() == 0) {
+                while (interruptFlags().intValue() == 0) {
                     initiateInterrupts();
                     instructionCounter.inc();
                 }
