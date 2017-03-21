@@ -937,7 +937,8 @@ public class Cpu implements ReadableWritable {
 
                 // ALU Operations
                 if ((opcode.intValue() & 0xC0) == 0x80) {
-                    int operand = registers.registerRead(opcode.intValue() & 0x07);
+                    Registers.Register register = Registers.Register.from(opcode.intValue() & 0x07);
+                    int operand = registers.registerRead(register);
                     switch ((opcode.intValue() & 0x38) >> 3) {
 
                         // ADC A, r
@@ -984,7 +985,9 @@ public class Cpu implements ReadableWritable {
                     }
 
                 } else if ((opcode.intValue() & 0xC0) == 0x40) {   // Byte 0x01xxxxxxx indicates 8-bit ld
-                    registers.registerWrite((opcode.intValue() & 0x38) >> 3, registers.registerRead(opcode.intValue() & 0x07));
+                    Registers.Register register1 = Registers.Register.from((opcode.intValue() & 0x38) >> 3);
+                    Registers.Register register2 = Registers.Register.from(opcode.intValue() & 0x07);
+                    registers.registerWrite(register1, registers.registerRead(register2));
                 } else {
                     throw new IllegalArgumentException("Unrecognized base opcode [" + String.format("%02X", opcode.intValue()) + "][" + opcode.name() + "]");
                 }
@@ -996,13 +999,14 @@ public class Cpu implements ReadableWritable {
         final FlagRegister newf = new FlagRegister();
 
         int regNum = opcode.intValue() & 0x07;
-        int data = registers.registerRead(regNum);
+        Registers.Register register = Registers.Register.from(regNum);
+        int data = registers.registerRead(register);
 
         if ((opcode.intValue() & 0xC0) == 0) {
             switch ((opcode.intValue() & 0xF8)) {
 
                 // RLC A
-                case 0x00:
+                case 0x00: {
                     registers.f.setValue(0);
                     if ((data & 0x80) == 0x80) {
                         registers.f.cf(ONE);
@@ -1016,11 +1020,12 @@ public class Cpu implements ReadableWritable {
                     if (data == 0) {
                         registers.f.zf(ONE);
                     }
-                    registers.registerWrite(regNum, data);
+                    registers.registerWrite(register, data);
                     break;
+                }
 
                 // RRC A
-                case 0x08:
+                case 0x08: {
                     registers.f.setValue(0);
                     if ((data & 0x01) == 0x01) {
                         registers.f.cf(ONE);
@@ -1032,11 +1037,12 @@ public class Cpu implements ReadableWritable {
                     if (data == 0) {
                         registers.f.zf(ONE);
                     }
-                    registers.registerWrite(regNum, data);
+                    registers.registerWrite(register, data);
                     break;
+                }
 
                 // RL r
-                case 0x10:
+                case 0x10: {
                     newf.setValue(0);
                     if ((data & 0x80) == 0x80) {
                         newf.cf(ONE);
@@ -1052,11 +1058,12 @@ public class Cpu implements ReadableWritable {
                         newf.zf(ONE);
                     }
                     registers.f.setValue(newf.intValue());
-                    registers.registerWrite(regNum, data);
+                    registers.registerWrite(register, data);
                     break;
+                }
 
                 // RR r
-                case 0x18:
+                case 0x18: {
                     newf.setValue(0);
                     if ((data & 0x01) == 0x01) {
                         newf.cf(ONE);
@@ -1072,11 +1079,12 @@ public class Cpu implements ReadableWritable {
                         newf.zf(ONE);
                     }
                     registers.f.setValue(newf.intValue());
-                    registers.registerWrite(regNum, data);
+                    registers.registerWrite(register, data);
                     break;
+                }
 
                 // SLA r
-                case 0x20:
+                case 0x20: {
                     registers.f.setValue(0);
                     if ((data & 0x80) == 0x80) {
                         registers.f.cf(ONE);
@@ -1088,11 +1096,13 @@ public class Cpu implements ReadableWritable {
                     if (data == 0) {
                         registers.f.zf(ONE);
                     }
-                    registers.registerWrite(regNum, data);
+
+                    registers.registerWrite(register, data);
                     break;
+                }
 
                 // SRA r
-                case 0x28:
+                case 0x28: {
                     short topBit;
 
                     topBit = (short) (data & 0x80);
@@ -1107,22 +1117,26 @@ public class Cpu implements ReadableWritable {
                     if (data == 0) {
                         registers.f.zf(ONE);
                     }
-                    registers.registerWrite(regNum, data);
+
+                    registers.registerWrite(register, data);
                     break;
+                }
 
                 // SWAP r
-                case 0x30:
+                case 0x30: {
 
                     data = (short) (((data & 0x0F) << 4) | ((data & 0xF0) >> 4));
                     registers.f.setValue(0);
                     if (data == 0) {
                         registers.f.zf(ONE);
                     }
-                    registers.registerWrite(regNum, data);
+
+                    registers.registerWrite(register, data);
                     break;
+                }
 
                 // SRL r
-                case 0x38:
+                case 0x38: {
                     registers.f.setValue(0);
                     if ((data & 0x01) == 0x01) {
                         registers.f.cf(ONE);
@@ -1133,8 +1147,10 @@ public class Cpu implements ReadableWritable {
                     if (data == 0) {
                         registers.f.zf(ONE);
                     }
-                    registers.registerWrite(regNum, data);
+
+                    registers.registerWrite(register, data);
                     break;
+                }
             }
         } else {
             int mask;
@@ -1156,14 +1172,14 @@ public class Cpu implements ReadableWritable {
             if ((opcode.intValue() & 0xC0) == 0x80) {
                 mask = (short) (0xFF - (0x01 << bitNumber));
                 data = (short) (data & mask);
-                registers.registerWrite(regNum, data);
+                registers.registerWrite(register, data);
             }
 
             // SET n, r
             if ((opcode.intValue() & 0xC0) == 0xC0) {
                 mask = (short) (0x01 << bitNumber);
                 data = (short) (data | mask);
-                registers.registerWrite(regNum, data);
+                registers.registerWrite(register, data);
             }
         }
     }

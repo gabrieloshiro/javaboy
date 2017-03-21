@@ -1,5 +1,6 @@
 package javaboy;
 
+import javaboy.instruction.BaseOpcode;
 import javaboy.lang.Byte;
 import javaboy.lang.FlagRegister;
 import javaboy.lang.Short;
@@ -31,59 +32,88 @@ public class Registers {
         this.memory = memory;
     }
 
-    public int registerRead(int regNum) {
-        switch (regNum) {
-            case 0:
+    public int registerRead(Register register) {
+        switch (register) {
+            case B:
                 return b.intValue();
-            case 1:
+            case C:
                 return c.intValue();
-            case 2:
+            case D:
                 return d.intValue();
-            case 3:
+            case E:
                 return e.intValue();
-            case 4:
+            case H:
                 return h.intValue();
-            case 5:
+            case L:
                 return l.intValue();
-            case 6:
+            case MEM:
                 return memory.read(hl).intValue();
-            case 7:
+            case A:
                 return a.intValue();
             default:
-                return -1;
+                throw new IllegalArgumentException();
         }
     }
 
-    public void registerWrite(int regNum, int data) {
-        switch (regNum) {
-            case 0:
+    public void registerWrite(Register register, int data) {
+        switch (register) {
+            case B:
                 b.setValue(data);
                 break;
-            case 1:
+            case C:
                 c.setValue(data);
                 break;
-            case 2:
+            case D:
                 d.setValue(data);
                 break;
-            case 3:
+            case E:
                 e.setValue(data);
                 break;
-            case 4:
+            case H:
                 h.setValue(data);
                 break;
-            case 5:
+            case L:
                 l.setValue(data);
                 break;
-            case 6:
+            case MEM:
                 memory.write(hl, new Byte(data));
                 break;
-            case 7:
+            case A:
                 a.setValue(data);
                 break;
             default:
-                break;
+                throw new IllegalArgumentException();
         }
     }
 
+    public enum Register {
+        A(7),
+        B(0),
+        C(1),
+        D(2),
+        E(3),
+        H(4),
+        L(5),
+        MEM(6);
+
+        private int index;
+
+        Register(int index) {
+            this.index = index;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public static Register from(int index) {
+            for (Register item: Register.values()) {
+                if (index == item.getIndex()) {
+                    return item;
+                }
+            }
+            throw new IllegalArgumentException();
+        }
+    }
 
 }
