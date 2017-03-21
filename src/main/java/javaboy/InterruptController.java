@@ -2,7 +2,6 @@ package javaboy;
 
 class InterruptController {
 
-
     public enum Interrupt {
         VBLANK(0b0000_0001, 0x40),
         LCDC(0b0000_0010, 0x48),

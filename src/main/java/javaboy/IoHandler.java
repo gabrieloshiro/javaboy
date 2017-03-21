@@ -14,38 +14,30 @@ import javaboy.lang.Short;
 
 public class IoHandler implements ReadableWritable {
 
-    /**
-     * Data contained in the handled memory area
-     */
-    public final Memory io = new Memory(0xFF00, 0x100);
+    private static final Short TIMER_DIV_ADDRESS = new Short(0xFF04);
+    private static final Short TIMER_TAC_ADDRESS = new Short(0xFF07);
+    private static final Short LCDC_ADDRESS = new Short(0xFF40);
+    private static final Short LCDC_STATUS_ADDRESS = new Short(0xFF41);
+    private static final Short DMA_ADDRESS = new Short(0xFF46);
+    private static final Short BACKGROUND_WINDOW_PALETTE_ADDRESS = new Short(0xFF47);
+    private static final Short OBJECT_ONE_PALETTE_ADDRESS = new Short(0xFF48);
+    private static final Short OBJECT_TWO_PALETTE_ADDRESS = new Short(0xFF49);
 
-    /**
-     * Reference to the current CPU object
-     */
+    public final Memory io = new Memory(0xFF00, 0x100);
     private final Cpu cpu;
-    
     private final InstructionCounter instructionCounter;
 
-    /**
-     * Create an IoHandler for the specified CPU
-     */
     IoHandler(Cpu cpu, InstructionCounter instructionCounter) {
         this.cpu = cpu;
         this.instructionCounter = instructionCounter;
         reset();
     }
 
-    /**
-     * Initialize IO to initial power on state
-     */
     void reset() {
         ioWrite(0x40, (short) 0x91);
         ioWrite(0x0F, (short) 0x01);
     }
 
-    /**
-     * Read data from IO Ram
-     */
     public short ioRead(int num) {
 
         Short address = new Short(0xFF00 + num);
@@ -81,9 +73,6 @@ public class IoHandler implements ReadableWritable {
         }
     }
 
-    /**
-     * Write data to IO Ram
-     */
     public void ioWrite(int num, short data) {
 
         Short address = new Short(0xFF00 + num);
@@ -159,7 +148,6 @@ public class IoHandler implements ReadableWritable {
                 break;
 
             case 0x47:           // FF47 - BKG and WIN palette
-                //    Logger.debug("Palette created!");
                 cpu.graphicsChip.backgroundPalette.decodePalette(data);
                 if (io.read(address).intValue() != (byte) data) {
                     io.write(address, dataByte);

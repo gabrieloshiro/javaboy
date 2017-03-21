@@ -23,9 +23,6 @@ class JavaBoy extends Frame {
         paint(graphics);
     }
 
-    /**
-     * Initialize JavaBoy when run as an application
-     */
     private JavaBoy() {
         Logger.debug("JavaBoy (tm) Version 0.92 (c) 2005 Neil Millstone (application)");
 
