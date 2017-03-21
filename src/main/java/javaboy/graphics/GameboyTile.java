@@ -15,7 +15,6 @@ class GameboyTile {
 
     private static final int IMAGE_COUNT = 64;
 
-
     private final GraphicsChip graphicsChip;
     private final Image[] image = new Image[IMAGE_COUNT];
 
@@ -151,15 +150,29 @@ class GameboyTile {
     /**
      * Invalidate tile with the specified palette, including all flipped versions.
      */
-    void invalidate(int attribs) {
-        valid[attribs] = false;       /* Invalidate original image and */
-        if (image[attribs] != null) image[attribs].flush();
-        valid[attribs + 1] = false;   /* all flipped versions in cache */
-        if (image[attribs + 1] != null) image[attribs + 1].flush();
-        valid[attribs + 2] = false;
-        if (image[attribs + 2] != null) image[attribs + 2].flush();
-        valid[attribs + 3] = false;
-        if (image[attribs + 3] != null) image[attribs + 3].flush();
+    void invalidate(int attributes) {
+        valid[attributes] = false;       /* Invalidate original image and */
+        if (image[attributes] != null) {
+            image[attributes].flush();
+        }
+
+        valid[attributes + 1] = false;   /* all flipped versions in cache */
+
+        if (image[attributes + 1] != null) {
+            image[attributes + 1].flush();
+        }
+
+        valid[attributes + 2] = false;
+
+        if (image[attributes + 2] != null) {
+            image[attributes + 2].flush();
+        }
+
+        valid[attributes + 3] = false;
+
+        if (image[attributes + 3] != null) {
+            image[attributes + 3].flush();
+        }
     }
 
     /**

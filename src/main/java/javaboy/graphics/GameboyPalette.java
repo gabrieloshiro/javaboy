@@ -45,14 +45,14 @@ public class GameboyPalette {
     /**
      * Get the RGB colour value for a specific colour entry
      */
-    int getRgbEntry(int e) {
-        return colours[data.get(e).intValue()];
+    int getRgbEntry(int entry) {
+        return colours[data.get(entry).intValue()];
     }
 
     /**
      * Get the colour number for a specific colour entry
      */
-    int getEntry(int e) {
-        return data.get(e).intValue();
+    int getEntry(int entry) {
+        return data.get(entry).intValue();
     }
 }
