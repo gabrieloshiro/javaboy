@@ -1,5 +1,6 @@
 package javaboy.memory;
 
+import javaboy.InterruptController;
 import javaboy.IoHandler;
 import javaboy.ReadableWritable;
 import javaboy.Registers;
@@ -25,12 +26,14 @@ public class MemoryController implements ReadableWritable {
     private final Registers registers;
     private final GraphicsChip graphicsChip;
     private final IoHandler ioHandler;
+    private final InterruptController interruptController;
 
-    public MemoryController(GraphicsChip graphicsChip, IoHandler ioHandler, Registers registers) {
+    public MemoryController(GraphicsChip graphicsChip, IoHandler ioHandler, Registers registers, InterruptController interruptController) {
         rom = RomLoader.loadRom("bgblogo.gb", ROM_SIZE);
         this.graphicsChip = graphicsChip;
         this.ioHandler = ioHandler;
         this.registers = registers;
+        this.interruptController = interruptController;
     }
 
     @Override
@@ -64,6 +67,10 @@ public class MemoryController implements ReadableWritable {
                 return new Byte(mainRam[address.intValue() - 0xE000]);
 
             case 0xF000:
+                if (address.intValue() == InterruptController.FLAGS_ADDRESS || address.intValue() == InterruptController.ENABLE_ADDRESS) {
+                    return interruptController.read(address);
+                }
+
                 if (address.intValue() < 0xFE00) {
                     return new Byte(mainRam[address.intValue() - 0xE000]);
                 } else if (address.intValue() < 0xFF00) {
@@ -113,6 +120,11 @@ public class MemoryController implements ReadableWritable {
                 break;
 
             case 0xF000:
+                if (address.intValue() == InterruptController.FLAGS_ADDRESS || address.intValue() == InterruptController.ENABLE_ADDRESS) {
+                    interruptController.write(address, data);
+                    break;
+                }
+
                 if (address.intValue() < 0xFE00) {
                     try {
                         mainRam[address.intValue() - 0xE000] = (byte) data.intValue();

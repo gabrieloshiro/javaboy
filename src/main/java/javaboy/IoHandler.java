@@ -26,10 +26,12 @@ public class IoHandler implements ReadableWritable {
     public final Memory io = new Memory(0xFF00, 0x100);
     private final Cpu cpu;
     private final InstructionCounter instructionCounter;
+    private final InterruptController interruptController;
 
-    IoHandler(Cpu cpu, InstructionCounter instructionCounter) {
+    IoHandler(Cpu cpu, InstructionCounter instructionCounter, InterruptController interruptController) {
         this.cpu = cpu;
         this.instructionCounter = instructionCounter;
+        this.interruptController = interruptController;
         reset();
     }
 
@@ -68,6 +70,9 @@ public class IoHandler implements ReadableWritable {
                 }
                 return (byte) (output | (io.read(new Short(0xFF41)).intValue() & 0xF8));
 
+            case 0x0F:
+            case 0xFF:
+                return (byte) interruptController.read(address).intValue();
             default:
                 return (short) io.read(address).intValue();
         }
@@ -191,19 +196,37 @@ public class IoHandler implements ReadableWritable {
                 io.write(new Short(0xFF55), dataByte);
                 break;
 
+            case 0x0F:
+            case 0xFF:
+                interruptController.write(address, dataByte);
+                break;
             default:
                 io.write(address, dataByte);
                 break;
         }
+
     }
 
     @Override
     public Byte read(Short address) {
+        switch (address.intValue()) {
+            case InterruptController.FLAGS_ADDRESS:
+            case InterruptController.ENABLE_ADDRESS:
+                return interruptController.read(address);
+        }
+
         return io.read(address);
     }
 
     @Override
     public void write(Short address, Byte data) {
+        switch (address.intValue()) {
+            case InterruptController.FLAGS_ADDRESS:
+            case InterruptController.ENABLE_ADDRESS:
+                interruptController.write(address, data);
+                return;
+        }
+
         io.write(address, data);
     }
 }

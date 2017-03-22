@@ -41,8 +41,8 @@ public class Cpu implements ReadableWritable {
         interruptController = new InterruptController();
         registers = new Registers(this);
         graphicsChip = new GraphicsChip(a, this);
-        ioHandler = new IoHandler(this, instructionCounter);
-        memoryController = new MemoryController(graphicsChip, ioHandler, registers);
+        ioHandler = new IoHandler(this, instructionCounter, interruptController);
+        memoryController = new MemoryController(graphicsChip, ioHandler, registers, interruptController);
         applet = a;
     }
 
@@ -94,11 +94,11 @@ public class Cpu implements ReadableWritable {
     public static final Short INTERRUPT_ENABLE_ADDRESS = new Short(0xFFFF);
 
     private Byte interruptFlags() {
-        return ioHandler.read(INTERRUPT_FLAGS_ADDRESS);
+        return read(INTERRUPT_FLAGS_ADDRESS);
     }
 
     private Byte interruptEnable() {
-        return ioHandler.read(INTERRUPT_ENABLE_ADDRESS);
+        return read(INTERRUPT_ENABLE_ADDRESS);
     }
 
     private boolean didInterruptOccur() {
