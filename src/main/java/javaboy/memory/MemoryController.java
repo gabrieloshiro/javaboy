@@ -10,7 +10,72 @@ import javaboy.lang.Short;
 import javaboy.rom.loader.RomLoader;
 import org.pmw.tinylog.Logger;
 
+/**
+ * ┌─────────────────────────┐ 0x0000
+ * │                         │
+ * │    Interrupt Address    │
+ * │       RST Address       │
+ * │                         │
+ * ├─────────────────────────┤ 0x0100
+ * │                         │
+ * │    Cartridge Header     │
+ * │      ROM Data area      │
+ * │                         │
+ * ├─────────────────────────┤ 0x0150 <-- Program start address
+ * │                         │
+ * │    User program area    │
+ * │         32 kB           │
+ * │                         │
+ * ├─────────────────────────┤ 0x8000
+ * │                         │
+ * │       Video Ram         │
+ * │                         │
+ * │                         │
+ * ├─────────────────────────┤ 0xA000
+ * │                         │
+ * │    External Expansion   │
+ * │      Working RAM        │
+ * │                         │
+ * ├─────────────────────────┤ 0xC000
+ * │                         │
+ * │      Working RAM        │
+ * │                         │
+ * │                         │
+ * ├─────────────────────────┤ 0xE000
+ * │XXXXXXXXXXXXXXXXXXXXXXXXX│
+ * │XXXXX Prohibited XXXXXXXX│
+ * │XXXXXXXXXXXXXXXXXXXXXXXXX│
+ * │XXXXXXXXXXXXXXXXXXXXXXXXX│
+ * ├─────────────────────────┤ 0xFE00
+ * │                         │
+ * │     OAM (40 Objects)    │
+ * │       40 x 32 bits      │
+ * │                         │
+ * ├─────────────────────────┤ 0xFEA0
+ * │XXXXXXXXXXXXXXXXXXXXXXXXX│
+ * │XXXXX Prohibited XXXXXXXX│
+ * │XXXXXXXXXXXXXXXXXXXXXXXXX│
+ * │XXXXXXXXXXXXXXXXXXXXXXXXX│
+ * ├─────────────────────────┤ 0xFF00
+ * │                         │
+ * │   Port/Mode Registers   │
+ * │    Control Registers    │
+ * │     Sound Registers     │
+ * │                         │
+ * ├─────────────────────────┤ 0xFF80
+ * │                         │
+ * │       Stack RAM         │
+ * │                         │
+ * │                         │
+ * ├─────────────────────────┤ 0xFFFE
+ * │                         │
+ * │    Interrupt Enable     │
+ * │       Register          │
+ * │                         │
+ * └─────────────────────────┘ 0xFFFF
+ */
 public class MemoryController implements ReadableWritable {
+
 
     private static final int ROM_SIZE = 0x8000;
 

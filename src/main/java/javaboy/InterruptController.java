@@ -5,20 +5,20 @@ import javaboy.lang.Short;
 
 public class InterruptController implements ReadableWritable {
 
-    public static final int FLAGS_ADDRESS = 0xFF0F;
-    public static final int ENABLE_ADDRESS = 0xFFFF;
+    public static final int FLAGS_ADDRESS = 0xFF0F; // IF
+    public static final int ENABLE_ADDRESS = 0xFFFF; // IE
 
-    private boolean masterInterruptEnable;
+    private boolean interruptMasterEnable; // IME
 
     private final Byte flags = new Byte();
     private final Byte enable = new Byte();
 
-    public boolean isMasterInterruptEnable() {
-        return masterInterruptEnable;
+    public boolean isInterruptMasterEnable() {
+        return interruptMasterEnable;
     }
 
-    public void setMasterInterruptEnable(boolean masterInterruptEnable) {
-        this.masterInterruptEnable = masterInterruptEnable;
+    public void setInterruptMasterEnable(boolean interruptMasterEnable) {
+        this.interruptMasterEnable = interruptMasterEnable;
     }
 
     @Override

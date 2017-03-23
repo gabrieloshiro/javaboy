@@ -115,7 +115,7 @@ public class Cpu implements ReadableWritable {
         if (interrupt == null) return;
 
         pushShort(registers.sp, registers.pc);
-        interruptController.setMasterInterruptEnable(false);
+        interruptController.setInterruptMasterEnable(false);
         attendInterrupt(interrupt, interrupt.getAddress());
     }
 
@@ -649,7 +649,7 @@ public class Cpu implements ReadableWritable {
                  HALT
                  */
             case HALT:
-                interruptController.setMasterInterruptEnable(true);
+                interruptController.setInterruptMasterEnable(true);
                 while (interruptFlags().intValue() == 0) {
                     initiateInterrupts();
                     instructionCounter.inc();
@@ -777,7 +777,7 @@ public class Cpu implements ReadableWritable {
                 break;
 
             case RETI:
-                interruptController.setMasterInterruptEnable(true);
+                interruptController.setInterruptMasterEnable(true);
                 ret(registers.sp);
                 break;
 
@@ -883,7 +883,7 @@ public class Cpu implements ReadableWritable {
             }
 
             case DI:
-                interruptController.setMasterInterruptEnable(false);
+                interruptController.setInterruptMasterEnable(false);
                 break;
 
             case PUSH_AF:
@@ -1204,13 +1204,13 @@ public class Cpu implements ReadableWritable {
                 if (ieDelay > 0) {
                     ieDelay--;
                 } else {
-                    interruptController.setMasterInterruptEnable(true);
+                    interruptController.setInterruptMasterEnable(true);
                     ieDelay = -1;
                 }
 
             }
 
-            if (interruptController.isMasterInterruptEnable()) {
+            if (interruptController.isInterruptMasterEnable()) {
                 checkInterrupts();
             }
 
