@@ -8,9 +8,8 @@ import java.io.*;
 public class RomLoader {
 
     public static Memory loadRom(String filepath, int size) {
-        InputStream is;
         try {
-            is = new FileInputStream(new File(filepath));
+            InputStream is = new FileInputStream(new File(filepath));
 
             byte[] data = new byte[size];   // Recreate the ROM array with the correct size
 

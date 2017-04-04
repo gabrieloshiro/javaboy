@@ -36,8 +36,8 @@ public class IoHandler implements ReadableWritable {
     }
 
     void reset() {
-        ioWrite(0x40, (short) 0x91);
-        ioWrite(0x0F, (short) 0x01);
+        write(LCDC_ADDRESS, new Byte(0x91));
+        write(new Short(InterruptController.FLAGS_ADDRESS), new Byte(0x01));
     }
 
     public short ioRead(int num) {
