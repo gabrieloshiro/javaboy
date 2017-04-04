@@ -26,13 +26,22 @@ class JavaBoy extends Frame {
     private JavaBoy() {
         Logger.debug("JavaBoy (tm) Version 0.92 (c) 2005 Neil Millstone (application)");
 
+        setupFrame();
+
+        cpu = new Cpu(this);
+        initializeCpu();
+    }
+
+    private void setupFrame() {
         setUndecorated(true);
         setSize(GraphicsChip.WIDTH, GraphicsChip.HEIGHT);
         setVisible(true);
         requestFocus();
+    }
 
-        cpu = new Cpu(this);
+    private void initializeCpu() {
         Logger.debug("CPU Reset");
+
         cpu.reset();
         cpu.execute();
     }
