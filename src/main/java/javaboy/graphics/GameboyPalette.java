@@ -3,6 +3,7 @@ package javaboy.graphics;
 import javaboy.lang.Byte;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class represents a palette.  There can be three
@@ -15,7 +16,7 @@ public class GameboyPalette {
     /**
      * Data for which colour maps to which RGB value
      */
-    private final ArrayList<Byte> data = new ArrayList<>(4);
+    private final List<Byte> data = new ArrayList<>(4);
 
     /**
      * Default RGB colour values

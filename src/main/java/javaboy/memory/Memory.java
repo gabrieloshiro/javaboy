@@ -3,7 +3,6 @@ package javaboy.memory;
 import javaboy.ReadableWritable;
 import javaboy.lang.Byte;
 import javaboy.lang.Short;
-import org.pmw.tinylog.Logger;
 
 import java.util.ArrayList;
 import java.util.Iterator;
