@@ -23,7 +23,7 @@ public class IoHandler implements ReadableWritable {
     private static final Short OBJECT_ONE_PALETTE_ADDRESS = new Short(0xFF48);
     private static final Short OBJECT_TWO_PALETTE_ADDRESS = new Short(0xFF49);
 
-    public final Memory io = new Memory(0xFF00, 0x100);
+    private final Memory io = new Memory(0xFF00, 0x100);
     private final Cpu cpu;
     private final InstructionCounter instructionCounter;
     private final InterruptController interruptController;
@@ -68,7 +68,7 @@ public class IoHandler implements ReadableWritable {
                         output |= 3;
                     }
                 }
-                return (byte) (output | (io.read(new Short(0xFF41)).intValue() & 0xF8));
+                return (byte) (output | (io.read(LCDC_STATUS_ADDRESS).intValue() & 0xF8));
 
             case 0x0F:
             case 0xFF:
@@ -87,8 +87,7 @@ public class IoHandler implements ReadableWritable {
 
             // DIV
             case 0x04:
-                io.write(new Short(0xFF04), new Byte(data));
-//                registers[0x04] = 0;
+                io.write(TIMER_DIV_ADDRESS, new Byte(data));
                 break;
 
             // TAC
@@ -137,7 +136,7 @@ public class IoHandler implements ReadableWritable {
                     cpu.graphicsChip.bgEnabled = false;
                     cpu.graphicsChip.winEnabled = false;
                 }
-                io.write(new Short(0xFF40), new Byte(data));
+                io.write(LCDC_ADDRESS, new Byte(data));
                 break;
 
             // DMA
